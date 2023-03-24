@@ -134,7 +134,7 @@ public:
 
 	ssize_t parseChunk(const char *data, size_t data_size, bool *end);
 	ssize_t handleChunkedData(void);
-	void manageBody(char *buf, int buf_len);
+	void manageBody(const char *buf, int buf_len);
 
 	bool expectBody(void) const;
 	size_t getBufferRewritedLength(void) const;

@@ -411,10 +411,10 @@ ssize_t http_parser::HttpData::handleChunkedData(void)
 	return 0;
 }
 
-void http_parser::HttpData::manageBody(char *buf, int buf_len)
+void http_parser::HttpData::manageBody(const char *buf, int buf_len)
 {
 	message_length = buf_len;
-	message = buf;
+	message = (char *)buf;
 
 	updateMessageTotalBytes(buf_len);
 

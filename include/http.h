@@ -46,6 +46,7 @@ struct zproxy_http_ctx {
 
 	const char			*buf;
 	uint32_t			buf_len;
+	uint32_t			buf_tail_len;
 	uint32_t			buf_siz;
 	enum zproxy_http_origin		from;
 	const struct sockaddr_in	*addr;

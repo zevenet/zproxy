@@ -82,6 +82,7 @@ int zproxy_http_request_reconnect(struct zproxy_http_ctx *ctx)
 		return -1;
 	}
 	ctx->buf = buf;
+	ctx->buf_tail_len = ctx->buf_len;
 
 	return 0;
 }
@@ -232,6 +233,7 @@ static int zproxy_http_request_head_rcv(struct zproxy_http_ctx *ctx)
 			std::string(ctx->stream->listener_config->runtime.err500_msg));
 		return -1;
 	}
+	ctx->buf_tail_len = ctx->buf_len;
 
 	if (ctx->stream->request.message_length > 0) {
 		ctx->stream->request.manageBody(ctx->stream->request.message, ctx->stream->request.message_length);
@@ -262,7 +264,7 @@ static int zproxy_http_request_100_cont(struct zproxy_http_ctx *ctx)
 		syslog(LOG_DEBUG, "100 continue does not receive body data yet");
 		return 0;
 	}
-	ctx->stream->request.message_length = ctx->buf_len - (ctx->stream->request.message - ctx->stream->request.buffer);
+	ctx->stream->request.message_length = ctx->buf_tail_len;
 	ctx->buf_len = ctx->stream->request.prepareToSend(&buf);
 
 	if (ctx->buf_len == 0) {
@@ -272,6 +274,7 @@ static int zproxy_http_request_100_cont(struct zproxy_http_ctx *ctx)
 			std::string(ctx->stream->listener_config->runtime.err500_msg));
 		return -1;
 	}
+	ctx->buf_tail_len = ctx->buf_len;
 
 	ctx->stream->request.manageBody(ctx->stream->request.message, ctx->stream->request.message_length);
 
@@ -298,7 +301,7 @@ static int zproxy_http_request_body_rcv(struct zproxy_http_ctx *ctx)
 {
 	auto stream = ctx->stream;
 
-	stream->request.manageBody(const_cast<char *>(ctx->buf), ctx->buf_len);
+	stream->request.manageBody(&ctx->buf[ctx->buf_len - ctx->buf_tail_len], ctx->buf_tail_len);
 
 	if (stream->waf.checkRequestBody(stream)) {
 		ctx->resp_buf = stream->waf.response(stream);
@@ -417,20 +420,20 @@ int zproxy_http_response_parser(struct zproxy_http_ctx *ctx)
 			return -1;
 		}
 		ctx->buf = buf;
+		ctx->buf_tail_len = ctx->buf_len;
 
 		stream->logSuccess();
 
 	} else if (state == HTTP_STATE::RESP_BODY_RCV) {
-		ctx->stream->response.message = const_cast<char *>(ctx->buf);
-		ctx->stream->response.message_length = ctx->buf_len;
+		ctx->stream->response.message = const_cast<char *>(&ctx->buf[ctx->buf_len - ctx->buf_tail_len]);
+		ctx->stream->response.message_length = ctx->buf_tail_len;
 	} else {
 		// TODO: ctx->stream->getStateTracer();
 		streamLogMessage(ctx->stream, "no valid state %s", stream->getStateString(state));
 		return -1;
 	}
 
-	ctx->stream->response.manageBody(ctx->stream->response.message,
-		ctx->stream->response.message_length);
+	stream->response.manageBody(&ctx->buf[ctx->buf_len - ctx->buf_tail_len], ctx->buf_tail_len);
 
 	if (stream->waf.checkResponseBody(stream)) {
 		if (buf)
