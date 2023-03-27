@@ -84,8 +84,10 @@ size_t http_parser::HttpData::getBufferRewritedLength(void) const
 		len = header_length_new + content_length;
 
 	// finished chunked encode
-	else if (chunked_status == http::CHUNKED_STATUS::CHUNKED_LAST_CHUNK)
-		len = header_length_new + message_total_bytes;
+	else if (chunked_status == http::CHUNKED_STATUS::CHUNKED_LAST_CHUNK) {
+		len = message_total_bytes;
+		syslog(LOG_DEBUG, "last chunk seen, header len %lu total message %lu\n", header_length_new, message_total_bytes);
+	}
 
 	return len;
 }
