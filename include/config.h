@@ -43,7 +43,7 @@
 #define CONFIG_REGEX_CNName		".*[Cc][Nn]=([-*.A-Za-z0-9]+).*$"
 
 #define CONFIG_DEFAULT_ErrNoSsl         "Please use HTTPS."
-#define CONFIG_DEFAULT_ErrNoSsl_Code    400
+#define CONFIG_DEFAULT_ErrNoSsl_Code    WS_HTTP_400
 
 /* pattern to match the request/header against */
 struct matcher {
@@ -341,6 +341,7 @@ struct zproxy_proxy_cfg {
 		char			errnossl_path[PATH_MAX];
 		char			nosslredirect_url[PATH_MAX];
 		enum ws_responses       nosslredirect_code;
+		enum ws_responses       errnossl_code;
 		char			errwaf_path[PATH_MAX];
 	} error;
 
@@ -352,7 +353,6 @@ struct zproxy_proxy_cfg {
 		char			err501_msg[CONFIG_MAXBUF];
 		char			err503_msg[CONFIG_MAXBUF];
 		char			errnossl_msg[CONFIG_MAXBUF];
-		int                     errnossl_code;
 		char			errwaf_msg[CONFIG_MAXBUF];
 		void                    *waf_rules;
 		regex_t			req_url_pat_reg;

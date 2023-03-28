@@ -1,6 +1,6 @@
-HTTP/1.0 400 Bad Request
-Content-Type: text/html
-Content-Length: 18
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: #######
 Expires: now
 Pragma: no-cache
 Server: zproxy/VERSION

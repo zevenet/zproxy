@@ -239,6 +239,7 @@ static void zproxy_proxy_cfg_init(struct zproxy_cfg *cfg,
 	proxy->id = listener_counter++;
 
 	proxy->log_level = cfg->args.log_level;
+	proxy->error.errnossl_code = CONFIG_DEFAULT_ErrNoSsl_Code;
 
 	INIT_LIST_HEAD(&proxy->runtime.replace_header_req);
 	INIT_LIST_HEAD(&proxy->runtime.replace_header_res);
@@ -1398,9 +1399,9 @@ static int zproxy_proxy_cfg_file(struct zproxy_cfg *cfg, struct zproxy_proxy_cfg
 		} else if (zproxy_regex_exec(CONFIG_REGEX_ErrNoSsl, lin, matches)) {
 			if (matches[1].rm_eo != matches[1].rm_so) {
 				lin[matches[1].rm_eo] = '\0';
-				proxy->runtime.errnossl_code = atoi(lin + matches[1].rm_so);
-			} else {
-				proxy->runtime.errnossl_code = CONFIG_DEFAULT_ErrNoSsl_Code;
+				proxy->error.errnossl_code = http_to_ws(atoi(lin + matches[1].rm_so));
+				if (proxy->error.errnossl_code == WS_HTTP_MAX)
+					parse_error("Invalid err ssl code.");
 			}
 			lin[matches[2].rm_eo] = '\0';
 			snprintf(proxy->error.errnossl_path, PATH_MAX, "%s",
@@ -1409,20 +1410,9 @@ static int zproxy_proxy_cfg_file(struct zproxy_cfg *cfg, struct zproxy_proxy_cfg
 			if (matches[1].rm_eo != matches[1].rm_so) {
 				lin[matches[1].rm_eo] = '\0';
 				const int code = atoi(lin + matches[1].rm_so);
-				switch (code) {
-				case 301:
-					proxy->error.nosslredirect_code = WS_HTTP_301;
-					break;
-				case 302:
-					proxy->error.nosslredirect_code = WS_HTTP_302;
-					break;
-				case 307:
-					proxy->error.nosslredirect_code = WS_HTTP_307;
-					break;
-				default:
+				proxy->error.nosslredirect_code = http_to_ws(code);
+				if (proxy->error.nosslredirect_code == WS_HTTP_MAX)
 					parse_error("Invalid redirect code.");
-					break;
-				}
 			} else {
 				proxy->error.nosslredirect_code = WS_HTTP_302;
 			}

@@ -38,6 +38,7 @@ extern "C" {
 
 enum ws_responses {
 	WS_HTTP_500,    // internal server error
+	WS_HTTP_505,    // HTTP Version Not Supported
 	WS_HTTP_400,    // bad request
 	WS_HTTP_401,    // unauthorized
 	WS_HTTP_404,    // not found
@@ -53,6 +54,8 @@ enum ws_responses {
 };
 
 extern const char *ws_str_responses[WS_HTTP_MAX];
+
+enum ws_responses http_to_ws(int code);
 
 #ifdef __cplusplus
 }

@@ -515,7 +515,7 @@ int zproxy_http_event_nossl(struct zproxy_http_ctx *ctx)
 	} else {
 		snprintf((char*)ctx->resp_buf, SRV_MAX_HEADER + CONFIG_MAXBUF,
 			 "%s%s%zu%s%s%s",
-			 ws_str_responses[WS_HTTP_400],
+			 ws_str_responses[proxy->error.errnossl_code],
 			 HTTP_HEADER_CONTENT_HTML
 			 HTTP_HEADER_CONTENTLEN, strlen(ctx->cfg->runtime.errnossl_msg), HTTP_LINE_END,
 			 HTTP_HEADER_EXPIRES

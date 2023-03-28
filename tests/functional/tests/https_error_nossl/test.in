@@ -6,17 +6,14 @@ URL="/"
 #########################
 CMD=reload
 FILE="zproxy_default_errnossl.cfg"
-DISABLE=true
 #########################
 DESCRIPTION="http request, the default error is expected"
 CMD=curl
 CL=1
 METHOD="GET"
 URL="/"
-DISABLE=true
 #########################
 DESCRIPTION="Get stats to check counters"
 CMD=ctl
 URL="/listener/0"
 METHOD="GET"
-DISABLE=true

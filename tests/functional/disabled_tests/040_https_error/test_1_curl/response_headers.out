@@ -1,8 +1,0 @@
-HTTP/1.0 505 HTTP Version Not Supported
-Content-Type: text/html
-Content-Length: 38
-Expires: now
-Pragma: no-cache
-Server: zproxy/VERSION
-Cache-control: no-cache,no-store
-
