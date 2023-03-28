@@ -18,6 +18,7 @@
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
+
 #include <stdlib.h>
 #include <stdint.h>
 #include <unistd.h>
@@ -132,6 +133,37 @@ static int zproxy_backend_read(struct ev_loop *loop, struct zproxy_conn *conn, i
 	ev_timer_again(loop, &conn->backend.timer);
 
 	switch (conn->state) {
+	case ZPROXY_CONN_PROXY_SPLICE:
+		ret = zproxy_conn_backend_recv(loop, conn, &numbytes);
+		if (ret < 0)
+			return ret;
+		else if (ret == 0)
+			return 1;
+
+		if (numbytes == 0) {
+			if (backend_buflen(conn) > 0) {
+				ev_io_stop(loop, &conn->backend.io);
+				conn->client.shutdown = true;
+				return 1;
+			}
+			return 0;
+		}
+
+		if (conn->backend.buf_len == 0) {
+			ev_io_stop(loop, &conn->client.io);
+			ev_io_set(&conn->client.io, conn->client.io.fd,
+				  EV_READ | EV_WRITE);
+			ev_io_start(loop, &conn->client.io);
+		}
+
+		conn->backend.recv += numbytes;
+		conn->backend.buf_len += numbytes;
+
+		if (conn->backend.buf_len >= conn->backend.buf_siz) {
+			ev_io_stop(loop, &conn->backend.io);
+			conn->backend.stopped = true;
+		}
+		break;
 	case ZPROXY_CONN_RECV_HTTP_RESP:
 		ret = zproxy_conn_backend_recv(loop, conn, &numbytes);
 		if (ret < 0)
@@ -211,6 +243,33 @@ static int zproxy_backend_write(struct ev_loop *loop, struct zproxy_conn *conn, 
 	ev_timer_again(loop, &conn->backend.timer);
 
 	switch (conn->state) {
+	case ZPROXY_CONN_PROXY_SPLICE:
+		ret = zproxy_conn_backend_send(loop, conn, &numbytes);
+		if (ret < 0)
+			return ret;
+		else if (ret == 0)
+			return 1;
+
+		conn->backend.buf_sent += numbytes;
+
+		if (conn->backend.buf_sent < conn->client.buf_len) {
+			if (!conn->client.stopped) {
+				conn->client.stopped = true;
+				ev_io_stop(loop, &conn->client.io);
+			}
+		} else {
+			if (conn->client.stopped) {
+				conn->client.stopped = false;
+				ev_io_start(loop, &conn->client.io);
+			}
+			conn->backend.buf_sent = 0;
+			conn->client.buf_len = 0;
+
+			ev_io_stop(loop, &conn->backend.io);
+			ev_io_set(&conn->backend.io, conn->backend.io.fd, EV_READ);
+			ev_io_start(loop, &conn->backend.io);
+		}
+		break;
 	case ZPROXY_CONN_RECV_HTTP_REQ:
 		ret = zproxy_conn_backend_send(loop, conn, &numbytes);
 		if (ret < 0)
@@ -367,6 +426,17 @@ static void zproxy_client_read(struct ev_loop *loop, struct zproxy_conn *conn, i
 	conn->client.buf_len += numbytes;
 
 	switch (conn->state) {
+	case ZPROXY_CONN_PROXY_SPLICE:
+		if (conn->client.buf_len >= conn->client.buf_siz) {
+			conn->client.stopped = true;
+			ev_io_stop(loop, &conn->client.io);
+		}
+
+		ev_io_stop(loop, &conn->backend.io);
+		ev_io_set(&conn->backend.io, conn->backend.io.fd,
+			  EV_READ | EV_WRITE);
+		ev_io_start(loop, &conn->backend.io);
+		break;
 	case ZPROXY_CONN_RECV_HTTP_REQ:
 		ret = zproxy_conn_recv_http_req(loop, conn, &backend, numbytes);
 		if (ret < 0)
@@ -447,6 +517,37 @@ static void zproxy_client_write(struct ev_loop *loop, struct zproxy_conn *conn, 
 			ev_io_start(loop, &conn->client.io);
 		}
 		break;
+	case ZPROXY_CONN_PROXY_SPLICE:
+		ret = zproxy_conn_client_send(loop, backend_buf(conn),
+					      backend_buflen(conn), &numbytes,
+					      conn);
+		if (ret < 0)
+			goto err_close;
+		else if (ret == 0)
+			return;
+
+		conn->client.buf_sent += numbytes;
+
+		if (conn->client.buf_sent < conn->backend.buf_len) {
+			ev_io_stop(loop, &conn->backend.io);
+			conn->backend.stopped = true;
+		} else {
+			if (conn->client.shutdown) {
+				ret = 0;
+				goto err_close;
+			}
+			if (conn->backend.stopped) {
+				conn->backend.stopped = false;
+				ev_io_start(loop, &conn->backend.io);
+			}
+			conn->client.buf_sent = 0;
+			conn->backend.buf_len = 0;
+
+			ev_io_stop(loop, &conn->client.io);
+			ev_io_set(&conn->client.io, conn->client.io.fd, EV_READ);
+			ev_io_start(loop, &conn->client.io);
+		}
+		break;
 	case ZPROXY_CONN_RECV_HTTP_RESP:
 		ret = zproxy_conn_client_send(loop, backend_buf(conn),
 					      backend_buflen(conn), &numbytes,
@@ -491,7 +592,14 @@ static void zproxy_client_write(struct ev_loop *loop, struct zproxy_conn *conn, 
 				goto err_close;
 			}
 			zproxy_conn_reset_state(loop, conn);
-			conn->state = ZPROXY_CONN_RECV_HTTP_REQ;
+
+			// switch to websocket mode
+			if (conn->stream->isTunnel()) {
+				zcu_log_print_th(LOG_DEBUG, "Switching to WebSocket mode");
+				conn->state = ZPROXY_CONN_PROXY_SPLICE;
+			} else {
+				conn->state = ZPROXY_CONN_RECV_HTTP_REQ;
+			}
 			ev_io_stop(loop, &conn->client.io);
 			ev_io_set(&conn->client.io, conn->client.io.fd, EV_READ);
 			ev_io_start(loop, &conn->client.io);
