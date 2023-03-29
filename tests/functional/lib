@@ -110,7 +110,7 @@ start_proxy () {
 }
 
 stop_proxy () {
-	if [[ VALGRIND -eq 0 ]]; then
+	if [[ $VALGRIND -eq 0 ]]; then
 		if [[ -f $PROXY_PID_F ]]; then
 			cmd "ip netns exec $PROXY_NS kill -15 `cat $PROXY_PID_F`"
 		fi
