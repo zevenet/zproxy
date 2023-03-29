@@ -227,7 +227,28 @@ VHOST="zproxy"
 URL="/index.html"
 ```
 
+### websocket
+
+Executes a dummy websocket client (written found in `tpl/ws-cl-http.py`) to
+simular a websocket connection, and sending some data back and forth.
+
+| Parameter | Description | Required |
+| --------- | ----------- | -------- |
+| DESCRIPTION | This parameter is not used. It is a commentary to add more information about the executed command. |
+| CMD       | It is the command to execute. In this case `websocket`. | True |
+| CL        | It is the client ID that will execute the command. | True |
+| URL       | It is the HTTP URL path used for the request (/, /svc...) | True |
+| VHOST     | It is the virtual hostname, it will be put in the URL. If it is not defined the virtual IP and virtual port will be used instead. This vhost is added to the curl command in order to be resolved. |
+
+```
+DESCRIPTION="Send websocket request"
+CMD=websocket
+CL=1
+URL="/websocket"
+```
+
 ### wrk
+>>>>>>> Stashed changes
 
 It executes the wrk tool in order to create a stable flow of connections and requests.
 This can be executed in bg to check the zproxy stats

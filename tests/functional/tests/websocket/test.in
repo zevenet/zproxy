@@ -1,0 +1,4 @@
+DESCRIPTION="Send websocket request"
+CMD=websocket
+CL=1
+URL="/websocket"

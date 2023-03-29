@@ -133,6 +133,9 @@ exec_test () {
 		elif [[ "$CMD" == "curl" ]]; then
 			if [[ $FUNCTIONAL_FLAG -eq 0 ]]; then msg "The functional was skipped"; continue; fi
 			exec_curl $OUT_DIR
+		elif [[ "$CMD" == "websocket" ]]; then
+			if [[ $FUNCTIONAL_FLAG -eq 0 ]]; then msg "The functional was skipped"; continue; fi
+			exec_websocket $OUT_DIR
 		elif [[ "$CMD" == "average" ]]; then
 			if [[ $FUNCTIONAL_FLAG -eq 0 ]]; then msg "The functional was skipped"; continue; fi
 			exec_average $OUT_DIR

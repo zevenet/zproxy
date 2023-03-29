@@ -1,0 +1,12 @@
+Connecting to 10.1.2.1:80
+Received: b'HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=\r\n\r\n'
+WS Received: b'Hello from the server!'
+WS Received: b'Hello from the server!'
+WS Received: b'Hello from the server!'
+WS Received: b'Hello from the server!'
+WS Received: b'Hello from the server!'
+WS Received: b'Hello from the server!'
+WS Received: b'Hello from the server!'
+WS Received: b'Hello from the server!'
+WS Received: b'Hello from the server!'
+WS Received: b'Hello from the server!'
