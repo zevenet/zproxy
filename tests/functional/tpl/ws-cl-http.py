@@ -19,10 +19,12 @@
 import socket
 import time
 import sys
+import ssl
 
 HOST = sys.argv[1]
 PORT = int(sys.argv[2])
-PATH = sys.argv[3]
+SSL = int(sys.argv[3])
+PATH = sys.argv[4]
 
 ws_req = (
         bytes('GET {} HTTP/1.1\r\n'.format(PATH), 'utf-8') +
@@ -33,7 +35,12 @@ ws_req = (
         b'Sec-WebSocket-Version: 13\r\n\r\n'
         )
 
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+if SSL > 0:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        context = ssl._create_unverified_context()
+        sock = context.wrap_socket(s)
+else:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 serv_addr = (HOST, PORT)
 print("Connecting to {}:{}".format(*serv_addr))

@@ -192,6 +192,9 @@ start_httpd () {
 	HTTP_WEBROOT="$TMP_DIR/http-app-$ID"
 	local WS_SRV_SCRIPT="tpl/ws-sv-http.py"
 	local WS_PID_F="$TMP_DIR/ws-sv-$ID.pid"
+	local WS_LOG_F="$TMP_DIR/ws-$ID.log"
+	local WSS_PID_F="$TMP_DIR/wss-sv-$ID.pid"
+	local WSS_LOG_F="$TMP_DIR/wss-$ID.log"
 
 	deploy_tpl $HTTP_TPL $HTTP_CFG_F
 	deploy_tpl $HTTP_SITES_TPL $HTTP_SITE
@@ -199,8 +202,12 @@ start_httpd () {
 	cp -r "tpl/download" $HTTP_WEBROOT
 
 	cmd "ip netns exec $NS $HTTPD_BIN -c $HTTP_CFG_F"
-	eval "ip netns exec $NS $WS_SRV_SCRIPT >> $TMP_DIR/ws-$ID.log 2>&1 &"
+	# start ws server
+	eval "ip netns exec $NS $WS_SRV_SCRIPT 0 >> $WS_LOG_F 2>&1 &"
 	echo $! > $WS_PID_F
+	# start wss server
+	eval "ip netns exec $NS $WS_SRV_SCRIPT 1 >> $WSS_LOG_F 2>&1 &"
+	echo $! > $WSS_PID_F
 
 	if [[ $? -ne 0 ]]; then error "Error running the backend $ID"; fi
 
@@ -214,6 +221,7 @@ stop_httpd () {
 	local HTTP_PID_F=$(get_bck_pid_f $ID)
 	local NS=$(get_bck_ns $ID)
 	local WS_PID_F="$TMP_DIR/ws-sv-$ID.pid"
+	local WSS_PID_F="$TMP_DIR/wss-sv-$ID.pid"
 
 	HTTP_SITE_F="$TMP_DIR/nginx-sites-$ID.conf"
 	HTTP_WEBROOT="$TMP_DIR/http-app-$ID"
@@ -222,6 +230,7 @@ stop_httpd () {
 	rm -rf $HTTP_CFG_F $HTTP_WEBROOT $HTTP_SITE_F
 
 	ip netns exec $NS kill -15 `cat $WS_PID_F`
+	ip netns exec $NS kill -15 `cat $WSS_PID_F`
 }
 
 create_proxy () {
@@ -672,10 +681,16 @@ exec_websocket() {
 	if [[ "$1" == "" ]]; then error_param "directory"; fi
 	if [[ "$CL" == "" ]]; then error_param "client_id"; fi
 	if [[ "$URL" == "" ]]; then error_param "url"; fi
+	if [[ $SSL -ne 1 ]]; then SSL=0; fi
 	local DIR=$1
 	local NS=$NS
 	if [[ "$NS" == "" ]]; then NS=$(get_cl_ns $CL); fi
-	if [[ "$PORT" == "" ]]; then PORT=80; fi
+	if [[ "$PORT" == "" ]]
+	then
+		[[ $SSL -eq 1 ]] &&
+			PORT=443 ||
+			PORT=80
+	fi
 	if [[ "$VHOST" == "" ]]; then VHOST="$PROXY_VIP"; fi
 
 	local WS_CL_SCRIPT="../../tpl/ws-cl-http.py"
@@ -683,7 +698,7 @@ exec_websocket() {
 	local ERR_TMP="$DIR/error.out.tmp"
 	local CMD_F="$DIR/cmd.out.tmp"
 
-	local COMMAND="ip netns exec $NS $WS_CL_SCRIPT $VHOST $PORT $URL"
+	local COMMAND="ip netns exec $NS $WS_CL_SCRIPT $VHOST $PORT $SSL $URL"
 	echo "$COMMAND" >$CMD_F
 
 	bash $CMD_F >$TMP 2>$ERR_TMP

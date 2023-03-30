@@ -7,6 +7,8 @@ different proxy configuration files and analyze its HTTP responses.
 
 ## Getting Started
 
+As a prerequisite, you must have Python 3 installed on your system.
+
 The following steps are required to configure the test application:
 
 * Adding the variables file. This file contains all the environment configuration
@@ -229,10 +231,12 @@ simular a websocket connection, and sending some data back and forth.
 | Parameter | Description | Required |
 | --------- | ----------- | -------- |
 | DESCRIPTION | This parameter is not used. It is a commentary to add more information about the executed command. |
-| CMD       | It is the command to execute. In this case `websocket`. | True |
-| CL        | It is the client ID that will execute the command. | True |
-| URL       | It is the HTTP URL path used for the request (/, /svc...) | True |
-| VHOST     | It is the virtual hostname, it will be put in the URL. If it is not defined the virtual IP and virtual port will be used instead. This vhost is added to the curl command in order to be resolved. |
+| CMD       | The command to execute. In this case `websocket`. | True |
+| CL        | The client ID that will execute the command. | True |
+| URL       | The HTTP URL path used for the request (/, /svc...) | True |
+| VHOST     | The virtual hostname, it will be put in the URL. If it is not defined the virtual IP and virtual port will be used instead. This vhost is added to the curl command in order to be resolved. |
+| PORT      | The port where proxy is listening. The default value is 80, or 443 if the request is HTTPS. |
+| SSL       | If this flag is set with `1` the request will use the HTTPS protocol. |
 
 ```
 DESCRIPTION="Send websocket request"

@@ -1,4 +1,24 @@
 DESCRIPTION="Send websocket request"
 CMD=websocket
 CL=1
-URL="/websocket"
+URL="/"
+###################################
+DESCRIPTION="Load Zproxy HTTPS listener configuration, but HTTP WS backend"
+CMD=reload
+FILE=zproxy_ssl.cfg
+###################################
+DESCRIPTION="Wait for reload"
+CMD=wait
+TIMEOUT=2
+###################################
+DESCRIPTION="Send websocket request via SSL"
+CMD=websocket
+CL=1
+URL="/"
+SSL=1
+###################################
+DESCRIPTION="Send websocket request via SSL with SSL backend"
+CMD=websocket
+CL=1
+URL="/app1"
+SSL=1

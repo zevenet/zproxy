@@ -19,6 +19,9 @@
 import signal
 import socket
 import sys
+import ssl
+
+SSL = int(sys.argv[1])
 
 def handle_exit(signal, frame):
     print("Exit")
@@ -35,14 +38,28 @@ ws_resp = (
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-serv_addr = ('', 8080)
+if SSL > 0:
+    serv_addr = ('', 8443)
+else:
+    serv_addr = ('', 8080)
 print("Running on {}:{}".format(*serv_addr))
 sock.bind(serv_addr)
 
 sock.listen(1)
 
 while True:
-    conn, cl_addr = sock.accept()
+    if SSL > 0:
+        raw_conn, cl_addr = sock.accept()
+        try:
+                conn = ssl.wrap_socket(raw_conn, server_side=True, certfile="nginx.pem",
+                        keyfile="nginx.key")
+        except:
+                # if exception is caused, this connection is from the zproxy
+                # monitor
+                continue
+    else:
+        conn, cl_addr = sock.accept()
+
     try:
         req_data = b""
         while True:
