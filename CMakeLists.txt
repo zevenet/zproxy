@@ -22,10 +22,6 @@
 cmake_minimum_required(VERSION 3.6)
 set(CMAKE_CXX_STANDARD 17)
 
-if(EXISTS CMakeLists.txt)
-	message(FATAL_ERROR "Please create a cmake build directory, running cmake from source tree root is not allowed\n")
-endif()
-
 if (NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif ()
