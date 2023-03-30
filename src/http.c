@@ -594,7 +594,7 @@ static void zproxy_client_write(struct ev_loop *loop, struct zproxy_conn *conn, 
 			zproxy_conn_reset_state(loop, conn);
 
 			// switch to websocket mode
-			if (conn->stream->isTunnel()) {
+			if (conn->stream && conn->stream->isTunnel()) {
 				zcu_log_print_th(LOG_DEBUG, "Switching to WebSocket mode");
 				conn->state = ZPROXY_CONN_PROXY_SPLICE;
 			} else {
