@@ -381,10 +381,8 @@ zproxy_service_schedule(const struct zproxy_service_cfg *service_config,
 	const struct zproxy_backend_cfg *selected_backend;
 
 	selected_backend = zproxy_service_singleton_backend(service_config, http_state);
-	if (selected_backend) {
-		zproxy_stats_backend_inc_conn_pending(http_state, selected_backend);
+	if (selected_backend)
 		return selected_backend;
-	}
 
 	pthread_mutex_lock(&service_state_mutex);
 
@@ -400,9 +398,6 @@ zproxy_service_schedule(const struct zproxy_service_cfg *service_config,
 		selected_backend = zproxy_service_response_time(service_config, http_state);
 		break;
 	}
-
-	if (selected_backend)
-		zproxy_stats_backend_inc_conn_pending(http_state, selected_backend);
 
 	pthread_mutex_unlock(&service_state_mutex);
 
@@ -428,8 +423,6 @@ zproxy_service_backend_session(struct zproxy_service_cfg *service_config,
 		zcu_log_print(LOG_DEBUG, "Session backend is not up. Choosing a new one.");
 		return NULL;
 	}
-
-	zproxy_stats_backend_inc_conn_pending(http_state, selected_backend);
 
 	return selected_backend;
 }

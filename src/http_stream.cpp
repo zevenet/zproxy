@@ -16,6 +16,7 @@
  */
 
 #include "http_stream.h"
+#include "state.h"
 
 static int id = 0;
 
@@ -138,11 +139,7 @@ int HttpStream::setStats(const STREAM_STATE new_state)
 			break;
 		case BCK_CONN:
 			zproxy_stats_listener_inc_conn_established(http_state);
-			/*
-			 * backend->conn_pending is not incremented because it has already
-			 * been incremented during the selection process. See
-			 * Service::checkBackendAvailable().
-			 */
+			zproxy_stats_backend_inc_conn_pending(http_state, backend_config);
 			break;
 		case ESTABLISHED:
 			zproxy_stats_listener_inc_conn_established(http_state);
