@@ -212,6 +212,26 @@ static regex_t **get_subjectaltnames(X509 *x509, unsigned int *count_)
 	return result;
 }
 
+static int cfg_min_ssl_proto(uint64_t options)
+{
+	if (options & SSL_OP_NO_TLSv1_3)
+		return SSL2_VERSION;
+	if (options & SSL_OP_NO_TLSv1_2)
+		return TLS1_3_VERSION;
+	if (options & SSL_OP_NO_TLSv1_1)
+		return TLS1_2_VERSION;
+	if (options & SSL_OP_NO_TLSv1)
+		return TLS1_1_VERSION;
+	return TLS1_VERSION;
+}
+
+static int cfg_max_ssl_proto(uint64_t options)
+{
+	if (options & SSL_OP_NO_TLSv1_3)
+		return TLS1_2_VERSION;
+	return TLS1_3_VERSION;
+}
+
 int zproxy_ssl_ctx_alloc(struct zproxy_proxy_cfg *cfg, const char *cert_path, int *err)
 {
 	SSL_CTX *ctx;
@@ -307,6 +327,7 @@ int zproxy_ssl_ctx_configure(const struct zproxy_proxy_cfg *cfg)
 {
 	uint64_t options = SSL_OP_ALL |
 			   SSL_OP_NO_SSLv2 |
+			   SSL_OP_NO_SSLv3 |
 			   SSL_OP_NO_RENEGOTIATION |
 			   SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION |
 			   SSL_OP_NO_COMPRESSION |
@@ -326,6 +347,9 @@ int zproxy_ssl_ctx_configure(const struct zproxy_proxy_cfg *cfg)
 		SSL_CTX_set_mode(c->ctx, SSL_MODE_RELEASE_BUFFERS);
 		SSL_CTX_set_options(c->ctx, options);
 		SSL_CTX_clear_options(c->ctx, disable_options);
+		SSL_CTX_set_min_proto_version(c->ctx, cfg_min_ssl_proto(cfg->ssl.ssl_op_enable));
+		SSL_CTX_set_max_proto_version(c->ctx, cfg_max_ssl_proto(cfg->ssl.ssl_op_enable));
+
 		if (cfg->cfg->runtime.ssl_dh_params)
 			SSL_CTX_set_tmp_dh(c->ctx, cfg->cfg->runtime.ssl_dh_params);
 		else

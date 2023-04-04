@@ -1332,6 +1332,9 @@ static int zproxy_proxy_cfg_prepare(struct zproxy_proxy_cfg *proxy)
 		}
 	}
 
+	if (zproxy_proxy_ctx_start(proxy) == -1)
+		zcu_log_print(LOG_ERR, "Error creating SSL context");
+
 	return 0;
 }
 
@@ -1463,34 +1466,17 @@ static int zproxy_proxy_cfg_file(struct zproxy_cfg *cfg, struct zproxy_proxy_cfg
 		} else if (zproxy_regex_exec(CONFIG_REGEX_DisableProto, lin, matches)) {
 			require_ssl(proxy->runtime.ssl_enabled);
 			lin[matches[1].rm_eo] = '\0';
-			if (strcasecmp(lin + matches[1].rm_so, "SSLv2") == 0)
-				proxy->ssl.ssl_op_enable |= SSL_OP_NO_SSLv2;
-			else if (strcasecmp(lin + matches[1].rm_so, "SSLv3") == 0)
-				proxy->ssl.ssl_op_enable |=
-					SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3;
-#ifdef SSL_OP_NO_TLSv1
-			else if (strcasecmp(lin + matches[1].rm_so, "TLSv1") == 0)
-				proxy->ssl.ssl_op_enable |= SSL_OP_NO_SSLv2 |
-						 SSL_OP_NO_SSLv3 |
-						 SSL_OP_NO_TLSv1;
-#endif
-#ifdef SSL_OP_NO_TLSv1_1
+			if (strcasecmp(lin + matches[1].rm_so, "TLSv1") == 0)
+				proxy->ssl.ssl_op_enable |= SSL_OP_NO_TLSv1;
 			else if (strcasecmp(lin + matches[1].rm_so, "TLSv1_1") == 0)
 				proxy->ssl.ssl_op_enable |=
-					SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 |
 					SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1;
-#endif
-#ifdef SSL_OP_NO_TLSv1_2
 			else if (strcasecmp(lin + matches[1].rm_so, "TLSv1_2") == 0)
 				proxy->ssl.ssl_op_enable |=
-					SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 |
 					SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 |
 					SSL_OP_NO_TLSv1_2;
-#endif
-#ifdef SSL_OP_NO_TLSv1_3
 			else if (strcasecmp(lin + matches[1].rm_so, "TLSv1_3") == 0)
 				proxy->ssl.ssl_op_enable |= SSL_OP_NO_TLSv1_3;
-#endif
 		} else if (zproxy_regex_exec(CONFIG_REGEX_ECDHCurve, lin, matches)) { // NOT USED
 		} else if (zproxy_regex_exec(CONFIG_REGEX_SSLAllowClientRenegotiation, lin, matches)) {
 			require_ssl(proxy->runtime.ssl_enabled);
@@ -1533,12 +1519,8 @@ static int zproxy_proxy_cfg_file(struct zproxy_cfg *cfg, struct zproxy_proxy_cfg
 		} else if (zproxy_regex_exec(CONFIG_REGEX_End, lin, matches)) {
 			if (!has_addr || !has_port)
 				parse_error("ListenHTTP missing Address or Port");
-			if (ssl_enabled) {
-				if (proxy->runtime.ssl_certs_cnt == 0)
-					parse_error("ListenHTTPS missing SSL certificate");
-				if (zproxy_proxy_ctx_start(proxy) == -1)
-					parse_error("Error creating SSL context");
-			}
+			if (ssl_enabled && proxy->runtime.ssl_certs_cnt == 0)
+				parse_error("ListenHTTPS missing SSL certificate");
 			Waf::dump_rules(proxy->runtime.waf_rules);
 			list_add_tail(&proxy->list, &cfg->proxy_list);
 			return 0;
@@ -1623,7 +1605,7 @@ zproxy_proxy_cfg_clone(const struct zproxy_proxy_cfg *proxy_cfg,
 	*new_proxy = *proxy_cfg;
 	new_proxy->cfg = cfg;
 	INIT_LIST_HEAD(&new_proxy->service_list);
-	INIT_LIST_HEAD(&new_proxy->ssl.cert_paths); // TODO: Fill this!
+	INIT_LIST_HEAD(&new_proxy->ssl.cert_paths);
 	INIT_LIST_HEAD(&new_proxy->runtime.ssl_certs);
 	INIT_LIST_HEAD(&new_proxy->runtime.del_header_req);
 	INIT_LIST_HEAD(&new_proxy->runtime.del_header_res);
