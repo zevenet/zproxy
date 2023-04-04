@@ -1,0 +1,1 @@
+curl: (35) error:141E70BF:SSL routines:tls_construct_client_hello:no protocols available

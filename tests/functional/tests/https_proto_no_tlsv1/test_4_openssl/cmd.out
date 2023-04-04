@@ -1,0 +1,1 @@
+ip netns exec cl-ns-1 timeout 1 /usr/bin/openssl s_client -connect 10.1.2.1:443 -tls1_3 >test_4_openssl/extended.out.tmp 2>/dev/null 

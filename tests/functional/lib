@@ -383,7 +383,7 @@ get_test_out_dir () {
 # variables used to form the curl command, these has to be cleaned beetwen tests
 clean_test () {
 	unset CMD CL METHOD SSL URL VHOST HEADERS BODY SSL REQUESTS RESOLV_VHOST FILE CONNS TIMEOUT THREADS BACKGROUND FILTER \
-	NEXT_METHOD NEXT_BODY NEXT_FILE NEXT_VHOST NEXT_URL DISABLE TIMEOUT_100CONT PORT
+	NEXT_METHOD NEXT_BODY NEXT_FILE NEXT_VHOST NEXT_URL DISABLE TIMEOUT_100CONT PORT CMDPARAMS
 }
 
 replace_test_out ()
@@ -508,7 +508,7 @@ exec_curl () {
 		OUT_F="-"
 	fi
 
-	echo "ip netns exec $CLNS $CURL_BIN -X $METHOD $B $H --connect-timeout $CLIENT_CONN_TIMEOUT \
+	echo "ip netns exec $CLNS $CURL_BIN $CMDPARAMS -X $METHOD $B $H --connect-timeout $CLIENT_CONN_TIMEOUT \
 ${TIMEOUT100CONT_}-s -k --show-error $EXTENDED_OUT $F \
 -D $HEAD_F -o $OUT_F $SOCKET $HTTP://${VHOST_LOC}$URL $NEXT >$EXT_F 2>$ERR_F $FG" > $CMD_F
 
@@ -516,7 +516,7 @@ ${TIMEOUT100CONT_}-s -k --show-error $EXTENDED_OUT $F \
 	sed -i "s,$TEST_TPL,\$TEST_TPL,g" $CMD_F
 
 	# cmd to debug
-	echo "ip netns exec $CLNS $CURL_BIN -X $METHOD $B $H --connect-timeout $CLIENT_CONN_TIMEOUT \
+	echo "ip netns exec $CLNS $CURL_BIN $CMDPARAMS -X $METHOD $B $H --connect-timeout $CLIENT_CONN_TIMEOUT \
 ${TIMEOUT100CONT_}-s -k --show-error $SOCKET $HTTP://${VHOST_LOC}$URL $NEXT" > ${CMD_F}.dbg
 
 	bash $CMD_F
@@ -536,6 +536,65 @@ ${TIMEOUT100CONT_}-s -k --show-error $SOCKET $HTTP://${VHOST_LOC}$URL $NEXT" > $
 		touch $ERR_F
 	else
 		touch $FILTER_F
+	fi
+}
+
+## CLIENT SSL ACTIONS
+# the directory where the outputs are saved is passed as parameter
+# in the directory will be created the following files:
+#   - cmd, it is the command executed
+#   - response_headers.out, they are the proxy response headers
+#   - body.out, it is the response body returned by the proxy
+exec_openssl () {
+	local DIR=$TMP_DIR
+	local CLNS="$PROXY_NS"
+
+	if [[ $1 != "" ]]; then DIR=$1; fi
+	if [[ "$CL" != "" ]]; then CLNS=$(get_cl_ns $CL); fi
+	if [[ "$URL" == "" ]]; then error_param "url"; fi
+	if [[ "$METHOD" == "" ]]; then error_param "method"; fi
+
+	local CMD_F="$DIR/cmd.out.tmp"
+	local HEAD_F="$DIR/response_headers.out.tmp"
+	local OUT_F="$DIR/body.out.tmp"
+	local EXT_F="$DIR/extended.out.tmp"
+	local ERR_F="$DIR/error.out.tmp"
+	local FILTER_F="$DIR/filter.out.tmp"
+
+	# create files to refresh files if become empty
+	rm -f $CMD_F $HEAD_F $OUT_F $EXT_F $ERR_F $FILTER_F
+	touch $CMD_F $HEAD_F $OUT_F $EXT_F $ERR_F
+
+	local HTTP_VERSION="HTTP/1.1"
+	local VHOST_LOC="$VHOST"
+	local H=""
+	local B=""
+	local FG=""
+	local F=""
+	local P="${PROXY_VPORT}"
+
+	P="${PROXY_VPORT_SSL}"
+	if [[ "$PORT" != "" ]]; then
+		P="${PORT}"
+	fi
+
+	VHOST_LOC="$PROXY_VIP:${P}"
+
+	echo "ip netns exec $CLNS timeout 1 $OPENSSL_BIN s_client \
+-connect ${VHOST_LOC} $CMDPARAMS >$EXT_F 2>/dev/null $FG" > $CMD_F
+
+	# mask tpl dir
+	sed -i "s,$TEST_TPL,\$TEST_TPL,g" $CMD_F
+
+	# cmd to debug
+	echo "ip netns exec $CLNS echo -e \"$METHOD $URL $HTTP_VERSION\r\n\r\n\" | $OPENSSL_BIN s_client \
+-connect ${VHOST_LOC} $CMDPARAMS" > ${CMD_F}.dbg
+
+	bash $CMD_F
+
+	if [[ "$FILTER" != "" ]]; then
+		grep "$FILTER" $EXT_F > $FILTER_F
+		mv $FILTER_F $EXT_F
 	fi
 }
 
