@@ -202,7 +202,7 @@ exec_all_test () {
 	for LOC_DIR in `ls $TEST_DIR`; do
 
 		if [ ! -d "$TEST_DIR/$LOC_DIR" ]; then
-			error "The directroy '$LOC_DIR' does not exist"
+			error "The directory '$LOC_DIR' does not exist"
 		fi
 
 		cd $TEST_DIR/$LOC_DIR
@@ -289,7 +289,7 @@ exec)
 	fi
 
 	if [ ! -d "$2" ]; then
-		error "The directroy '$2' does not exist"
+		error "The directory '$2' does not exist"
 	fi
 	cd $2
 	exec_test $2
