@@ -294,9 +294,15 @@ static struct zproxy_service_cfg *zproxy_service_cfg_alloc(void)
 	return cfg;
 }
 
+static void _zproxy_backend_cfg_free(struct zproxy_backend_cfg *backend)
+{
+	if (backend->runtime.ssl_ctx)
+		zproxy_ssl_ctx_free(backend->runtime.ssl_ctx);
+}
+
 static void zproxy_backend_cfg_free(struct zproxy_backend_cfg *backend)
 {
-	zproxy_ssl_ctx_free(backend->runtime.ssl_ctx);
+	_zproxy_backend_cfg_free(backend);
 	list_del(&backend->list);
 	free(backend);
 }
@@ -344,7 +350,7 @@ static void zproxy_matcher_list_cfg_free(struct list_head *head)
 	}
 }
 
-static void zproxy_service_cfg_free(struct zproxy_service_cfg *service)
+static void _zproxy_service_cfg_free(struct zproxy_service_cfg *service)
 {
 	zproxy_backend_cfg *backend, *next;
 
@@ -359,7 +365,11 @@ static void zproxy_service_cfg_free(struct zproxy_service_cfg *service)
 	zproxy_replace_header_list_cfg_free(&service->runtime.replace_header_res);
 	zproxy_replace_header_list_cfg_free(&service->runtime.req_rw_url);
 	zproxy_matcher_list_cfg_free(&service->runtime.req_url);
+}
 
+static void zproxy_service_cfg_free(struct zproxy_service_cfg *service)
+{
+	_zproxy_service_cfg_free(service);
 	list_del(&service->list);
 	free(service);
 }
@@ -870,6 +880,8 @@ static int zproxy_backend_cfg_file(zproxy_cfg *cfg, zproxy_service_cfg *service,
 
 	parse_error("BackEnd premature EOF");
 err:
+	_zproxy_backend_cfg_free(backend);
+	free(backend);
 	return -1;
 }
 
@@ -1014,7 +1026,7 @@ static int zproxy_service_cfg_file(struct zproxy_cfg *cfg,
 			if (parseReplaceHeader(cfg, lin, matches,
 					   &service->runtime.replace_header_req,
 					   &service->runtime.replace_header_res) < 0)
-				return -1;
+				goto err;
 		} else if (zproxy_regex_exec(CONFIG_REGEX_OrURLs, lin, matches)) { // NOT USED
 		} else if (zproxy_regex_exec(CONFIG_REGEX_HeadRequire, lin, matches)) {
 			struct matcher *m = (struct matcher *) calloc(1, sizeof(struct matcher));
@@ -1056,22 +1068,22 @@ static int zproxy_service_cfg_file(struct zproxy_cfg *cfg,
 			parseAddHeader(cfg, service->header.add_header_res, lin, matches);
 		} else if (zproxy_regex_exec(CONFIG_REGEX_RemoveRequestHeader, lin, matches)) {
 			if (parseRemoveHeader(cfg, &service->runtime.del_header_req, lin, matches) < 0)
-				return -1;
+				goto err;
 		} else if (zproxy_regex_exec(CONFIG_REGEX_RemoveResponseHeader, lin, matches)) {
 			if (parseRemoveHeader(cfg, &service->runtime.del_header_res, lin, matches) < 0)
-				return -1;
+				goto err;
 		} else if (zproxy_regex_exec(CONFIG_REGEX_StrictTransportSecurity, lin, matches)) {
 			service->header.sts = atoi(lin + matches[1].rm_so);
 		} else if (zproxy_regex_exec(CONFIG_REGEX_Redirect, lin, matches)) {
 			if (parseRedirect(&service->redirect, lin, matches,
 					  (bool)list_empty(&service->runtime.req_url)) == -1)
-				return -1;
+				goto err;
 		} else if (zproxy_regex_exec(CONFIG_REGEX_BackEnd, lin, matches)) {
 			if (zproxy_backend_cfg_file(cfg, service, fd) == -1)
-				return -1;
+				goto err;
 		} else if (zproxy_regex_exec(CONFIG_REGEX_Session, lin, matches)) {
 			if (parseSession(cfg, service, fd) < 0)
-				return -1;
+				goto err;
 		} else if (zproxy_regex_exec(CONFIG_REGEX_DynScale, lin, matches)) {	// NOT USED
 		} else if (zproxy_regex_exec(CONFIG_REGEX_RoutingPolicy, lin, matches)) {
 			lin[matches[1].rm_eo] = '\0';
@@ -1098,6 +1110,8 @@ static int zproxy_service_cfg_file(struct zproxy_cfg *cfg,
 
 	parse_error("Service premature EOF");
 err:
+	_zproxy_service_cfg_free(service);
+	free(service);
 	return -1;
 }
 
@@ -1125,7 +1139,7 @@ static int zproxy_proxy_ctx_start(struct zproxy_proxy_cfg *proxy)
 	return zproxy_ssl_ctx_configure(proxy);
 }
 
-static void zproxy_proxy_cfg_free(struct zproxy_cfg *cfg,
+static void _zproxy_proxy_cfg_free(struct zproxy_cfg *cfg,
 				  struct zproxy_proxy_cfg *proxy)
 {
 	zproxy_service_cfg *service, *next;
@@ -1148,6 +1162,13 @@ static void zproxy_proxy_cfg_free(struct zproxy_cfg *cfg,
 	zproxy_matcher_list_cfg_free(&proxy->runtime.del_header_res);
 	regfree(&proxy->runtime.req_url_pat_reg);
 	regfree(&proxy->runtime.req_verb_reg);
+}
+
+
+static void zproxy_proxy_cfg_free(struct zproxy_cfg *cfg,
+				  struct zproxy_proxy_cfg *proxy)
+{
+	_zproxy_proxy_cfg_free(cfg, proxy);
 	list_del(&proxy->list);
 	free(proxy);
 }
@@ -1510,12 +1531,12 @@ static int zproxy_proxy_cfg_file(struct zproxy_cfg *cfg, struct zproxy_proxy_cfg
 		} else if (zproxy_regex_exec(CONFIG_REGEX_ServiceName, lin, matches)) {
 			lin[matches[1].rm_eo] = '\0';
 			if (zproxy_service_cfg_file(cfg, proxy, lin + matches[1].rm_so, fd) == -1)
-				return -1;
+				goto err;
 		} else if (zproxy_regex_exec(CONFIG_REGEX_ReplaceHeader, lin, matches)) {
 			if (parseReplaceHeader(cfg, lin, matches,
 					   &proxy->runtime.replace_header_req,
 					   &proxy->runtime.replace_header_res) < 0)
-				return -1;
+				goto err;
 		} else if (zproxy_regex_exec(CONFIG_REGEX_End, lin, matches)) {
 			if (!has_addr || !has_port)
 				parse_error("ListenHTTP missing Address or Port");
@@ -1531,6 +1552,8 @@ static int zproxy_proxy_cfg_file(struct zproxy_cfg *cfg, struct zproxy_proxy_cfg
 	parse_error("Listener premature EOF");
 
 err:
+	_zproxy_proxy_cfg_free(cfg, proxy);
+	free(proxy);
 	return -1;
 }
 
