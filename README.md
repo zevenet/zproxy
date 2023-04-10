@@ -275,27 +275,28 @@ is customary for them to be at the start. They may appear in any order.
 * **ErrWAF** "filename"
 
   A file with the text to be displayed if the WAF reject a request.  Default:
-  "The request was rejected by the server.".
+  "The request was rejected by the server.". Maximum file size: 4KB.
 
 * **Err414** "filename"
 
   A file with the text to be displayed if an Error 414 occurs.  Default:
-  "Request URI is too long.".
+  "Request URI is too long.". Maximum file size: 4KB.
 
 * **Err500** "filename"
 
   A file with the text to be displayed if an Error 500 occurs.  Default: "An
-  internal server error occurred. Please try again later.".
+  internal server error occurred. Please try again later.". Maximum file size:
+  4KB.
 
 * **Err501** "filename"
 
   A file with the text to be displayed if an Error 501 occurs.  Default: "This
-  method may not be used.".
+  method may not be used.". Maximum file size: 4KB.
 
 * **Err503** "filename"
 
   A file with the text to be displayed if an Error 503 occurs.  Default: "The
-  service is not available. Please try again later.".
+  service is not available. Please try again later.". Maximum file size: 4KB.
 
 * **ErrNoSsl** [code] "filename"
 
@@ -304,7 +305,7 @@ is customary for them to be at the start. They may appear in any order.
   directive. Default: "Please use HTTPS.".
 
   The optional parameter "code" is the HTTP response code, it expects an 4xx or
-  5xx value. Default: "400".
+  5xx value. Default: "400". Maximum file size: 4KB.
 
   Only valid for HTTPS listeners.
 
@@ -313,7 +314,7 @@ is customary for them to be at the start. They may appear in any order.
   A url that the user will be redirected to if the user connects to a HTTPS
   listener with HTTP. The code here is just like the code in Redirect blocks. It
   defaults to 302, but could be 301 or 307. Only valid for HTTPS listeners. If
-  ErrNoSsl is defined also it will be ignored.
+  ErrNoSsl is defined also it will be ignored. Maximum file size: 4KB.
 
   Example:
 
