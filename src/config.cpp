@@ -142,6 +142,10 @@
 static int n_lin = 0;
 static int listener_counter = 0;
 
+#define file_load_err(lvl, fmt, ...)                                           \
+	fprintf(stderr, fmt, __VA_ARGS__);                                     \
+	syslog(lvl, fmt, __VA_ARGS__)
+
 #define parse_error(str){ \
 	fprintf(stderr, "config_error(line %d): ", n_lin); \
 	fprintf(stderr, str": %s\n", lin); \
@@ -1183,20 +1187,20 @@ static int zproxy_cfg_errmsg_file(const char *path, char *errmsg)
 
 	fp = fopen(path, "r");
 	if (!fp) {
-		syslog(LOG_ERR, "Can't open error file %s", path);
+		file_load_err(LOG_ERR, "Can't open error file %s", path);
 		return -1;
 	}
 
 	len = fread(errmsg, sizeof(char), CONFIG_MAXBUF, fp);
 	if (ferror(fp) != 0) {
-		syslog(LOG_ERR, "Error when reading file %s", path);
+		file_load_err(LOG_ERR, "Error when reading file %s", path);
 		fclose(fp);
 		return -1;
 	}
 
 	if (len >= CONFIG_MAXBUF) {
-		syslog(LOG_ERR, "File %s contains too large error, max is %u",
-		       path, CONFIG_MAXBUF);
+		file_load_err(LOG_ERR, "File %s contains too large error, max is %u",
+			      path, CONFIG_MAXBUF);
 		return -1;
 	}
 
