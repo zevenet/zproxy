@@ -450,13 +450,13 @@ The following additional directives are also available:
 
   Cert and CertDir directives must precede all other SSL-specific directives.
 
-* **Disable** SSLv2|SSLv3|TLSv1|TLSv1\_1|TLSv1\_2|TLSv1\_3
+* **Disable** TLSv1|TLSv1\_1|TLSv1\_2|TLSv1\_3
 
   Disable the protocol and all lower protocols as well.  This is due to a
   limitation in OpenSSL, which does not support disabling a single protocol. For
-  example, Disable  TLSv1 would disable SSLv2, SSLv3 and TLSv1, thus allowing
-  only TLSv1\_1 and TLSv1\_2.  [NOTE]Disable TLSv1\_3 would disable only
-  TLSv1\_3.
+  example, Disable  TLSv1\_1 would disable TLSv1 and TLSv1\_1, thus allowing
+  only TLSv1\_2 and TLSv1\_3. Disable TLSv1\_3 would disable only
+  TLSv1\_3. SSLv2 and SSLv3 are disable by default.
 
 * **Ciphers** "acceptable:cipher:list"
 
