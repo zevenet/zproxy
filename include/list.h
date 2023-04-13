@@ -178,8 +178,6 @@ static inline int list_empty(const struct list_head *head)
 	     &pos->member != (head); 					\
 	     pos = n, n = list_entry(n->member.lnext, typeof(*n), member))
 
-#endif
-
 /**
  * list_for_each_entry_continue_reverse - iterate backwards from the given point
  * @pos:        the type * to use as a loop cursor.
@@ -193,3 +191,5 @@ static inline int list_empty(const struct list_head *head)
 	for (pos = list_entry(pos->member.lprev, typeof(*pos), member);	\
 	     &pos->member != (head);					\
 	     pos = list_entry(pos->member.lprev, typeof(*pos), member))
+
+#endif
