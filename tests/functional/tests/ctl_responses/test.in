@@ -47,3 +47,8 @@ DESCRIPTION="Get invalid backend"
 CMD=ctl
 URL="/listener/0/service/default/backend/0.0.0.0-9999"
 METHOD="GET"
+#########################
+DESCRIPTION="Get service sessions"
+CMD=ctl
+URL="/listener/0/service/default/sessions"
+METHOD="GET"

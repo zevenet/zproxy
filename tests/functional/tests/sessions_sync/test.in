@@ -1,0 +1,17 @@
+DESCRIPTION="Set first cookie."
+CMD=curl
+HEADERS="Cookie: cookie=xxxxx"
+CL=1
+METHOD="GET"
+URL="/"
+######################################
+DESCRIPTION="Get info to check sessions"
+CMD=ctl
+URL="/listener/0"
+METHOD="GET"
+######################################
+DESCRIPTION="Sync with new sessions"
+CMD=ctl
+URL="/listener/0/service/default/sessions"
+METHOD="PATCH"
+BODY=sync-sess.json

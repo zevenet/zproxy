@@ -246,6 +246,22 @@ char *zproxy_json_encode_service(const struct zproxy_service_cfg *service)
 	return buf;
 }
 
+char *zproxy_json_encode_sessions(const zproxy_service_cfg *service,
+				  sessions::Set *sessions)
+{
+	json_t *sess_arr;
+	char *buf = NULL;
+
+	sess_arr = sessions->to_json(service);
+	if (!sess_arr)
+		return NULL;
+
+	buf = json_dumps(sess_arr, JSON_REAL_PRECISION(3) | JSON_INDENT(8));
+	json_decref(sess_arr);
+
+	return buf;
+}
+
 char *zproxy_json_encode_backends(const struct zproxy_service_cfg *service)
 {
 	struct zproxy_http_state *state = NULL;
@@ -375,6 +391,38 @@ int zproxy_json_decode_session(const char *buf, char *sess_id, size_t sess_id_le
 
 	json_decref(obj);
 
+	return 1;
+}
+
+int zproxy_json_decode_sessions(const char *buf,
+				std::vector<struct json_session> &sessions)
+{
+	json_error_t json_err;
+	json_t *sess_array, *sess;
+	size_t sess_i;
+
+	if (!buf)
+		return -1;
+
+	if (!(sess_array = json_loads(buf, 0, &json_err))) {
+		zcu_log_print(LOG_WARNING, "Failed to decode JSON buffer.");
+		return -1;
+	}
+
+	if (!json_is_array(sess_array)) {
+		zcu_log_print(LOG_WARNING, "Invalid JSON for sync");
+		return -1;
+	}
+
+	json_array_foreach(sess_array, sess_i, sess) {
+		sessions.push_back({
+				   json_string_value(json_object_get(sess, "id")),
+				   json_string_value(json_object_get(sess, "backend-id")),
+				   json_integer_value(json_object_get(sess, "last-seen")),
+				   });
+	}
+
+	json_decref(sess_array);
 	return 1;
 }
 

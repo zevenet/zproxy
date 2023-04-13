@@ -21,7 +21,9 @@
 #include <cstdio>
 #include <jansson.h>
 #include <stdarg.h>
+#include <vector>
 #include "config.h"
+#include "session.h"
 #include "state.h"
 #include "monitor.h"
 #include "proxy.h"
@@ -61,6 +63,8 @@ inline char *zproxy_json_return_err(const char *format, ...)
 char *zproxy_json_encode_listener(const struct zproxy_proxy_cfg *proxy);
 char *zproxy_json_encode_services(const struct zproxy_proxy_cfg *proxy);
 char *zproxy_json_encode_service(const struct zproxy_service_cfg *service);
+char *zproxy_json_encode_sessions(const zproxy_service_cfg *service,
+				  sessions::Set *sessions);
 char *zproxy_json_encode_backends(const struct zproxy_service_cfg *service);
 char *zproxy_json_encode_backend(const struct zproxy_backend_cfg *backend);
 
@@ -69,6 +73,16 @@ int zproxy_json_decode_status(const char *buf, enum zproxy_status *status);
 int zproxy_json_decode_session(const char *buf, char *sess_id, size_t sess_id_len,
 			       char *backend_id, size_t backend_id_len,
 			       time_t *last_seen);
+
+struct json_session {
+	std::string id;
+	std::string backend_id;
+	time_t last_seen;
+};
+
+int zproxy_json_decode_sessions(const char *buf,
+				std::vector<struct json_session> &sessions);
+
 int zproxy_json_decode_backend(const char *buf, char *id, size_t id_len,
 			       char *address, size_t address_len, int *port,
 			       int *https, int *weight, int *priority,

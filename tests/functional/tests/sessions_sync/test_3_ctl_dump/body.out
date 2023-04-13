@@ -1,0 +1,62 @@
+[
+    {
+        "backends": [
+            {
+                "2xx-code-hits": 1,
+                "3xx-code-hits": 0,
+                "4xx-code-hits": 0,
+                "5xx-code-hits": 0,
+                "address": "10.2.1.1",
+                "connect-time": "#######",
+                "connections": 0,
+                "connections-limit": 0,
+                "https": false,
+                "id": "10.2.1.1-80",
+                "pending-connections": 0,
+                "port": 80,
+                "priority": 1,
+                "response-time": "#######",
+                "cookie-key": "4-0a020101-500000",
+                "status": "active",
+                "type": 0,
+                "nfmark": 0,
+                "weight": 1
+            },
+            {
+                "2xx-code-hits": 0,
+                "3xx-code-hits": 0,
+                "4xx-code-hits": 0,
+                "5xx-code-hits": 0,
+                "address": "10.2.1.2",
+                "connect-time": "#######",
+                "connections": 0,
+                "connections-limit": 0,
+                "https": false,
+                "id": "10.2.1.2-80",
+                "pending-connections": 0,
+                "port": 80,
+                "priority": 1,
+                "response-time": "#######",
+                "cookie-key": "4-0a020102-500000",
+                "status": "active",
+                "type": 0,
+                "nfmark": 0,
+                "weight": 1
+            }
+        ],
+        "name": "default",
+        "priority": 1,
+        "sessions": [
+            {
+                "id": "sess0",
+                "backend-id": "10.2.1.1-80",
+                "last-seen": 0
+            },
+            {
+                "id": "sess1",
+                "backend-id": "10.2.1.2-80",
+                "last-seen": 0
+            }
+        ]
+    }
+]

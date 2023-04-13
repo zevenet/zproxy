@@ -33,6 +33,12 @@ GET /listener/<listener_id>/service/<service_name>
 GET /listener/<listener_id>/service/<service_name>/backends
 ```
 
+- Get the stats for the sessions belonging to 'service\_name'
+
+```
+GET /listener/<listener_id>/service/<service_name>/sessions
+```
+
 - Get the stats for a backend with 'backend\_id'
 
 ```
@@ -88,6 +94,7 @@ components of Zproxy.
   service.
 
 #### Backend
+
 - **2xx-code-hits** "integer": The number of 2xx codes that Zproxy forwarded
   from the backend to the client.
 - **3xx-code-hits** "integer": The number of 3xx codes that Zproxy forwarded
@@ -209,4 +216,10 @@ DELETE '{"backend-id":"<backend_id>"}' /listener/<listener_id>/service/<service_
 
 ```
 PATCH '{"backend-id":"<backend_id>","last-seen":<last_seen>}' /listener/<listener_id>/service/<service_id>/session/<session_id>
+```
+
+- Synchronize sessions from JSON array
+
+```
+PATCH '[{"backend-id":"<backend_id>","last-seen":<last_seen>},...]' /listener/<listener_id>/service/<service_id>/sessions
 ```

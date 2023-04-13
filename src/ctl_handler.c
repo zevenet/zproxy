@@ -17,6 +17,7 @@
 
 #include "config.h"
 #include "monitor.h"
+#include "session.h"
 #include "state.h"
 #include "zcu_network.h"
 #include "zproxy.h"
@@ -28,6 +29,7 @@
 #include <netdb.h>
 #include <stdio.h>
 #include <sys/syslog.h>
+#include <vector>
 
 #define CTL_PATH_MAX_PARAMS  4
 
@@ -224,6 +226,22 @@ static enum ws_responses handle_get(const std::string &req_path,
 							   service_id.c_str());
 			return WS_HTTP_500;
 		}
+	} else if (zproxy_regex_exec(API_REGEX_SELECT_SERVICE_SESSIONS,
+				     req_path.c_str(), matches)) {
+		GET_MATCH_2PARAM(req_path, param1, service_id);
+		const int listener_id = atoi(param1.c_str());
+		const struct zproxy_service_cfg *service =
+			find_service(cfg, listener_id, service_id.c_str());
+		struct zproxy_http_state *state =
+			zproxy_state_lookup(listener_id);
+		sessions::Set *sessions =
+			zproxy_state_get_session(service_id, &state->services);
+		if (!(*resp_buf = zproxy_json_encode_sessions(service, sessions))) {
+			*resp_buf = zproxy_json_return_err("Failed to serialize sesssions of service %s.",
+							   service_id.c_str());
+			return WS_HTTP_500;
+		}
+		zproxy_state_release(&state);
 	} else if (zproxy_regex_exec(API_REGEX_SELECT_BACKEND,
 				     req_path.c_str(), matches)) {
 		GET_MATCH_3PARAM(req_path, param1, service_id, backend_id);
@@ -258,7 +276,44 @@ static enum ws_responses handle_patch(const std::string &req_path,
 	regmatch_t matches[CTL_PATH_MAX_PARAMS];
 	*resp_buf = NULL;
 
-	if (zproxy_regex_exec(API_REGEX_SELECT_BACKEND_STATUS,
+	if (zproxy_regex_exec(API_REGEX_SELECT_SERVICE_SESSIONS,
+			      req_path.c_str(), matches)) {
+		GET_MATCH_2PARAM(req_path, param1, service_id);
+		const int listener_id = atoi(param1.c_str());
+		std::vector<struct json_session> new_sessions;
+		if (zproxy_json_decode_sessions(req_msg, new_sessions) < 0) {
+			*resp_buf = zproxy_json_return_err("Failed to decode JSON.");
+			return WS_HTTP_400;
+		}
+
+		struct zproxy_http_state *state =
+			zproxy_state_lookup(listener_id);
+		if (!state) {
+			*resp_buf = zproxy_json_return_err("Listener %d not found.",
+							   listener_id);
+			return WS_HTTP_404;
+		}
+		sessions::Set *sessions =
+			zproxy_state_get_session(service_id, &state->services);
+		if (!sessions) {
+			zproxy_state_release(&state);
+			*resp_buf = zproxy_json_return_err("Service %s not found.",
+							   service_id.c_str());
+			return WS_HTTP_404;
+		}
+
+		sessions->flushSessions();
+		for (struct json_session &i : new_sessions) {
+			struct zproxy_backend_cfg *backend =
+				find_backend(cfg, listener_id, service_id.c_str(),
+					     i.backend_id.c_str());
+			sessions::Info *sess =
+				sessions->addSession(i.id, backend);
+			sess->last_seen = i.last_seen;
+		}
+
+		zproxy_state_release(&state);
+	} else if (zproxy_regex_exec(API_REGEX_SELECT_BACKEND_STATUS,
 			      req_path.c_str(), matches)) {
 		GET_MATCH_3PARAM(req_path, param1, service_id, backend_id);
 		const int listener_id = atoi(param1.c_str());
