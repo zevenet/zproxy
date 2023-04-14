@@ -28,6 +28,7 @@
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include "zcu_log.h"
 #include "zproxy.h"
 #include "socket.h"
 #include "ctl.h"
@@ -100,10 +101,10 @@ void zproxy_ctl_cb(struct ev_loop *loop, struct ev_io *io, int events)
 	if (ctl->content_len >= 0 && ctl->content_len != body_len)
 		return;
 
+	zcu_log_print(LOG_INFO, "received control command");
+
 	if (ctl->cb)
 		ctl->cb(ctl, zproxy_ctl.cfg);
-
-	syslog(LOG_INFO, "received control command");
 err_out:
 	zproxy_ctl_conn_free(loop, ctl);
 }
