@@ -156,7 +156,23 @@ components of Zproxy.
 ## Configuration/Manipulation
 
 It is possible to manipulate and configure many of the components of a running
-Zproxy process via the control API.
+Zproxy process via the control API. Upon success a JSON will be returned as
+follows:
+
+```json
+{
+        "result": "ok"
+}
+```
+
+On error, it will return the following:
+
+```json
+{
+        "result": "error",
+        "reason": "<reason>"
+}
+```
 
 ### Global
 
