@@ -18,29 +18,34 @@
 #ifndef _ZPROXY_SERVICE_H_
 #define _ZPROXY_SERVICE_H_
 
+#include "config.h"
 #include "http_request.h"
-#include "session.h"
 #include "state.h"
+#include <sys/socket.h>
+#include <string>
 
-class Service
-{
-public:
-    static bool selectService(const HttpRequest &request,
-			const struct zproxy_service_cfg *service_config);
+struct zproxy_cfg;
 
-    static bool checkBackendAvailable(const zproxy_service_cfg *service_config,
-			zproxy_backend_cfg *bck, struct zproxy_http_state *http_state);
+int zproxy_service_state_init(struct zproxy_cfg *cfg);
+int zproxy_service_state_refresh(struct zproxy_cfg *cfg);
+void zproxy_service_state_fini(void);
 
-	/**
-	 * Selects the corresponding Backend to which the connection will be routed
-	 * according to the established balancing algorithm.
-	 */
-    static zproxy_backend_cfg *selectBackend(
-			struct zproxy_service_cfg *service_config,
-			HttpRequest &request,
-			std::string &client_addr, struct zproxy_sessions *sessions,
+const struct zproxy_backend_cfg *
+zproxy_service_schedule(const struct zproxy_service_cfg *service_config,
 			struct zproxy_http_state *http_state);
 
-};
+struct zproxy_backend_cfg *
+zproxy_service_backend_session(struct zproxy_service_cfg *service_config,
+			       const struct sockaddr_in *bck_addr,
+			       struct zproxy_http_state *http_state);
+
+bool zproxy_service_select(const HttpRequest *request,
+			   const struct zproxy_service_cfg *service_config);
+
+struct zproxy_backend_cfg *
+zproxy_service_select_backend(struct zproxy_service_cfg *service_config,
+			      HttpRequest &request, std::string &client_addr,
+			      struct zproxy_sessions *sessions,
+			      struct zproxy_http_state *http_state);
 
 #endif

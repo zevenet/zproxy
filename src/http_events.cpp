@@ -58,7 +58,7 @@ int zproxy_http_request_reconnect(struct zproxy_http_ctx *ctx)
 	zproxy_session_delete_backend(stream->session, &stream->backend_config->runtime.addr);
 
 	// getting a new backend
-	backend = Service::selectBackend(stream->service_config,
+	backend = zproxy_service_select_backend(stream->service_config,
 			stream->request, stream->client_addr, stream->session,
 			static_cast<struct zproxy_http_state*>(ctx->state));
 	if (backend == nullptr) {
@@ -153,7 +153,7 @@ static int zproxy_http_request_head_rcv(struct zproxy_http_ctx *ctx)
 	if (latest_svc != nullptr)
 		new_bck_flag = 0;
 	list_for_each_entry(service, &cfg->service_list, list) {
-		if (Service::selectService(stream->request, service)) {
+		if (zproxy_service_select(&stream->request, service)) {
 			stream->service_config = service;
 			stream->session = zproxy_state_get_session(service->name, &state->services);
 			break;
@@ -198,7 +198,7 @@ static int zproxy_http_request_head_rcv(struct zproxy_http_ctx *ctx)
 	}
 
 	if (new_bck_flag || reconnect_bck_flag) {
-		backend = Service::selectBackend(stream->service_config,
+		backend = zproxy_service_select_backend(stream->service_config,
 				stream->request, stream->client_addr, stream->session,
 				state);
 		if (backend == nullptr) {

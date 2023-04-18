@@ -31,7 +31,7 @@
 #include "zproxy.h"
 #include "config.h"
 #include "monitor.h"
-#include "services.h"
+#include "service.h"
 #include "worker.h"
 #include "ctl.h"
 #include "zcu_environment.h"
