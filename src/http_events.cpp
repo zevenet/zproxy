@@ -55,7 +55,7 @@ int zproxy_http_request_reconnect(struct zproxy_http_ctx *ctx)
 	// TODO: set down
 
 	// clear sessions if they exist
-	ctx->stream->session->deleteBackendSessions(stream->backend_config);
+	zproxy_session_delete_backend(stream->session, &stream->backend_config->runtime.addr);
 
 	// getting a new backend
 	backend = Service::selectBackend(stream->service_config,
@@ -481,7 +481,7 @@ int zproxy_http_event_timeout(struct zproxy_http_ctx *ctx)
 		return -1;
 
 	// clear sessions if they exist
-	stream->session->deleteBackendSessions(stream->backend_config);
+	zproxy_session_delete_backend(stream->session, &stream->backend_config->runtime.addr);
 
 	// TODO: did the client already send us a full http request? If not
 	//	 better return -1 to close connection immediately?

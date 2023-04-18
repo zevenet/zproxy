@@ -64,7 +64,7 @@ char *zproxy_json_encode_listener(const struct zproxy_proxy_cfg *proxy);
 char *zproxy_json_encode_services(const struct zproxy_proxy_cfg *proxy);
 char *zproxy_json_encode_service(const struct zproxy_service_cfg *service);
 char *zproxy_json_encode_sessions(const zproxy_service_cfg *service,
-				  sessions::Set *sessions);
+				  zproxy_sessions *sessions);
 char *zproxy_json_encode_backends(const struct zproxy_service_cfg *service);
 char *zproxy_json_encode_backend(const struct zproxy_backend_cfg *backend);
 

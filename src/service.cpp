@@ -22,6 +22,7 @@
 #include "session.h"
 #include "http_request.h"
 #include "monitor.h"
+#include "http_manager.h"
 
 bool Service::selectService(const HttpRequest &request,
 		const struct zproxy_service_cfg *service_config)
@@ -69,30 +70,32 @@ bool Service::selectService(const HttpRequest &request,
 struct zproxy_backend_cfg *Service::selectBackend(
 		struct zproxy_service_cfg *service_config,
 		HttpRequest &request,
-        std::string &client_addr, sessions::Set *session,
+        std::string &client_addr, struct zproxy_sessions *sessions,
 		struct zproxy_http_state *http_state)
 {
-	struct sockaddr_in *bck_addr = nullptr;
 	struct zproxy_backend_cfg *selected_backend = nullptr;
+	struct zproxy_session_node *session;
+	std::string session_key;
 
 	if (list_empty(&service_config->backend_list))
 		return nullptr;
 
-	// check if session exists
-	bck_addr = session->getBackend(client_addr, request,
-				       service_config->name, true);
-	if (bck_addr) {
-		selected_backend = zproxy_service_backend_session(service_config, bck_addr, http_state);
-		if (selected_backend)
-			return selected_backend;
+	// check sessions table
+	if (service_config->session.sess_type != SESS_TYPE::SESS_NONE) {
+		session_key = zproxy_service_get_session_key(sessions, client_addr.data(), request);
+		session = zproxy_session_get(sessions, session_key.data());
+		if (session) {
+			selected_backend = zproxy_service_backend_session(service_config, &session->bck_addr, http_state);
+			if (selected_backend)
+				return selected_backend;
+		}
 	}
 
 	selected_backend = (struct zproxy_backend_cfg *)zproxy_service_schedule(service_config, http_state);
 
-	if (selected_backend &&
-		service_config->session.sess_type != SESS_TYPE::SESS_NONE &&
-		service_config->session.sess_type != SESS_TYPE::SESS_BCK_COOKIE) // session is inserted in the response
-		session->addSession(client_addr, request, selected_backend);
+	if (selected_backend && !session_key.empty() &&
+		service_config->session.sess_type != SESS_TYPE::SESS_NONE)
+		zproxy_session_add(sessions, session_key.data(), &selected_backend->runtime.addr);
 
 	return selected_backend;
 }

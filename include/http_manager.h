@@ -91,4 +91,7 @@ public:
 				 HttpStream &stream);
 };
 
+std::string zproxy_service_get_session_key(struct zproxy_sessions *sessions, char *client_addr, HttpRequest &request);
+std::string getCookieValue(std::string_view cookie_header_value, std::string_view sess_id);
+
 #endif

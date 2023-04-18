@@ -19,6 +19,7 @@
 #include "zcu_common.h"
 #include "config.h"
 #include "session.h"
+#include "http_manager.h"
 
 void HttpResponse::reset()
 {
@@ -128,9 +129,8 @@ void HttpResponse::manageHeaders(phr_header *header,
 				setHeaderTransferEncoding(header_value);
 				break;
 			case http::HTTP_HEADER_NAME::SET_COOKIE: {
-				 if (service && service->session.sess_type == SESS_TYPE::SESS_COOKIE) {
-					session = sessions::getCookieValue(header_value, service->session.sess_id);
-				}
+				 if (service && service->session.sess_type == SESS_TYPE::SESS_COOKIE)
+					session = getCookieValue(header_value, service->session.sess_id);
 				break;
 			}
 			default:

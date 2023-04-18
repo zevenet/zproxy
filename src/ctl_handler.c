@@ -234,7 +234,7 @@ static enum ws_responses handle_get(const std::string &req_path,
 			find_service(cfg, listener_id, service_id.c_str());
 		struct zproxy_http_state *state =
 			zproxy_state_lookup(listener_id);
-		sessions::Set *sessions =
+		zproxy_sessions *sessions =
 			zproxy_state_get_session(service_id, &state->services);
 		if (!(*resp_buf = zproxy_json_encode_sessions(service, sessions))) {
 			*resp_buf = zproxy_json_return_err("Failed to serialize sesssions of service %s.",
@@ -293,7 +293,7 @@ static enum ws_responses handle_patch(const std::string &req_path,
 							   listener_id);
 			return WS_HTTP_404;
 		}
-		sessions::Set *sessions =
+		zproxy_sessions *sessions =
 			zproxy_state_get_session(service_id, &state->services);
 		if (!sessions) {
 			zproxy_state_release(&state);
@@ -302,14 +302,14 @@ static enum ws_responses handle_patch(const std::string &req_path,
 			return WS_HTTP_404;
 		}
 
-		sessions->flushSessions();
+		zproxy_sessions_flush(sessions);
 		for (struct json_session &i : new_sessions) {
 			struct zproxy_backend_cfg *backend =
 				find_backend(cfg, listener_id, service_id.c_str(),
 					     i.backend_id.c_str());
-			sessions::Info *sess =
-				sessions->addSession(i.id, backend);
-			sess->last_seen = i.last_seen;
+			zproxy_session_node *sess = 
+				zproxy_session_add(sessions, i.id.data(), &backend->runtime.addr);
+			sess->timestamp = i.last_seen;
 		}
 
 		zproxy_state_release(&state);
@@ -371,7 +371,7 @@ static enum ws_responses handle_patch(const std::string &req_path,
 							   listener_id);
 			return WS_HTTP_404;
 		}
-		sessions::Set *sessions =
+		zproxy_sessions *sessions =
 			zproxy_state_get_session(service_id, &state->services);
 		if (!sessions) {
 			zproxy_state_release(&state);
@@ -379,7 +379,8 @@ static enum ws_responses handle_patch(const std::string &req_path,
 							   service_id.c_str());
 			return WS_HTTP_404;
 		}
-		if (sessions->updateSession(session_id, backend, last_seen) < 0) {
+		if (zproxy_session_update(
+				sessions, session_id.data(), &backend->runtime.addr, last_seen) < 0) {
 			zproxy_state_release(&state);
 			*resp_buf = zproxy_json_return_err("Could not find session with ID %s.",
 							   session_id.c_str());
@@ -420,7 +421,7 @@ static enum ws_responses handle_delete(const std::string &req_path,
 							   listener_id);
 			return WS_HTTP_404;
 		}
-		sessions::Set *sessions =
+		zproxy_sessions *sessions =
 			zproxy_state_get_session(service_id, &state->services);
 		if (!sessions) {
 			zproxy_state_release(&state);
@@ -431,7 +432,7 @@ static enum ws_responses handle_delete(const std::string &req_path,
 
 		if (strlen(req_msg) <= 0) {
 			zcu_log_print(LOG_DEBUG, "Manually flushing sessions.");
-			sessions->flushSessions();
+			zproxy_sessions_flush(sessions);
 		} else {
 			char backend_id[CONFIG_IDENT_MAX] = { 0 };
 			char sess_id[CONFIG_IDENT_MAX] = { 0 };
@@ -456,12 +457,12 @@ static enum ws_responses handle_delete(const std::string &req_path,
 									   backend_id, service_id.c_str(), listener_id);
 					return WS_HTTP_404;
 				}
-				sessions->deleteBackendSessions(backend, true);
+				zproxy_session_delete_backend(sessions, &backend->runtime.addr);
 			} else if (sess_id[0]) {
 				zcu_log_print(LOG_DEBUG,
 					      "Manually flushing sessions with ID %s",
 					      sess_id);
-				if (!sessions->deleteSessionByKey(sess_id)) {
+				if (!zproxy_session_delete(sessions, sess_id)) {
 					zproxy_state_release(&state);
 					*resp_buf = zproxy_json_return_err("Could not find session with ID %s",
 									   sess_id);
@@ -531,7 +532,7 @@ static enum ws_responses handle_put(const std::string &req_path,
 							   listener_id);
 			return WS_HTTP_404;
 		}
-		sessions::Set *sessions =
+		zproxy_sessions *sessions =
 			zproxy_state_get_session(service_id, &state->services);
 		if (!sessions) {
 			zproxy_state_release(&state);
@@ -540,16 +541,14 @@ static enum ws_responses handle_put(const std::string &req_path,
 			return WS_HTTP_404;
 		}
 
-		sessions::Info *session = sessions->addSession(sess_id, backend);
+		zproxy_session_node *session = zproxy_session_add(sessions, sess_id, &backend->runtime.addr);
 		if (!session) {
 			zproxy_state_release(&state);
 			*resp_buf = zproxy_json_return_err("Unable to create session. Perhaps it already exists.");
 			return WS_HTTP_409;
 		}
-		if (last_seen < 0)
-			session->update();
-		else
-			session->last_seen = last_seen;
+		if (last_seen >= 0)
+			session->timestamp = last_seen;
 		zproxy_state_release(&state);
 	} else if (zproxy_regex_exec(API_REGEX_SELECT_SERVICE_BACKENDS,
 				     req_path.c_str(), matches)) {

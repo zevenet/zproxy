@@ -100,7 +100,7 @@ public:
 	zproxy_backend_cfg *new_backend{nullptr};
 	std::string client_addr {""};
 	int client_port {0};
-	sessions::Set *session{nullptr};
+	struct zproxy_sessions *session;
 
 	bool websocket{false};
 

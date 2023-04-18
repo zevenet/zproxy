@@ -44,10 +44,10 @@ struct zproxy_backend_state {
 
 struct zproxy_service_state {
 	std::unordered_map<std::string, std::shared_ptr<zproxy_backend_state>> backends;
-	sessions::Set sessions;
+	struct zproxy_sessions *sessions;
 	uint32_t	refcnt{1};
 
-	zproxy_service_state(SESS_TYPE type, std::string id, unsigned int ttl) : sessions(type, id, ttl) {};
+	zproxy_service_state() {};
 };
 
 struct zproxy_http_state {
@@ -234,7 +234,7 @@ void zproxy_state_release(struct zproxy_http_state **http_state);
 void zproxy_state_cfg_update(struct zproxy_cfg *cfg);
 void zproxy_state_backend_add(struct zproxy_http_state *http_state,
 			      const struct zproxy_backend_cfg *backend);
-sessions::Set *zproxy_state_get_session(const std::string &service,
+struct zproxy_sessions *zproxy_state_get_session(const std::string &service,
 	std::unordered_map<std::string, std::shared_ptr<struct zproxy_service_state>> *service_map);
 
 #endif

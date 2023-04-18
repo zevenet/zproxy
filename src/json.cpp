@@ -129,7 +129,7 @@ static json_t *serialize_service(const struct zproxy_service_cfg *service_cfg,
 	json_object_set_new(service, "name", json_string(service_cfg->name));
 	json_object_set_new(service, "priority", json_integer(service_state->priority));
 	json_object_set_new(service, "sessions",
-			    state->services.at(service_cfg->name)->sessions.to_json(service_cfg));
+		zproxy_sessions_to_json(state->services.at(service_cfg->name)->sessions, service_cfg));
 
 	return service;
 }
@@ -247,12 +247,12 @@ char *zproxy_json_encode_service(const struct zproxy_service_cfg *service)
 }
 
 char *zproxy_json_encode_sessions(const zproxy_service_cfg *service,
-				  sessions::Set *sessions)
+				  zproxy_sessions *sessions)
 {
 	json_t *sess_arr;
 	char *buf = NULL;
 
-	sess_arr = sessions->to_json(service);
+	sess_arr = zproxy_sessions_to_json(sessions, service);
 	if (!sess_arr)
 		return NULL;
 

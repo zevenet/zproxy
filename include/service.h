@@ -38,7 +38,7 @@ public:
     static zproxy_backend_cfg *selectBackend(
 			struct zproxy_service_cfg *service_config,
 			HttpRequest &request,
-			std::string &client_addr, sessions::Set *session,
+			std::string &client_addr, struct zproxy_sessions *sessions,
 			struct zproxy_http_state *http_state);
 
 };

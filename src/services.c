@@ -43,6 +43,7 @@ struct zproxy_service {
 	struct list_head		hlist;
 	char				name[CONFIG_IDENT_MAX];
 	struct list_head		backend_list;
+	struct zproxy_sessions	*sessions;
 
 	union {
 		struct {
@@ -88,6 +89,9 @@ static int zproxy_service_alloc(const struct zproxy_service_cfg *service_cfg)
 		if (zproxy_service_backend_alloc(backend_cfg, service_state) < 0)
 			return -1;
 	}
+
+	if (service_cfg->session.sess_type != SESS_TYPE::SESS_NONE)
+		service_state->sessions = zproxy_sessions_alloc(service_cfg);
 
 	return 0;
 }
@@ -201,6 +205,8 @@ void zproxy_service_state_fini(void)
 				list_del(&backend->list);
 				free(backend);
 			}
+			if (service->sessions)
+				zproxy_sessions_free(service->sessions);
 			list_del(&service->hlist);
 			free(service);
 		}

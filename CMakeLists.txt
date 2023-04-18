@@ -104,7 +104,7 @@ set(sources_c
 	"src/ssl.c"
 	"src/services.c"
 	"src/service.cpp"
-	"src/session.cpp"
+	"src/session.c"
 	"src/state.cpp"
 	"src/json.cpp"
 	"src/http.c"

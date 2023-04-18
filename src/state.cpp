@@ -41,8 +41,8 @@ static void zproxy_state_maintenance_cb(struct ev_loop *loop, ev_timer *timer, i
 	state = container_of(timer, struct zproxy_http_state, timer);
 
 	for (auto & service : state->services) {
-		counter -= service.second->sessions.sessions_set.size();
-		service.second->sessions.removeExpiredSessions();
+		counter -= service.second->sessions->size;
+		zproxy_sessions_remove_expired(service.second->sessions);
 		if (counter<=0)
 			break;
 	}
@@ -238,8 +238,8 @@ struct zproxy_http_state *zproxy_state_init(const struct zproxy_proxy_cfg *proxy
 
 		auto service_state_pair = state->services.find(service_cfg->name);
 		if (service_state_pair == state->services.end()) {
-			service_state = std::make_shared<zproxy_service_state>(service_cfg->session.sess_type,
-					service_cfg->session.sess_id, service_cfg->session.sess_ttl);
+			service_state = std::make_shared<zproxy_service_state>();
+			service_state->sessions = zproxy_sessions_alloc(service_cfg);
 			state->services.emplace(make_pair(service_cfg->name, service_state));
 		} else {
 			service_state = service_state_pair->second;
@@ -259,11 +259,7 @@ static void zproxy_state_cfg_service_update(const struct zproxy_service_cfg *ser
 	auto backend_state = service_state->backends.begin();
 	int found;
 
-	for (auto &session : service_state->sessions.sessions_set) {
-		if (!zproxy_backend_cfg_lookup(service, &session.second->bck_addr)) {
-			service_state->sessions.deleteSessionByKey(session.first);
-		}
-	}
+	zproxy_session_delete_old_backends(service, service_state->sessions);
 
 	while (backend_state != service_state->backends.end()) {
 		found = 0;
@@ -392,7 +388,7 @@ void zproxy_state_release(struct zproxy_http_state **http_state)
 	pthread_mutex_unlock(&list_mutex);
 }
 
-sessions::Set *zproxy_state_get_session(const std::string &service,
+struct zproxy_sessions *zproxy_state_get_session(const std::string &service,
 	std::unordered_map<std::string, std::shared_ptr<zproxy_service_state>> *service_list)
 {
 	auto session_pair = service_list->find(service);
@@ -400,5 +396,5 @@ sessions::Set *zproxy_state_get_session(const std::string &service,
 	if (session_pair == service_list->end())
 		return NULL;
 
-	return &session_pair->second->sessions;
+	return session_pair->second->sessions;
 }

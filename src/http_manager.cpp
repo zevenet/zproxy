@@ -25,6 +25,7 @@
 #include "http_manager.h"
 #include "http_stream.h"
 #include "macro.h"
+#include "session.h"
 
 /*
  * It replaces a chain in the original string.
@@ -129,6 +130,105 @@ void _removeHeaderHttp(phr_header *header, struct list_head *m, regmatch_t *eol)
 			break;
 		}
 	}
+}
+
+std::string getCookieValue(std::string_view cookie_header_value,
+								  std::string_view sess_id)
+{
+	auto it_start = cookie_header_value.find(sess_id);
+	if (it_start == std::string::npos)
+		return std::string();
+	it_start = cookie_header_value.find('=', it_start);
+	auto it_end = cookie_header_value.find(';', it_start++);
+	it_end = it_end != std::string::npos ? it_end : cookie_header_value.size();
+	std::string res(cookie_header_value.data() + it_start,
+					it_end - it_start);
+	return res;
+}
+
+static std::string getQueryParameter(const std::string &url,
+                                     const std::string &sess_id)
+{
+	auto it_start = url.find(sess_id);
+	if (it_start == std::string::npos)
+		return std::string();
+	it_start = url.find('=', it_start);
+	auto it_end = url.find(';', it_start++);
+	it_end = it_end != std::string::npos ? it_end : url.find('&', it_start);
+	;
+	it_end = it_end != std::string::npos ? it_end : url.size();
+	std::string res(url.data() + it_start, it_end - it_start);
+	return res;
+}
+
+static std::string getUrlParameter(const std::string &url)
+{
+	std::string expr_ = "[;][^?]*";
+	std::smatch match;
+	std::regex rgx(expr_);
+
+	if (std::regex_search(url, match, rgx)) {
+		std::string result = match[0];
+		return result.substr(1);
+	} else {
+		return std::string();
+	}
+}
+
+std::string zproxy_service_get_session_key(struct zproxy_sessions *sessions, char *client_addr, HttpRequest &request)
+{
+	std::string key;
+
+	switch (sessions->type) {
+	case SESS_TYPE::SESS_NONE:
+		break;
+	case SESS_TYPE::SESS_IP:
+		key = client_addr;
+		break;
+	case SESS_TYPE::SESS_BCK_COOKIE:
+		/* fallthrough */
+	case SESS_TYPE::SESS_COOKIE:
+		if (!request.getHeaderValue(http::HTTP_HEADER_NAME::COOKIE, key))
+			key = "";
+		else
+			key = getCookieValue(key, sessions->id);
+		break;
+	case SESS_TYPE::SESS_URL: {
+		std::string url = request.getUrl();
+		key = getQueryParameter(url, sessions->id);
+		break;
+	} case SESS_TYPE::SESS_PARM: {
+		std::string url = request.getUrl();
+		key = getUrlParameter(url);
+		break;
+	} case SESS_TYPE::SESS_HEADER:
+		if (!request.getHeaderValue(sessions->id, key))
+			key = "";
+		break;
+	case SESS_TYPE::SESS_BASIC:
+		if (!request.getHeaderValue(
+				http::HTTP_HEADER_NAME::AUTHORIZATION,
+				key)) {
+			key = "";
+		} else {
+			std::stringstream string_to_iterate(key);
+			std::istream_iterator<std::string> begin(
+				string_to_iterate);
+			std::istream_iterator<std::string> end;
+			std::vector<std::string> header_value_parts(begin, end);
+			if (header_value_parts[0] != "Basic") {
+				key = "";
+			} else {
+				key = header_value_parts
+					[1]; // Currently it stores username:password
+			}
+		}
+		break;
+	default:
+		break;
+	}
+
+	return key;
 }
 
 void http_manager::rewriteUrl(HttpStream *stream)
@@ -472,6 +572,26 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream *stream)
 	return validation::REQUEST_RESULT::OK;
 }
 
+static void zproxy_http_manage_set_cookie(HttpStream *stream, std::string session_key)
+{
+	if (!stream->backend_config)
+		return;
+
+	if (session_key.empty()) {
+		if (stream->service_config->session.sess_type != SESS_TYPE::SESS_BCK_COOKIE)
+			return;
+
+		stream->response.addHeader(http::HTTP_HEADER_NAME::SET_COOKIE,
+								stream->backend_config->cookie_set_header);
+		session_key = getCookieValue(stream->backend_config->cookie_set_header,
+								stream->session->id);
+	}
+
+	zproxy_session_add(stream->session,
+						session_key.data(),
+						&stream->backend_config->runtime.addr);
+}
+
 validation::REQUEST_RESULT http_manager::validateResponse(HttpStream *stream)
 {
 	auto &listener = stream->listener_config;
@@ -512,18 +632,7 @@ validation::REQUEST_RESULT http_manager::validateResponse(HttpStream *stream)
 	}
 
 	// backend cookie insert
-	if (stream->backend_config && stream->service_config
-			&& stream->service_config->session.sess_type == SESS_TYPE::SESS_BCK_COOKIE) {
-		stream->session->update(
-			stream->client_addr,
-			stream->backend_config->runtime.cookie_key,
-			stream->backend_config);
-		stream->response.addHeader(
-			http::HTTP_HEADER_NAME::SET_COOKIE,
-			stream->backend_config->cookie_set_header);
-	// update session
-	} else if (stream->backend_config && !session_key.empty())
-		stream->session->update(stream->client_addr, session_key, stream->backend_config);
+	zproxy_http_manage_set_cookie(stream, session_key);
 
 	// Add custom headers
 	if (!addHeaders.empty())

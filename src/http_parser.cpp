@@ -432,4 +432,3 @@ bool http_parser::HttpData::expectBody(void) const
 			   true :
 				 false;
 }
-
