@@ -390,6 +390,7 @@ int main(int argc, char *argv[])
 
 	if (zproxy_cfg_file(cfg) < 0) {
 		syslog(LOG_ERR, "Error parsing the config file");
+		free(cfg);
 		exit(EXIT_FAILURE);
 	}
 

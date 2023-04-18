@@ -1831,14 +1831,14 @@ int zproxy_cfg_file(struct zproxy_cfg *cfg)
 		} else if (zproxy_regex_exec(CONFIG_REGEX_ControlMode, lin, matches)) { // NOT USED
 		} else if (zproxy_regex_exec(CONFIG_REGEX_ListenHTTP, lin, matches)) {
 			if (zproxy_proxy_cfg_file(cfg, proxy, false, fd) == -1)
-				return -1;
+				goto err;
 		} else if (zproxy_regex_exec(CONFIG_REGEX_ListenHTTPS, lin, matches)) {
 			if (zproxy_proxy_cfg_file(cfg, proxy, true, fd) == -1)
-				return -1;
+				goto err;
 		} else if (zproxy_regex_exec(CONFIG_REGEX_ServiceName, lin, matches)) {
 			lin[matches[1].rm_eo] = '\0';
 			if (zproxy_service_cfg_file(cfg, proxy, lin + matches[1].rm_so, fd) == -1)
-				return -1;
+				goto err;
 		} else if (zproxy_regex_exec(CONFIG_REGEX_Anonymise, lin, matches)) { // NOT USED
 		} else
 			parse_error("unknown directive in file context");
