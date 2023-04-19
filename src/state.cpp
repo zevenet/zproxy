@@ -356,6 +356,8 @@ void zproxy_state_purge(struct zproxy_proxy_cfg *proxy)
 			continue;
 
 		if (--state_ptr->refcnt == 0) {
+			for (auto &service_pair : state_ptr->services)
+				zproxy_sessions_free(service_pair.second->sessions);
 			ev_timer_stop(zproxy_main.loop, &state_ptr->timer);
 			list_del(&state_ptr->list);
 			delete state_ptr;
