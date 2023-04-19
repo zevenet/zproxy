@@ -462,7 +462,7 @@ static enum ws_responses handle_delete(const std::string &req_path,
 				zcu_log_print(LOG_DEBUG,
 					      "Manually flushing sessions with ID %s",
 					      sess_id);
-				if (!zproxy_session_delete(sessions, sess_id)) {
+				if (zproxy_session_delete(sessions, sess_id) < 0) {
 					zproxy_state_release(&state);
 					*resp_buf = zproxy_json_return_err("Could not find session with ID %s",
 									   sess_id);
