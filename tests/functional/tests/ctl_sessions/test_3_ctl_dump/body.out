@@ -46,8 +46,8 @@
         "priority": 1,
         "sessions": [
             {
-                "id": "sess2",
-                "backend-id": "10.2.1.2-80",
+                "id": "sess0",
+                "backend-id": "10.2.1.1-80",
                 "last-seen": 0
             },
             {
@@ -56,8 +56,8 @@
                 "last-seen": 0
             },
             {
-                "id": "sess0",
-                "backend-id": "10.2.1.1-80",
+                "id": "sess2",
+                "backend-id": "10.2.1.2-80",
                 "last-seen": 0
             }
         ]
