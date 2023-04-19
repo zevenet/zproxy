@@ -630,8 +630,9 @@ static int parseSession(struct zproxy_cfg *cfg,
 				service->session.sess_type = SESS_TYPE::SESS_IP;
 			else if (!strcasecmp(cp, "COOKIE"))
 				service->session.sess_type = SESS_TYPE::SESS_COOKIE;
-			else if (!strcasecmp(cp, "BACKENDCOOKIE"))
-				service->session.sess_type = SESS_TYPE::SESS_BCK_COOKIE;
+			else if (!strcasecmp(cp, "BACKENDCOOKIE") ||
+					!strcasecmp(cp, "COOKIEINSERT"))
+				service->session.sess_type = SESS_TYPE::SESS_COOKIE_INSERT;
 			else if (!strcasecmp(cp, "URL"))
 				service->session.sess_type = SESS_TYPE::SESS_URL;
 			else if (!strcasecmp(cp, "PARM"))
@@ -650,7 +651,7 @@ static int parseSession(struct zproxy_cfg *cfg,
 			snprintf(service->session.sess_id, CONFIG_IDENT_MAX, "%s", lin + matches[1].rm_so);
 
 			if (service->session.sess_type != SESS_TYPE::SESS_COOKIE &&
-				service->session.sess_type != SESS_TYPE::SESS_BCK_COOKIE &&
+				service->session.sess_type != SESS_TYPE::SESS_COOKIE_INSERT &&
 				service->session.sess_type != SESS_TYPE::SESS_URL &&
 				service->session.sess_type != SESS_TYPE::SESS_HEADER)
 				parse_error("no ID permitted unless COOKIE/URL/HEADER Session");
@@ -672,10 +673,10 @@ static int parseSession(struct zproxy_cfg *cfg,
 				parse_error("Session type not defined");
 			if (service->session.sess_ttl == 0)
 				parse_error("Session TTL not defined");
-			if (service->session.sess_domain[0] && service->session.sess_type != SESS_TYPE::SESS_BCK_COOKIE)
-				parse_error("Session Domain is valid only for BackendCookie sessions");
-			if (service->session.sess_path[0] && service->session.sess_type != SESS_TYPE::SESS_BCK_COOKIE)
-				parse_error("Session Paths is valid only for BackendCookie sessions");
+			if (service->session.sess_domain[0] && service->session.sess_type != SESS_TYPE::SESS_COOKIE_INSERT)
+				parse_error("Session Domain is valid only for Cookie Insertion sessions");
+			if (service->session.sess_path[0] && service->session.sess_type != SESS_TYPE::SESS_COOKIE_INSERT)
+				parse_error("Session Paths is valid only for Cookie Insertion sessions");
 			if ((service->session.sess_type == SESS_TYPE::SESS_COOKIE ||
 				 service->session.sess_type == SESS_TYPE::SESS_URL ||
 				 service->session.sess_type == SESS_TYPE::SESS_HEADER) &&
@@ -700,7 +701,7 @@ int zproxy_backend_ctx_start(struct zproxy_backend_cfg *bck)
 	return zproxy_ssl_backend_ctx_alloc(bck);
 }
 
-void setBackendCookieHeader(zproxy_service_cfg *service,
+void zproxy_set_backend_cookie_insertion(zproxy_service_cfg *service,
 				    zproxy_backend_cfg *backend,
 				    char *set_cookie_header)
 {
@@ -872,8 +873,8 @@ static int zproxy_backend_cfg_file(zproxy_cfg *cfg, zproxy_service_cfg *service,
 
 			list_add_tail(&backend->list, &service->backend_list);
 			service->backend_list_size++;
-			if (service->session.sess_type == SESS_TYPE::SESS_BCK_COOKIE)
-				setBackendCookieHeader(service, backend, backend->cookie_set_header);
+			if (service->session.sess_type == SESS_TYPE::SESS_COOKIE_INSERT)
+				zproxy_set_backend_cookie_insertion(service, backend, backend->cookie_set_header);
 
 			return 0;
 		} else {

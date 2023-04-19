@@ -185,7 +185,7 @@ std::string zproxy_service_get_session_key(struct zproxy_sessions *sessions, cha
 	case SESS_TYPE::SESS_IP:
 		key = client_addr;
 		break;
-	case SESS_TYPE::SESS_BCK_COOKIE:
+	case SESS_TYPE::SESS_COOKIE_INSERT:
 		/* fallthrough */
 	case SESS_TYPE::SESS_COOKIE:
 		if (!request.getHeaderValue(http::HTTP_HEADER_NAME::COOKIE, key))
@@ -578,7 +578,7 @@ static void zproxy_http_manage_set_cookie(HttpStream *stream, std::string sessio
 		return;
 
 	if (session_key.empty()) {
-		if (stream->service_config->session.sess_type != SESS_TYPE::SESS_BCK_COOKIE)
+		if (stream->service_config->session.sess_type != SESS_TYPE::SESS_COOKIE_INSERT)
 			return;
 
 		stream->response.addHeader(http::HTTP_HEADER_NAME::SET_COOKIE,

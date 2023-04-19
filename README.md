@@ -735,7 +735,7 @@ that session to the same back-end server.
 
 The following directives are available:
 
-* **Type** IP|BASIC|URL|PARM|COOKIE|HEADER|BACKENDCOOKIE
+* **Type** IP|BASIC|URL|PARM|COOKIE|HEADER|COOKIEINSERT
 
   This is a mandatory parameter that can have once of the following values:
 
@@ -745,7 +745,7 @@ The following directives are available:
   * **PARM**: a URI parameter
   * **COOKIE**: a certain cookie
   * **HEADER**: a  certain  request header
-  * **BACKENDCOOKIE**: Zproxy will inject a cookie in each response with the
+  * **COOKIEINSERT**: Zproxy will inject a cookie in each response with the
       appropriate backend's key, so that even if the session table is flushed or
       sessions are disabled, the proper backend can be chosen. This allows for
       session databases to be offloaded to the client side via browser cookies.
@@ -764,12 +764,12 @@ The following directives are available:
 
 * **Path** "path\_domain"
 
-  This parameter should be used only for BACKENDCOOKIE session. It is the path
+  This parameter should be used only for COOKIEINSERT session. It is the path
   value in the cookie header
 
 * **Domain** "cookie\_domain"
 
-  This parameter should be used only for BACKENDCOOKIE session. It is the domain
+  This parameter should be used only for COOKIEINSERT session. It is the domain
   value in the cookie header
 
 ## API Description

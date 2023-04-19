@@ -73,7 +73,7 @@ static json_t *serialize_backend(const struct zproxy_backend_cfg *backend_cfg,
 	json_object_set_new(backend, "priority",
 			json_integer(backend_cfg->priority));
 	json_object_set_new(backend, "response-time", json_real(-1.0)); // stub
-	if (backend_cfg->service->session.sess_type == SESS_TYPE::SESS_BCK_COOKIE)
+	if (backend_cfg->service->session.sess_type == SESS_TYPE::SESS_COOKIE_INSERT)
 		json_object_set_new(backend, "cookie-key", json_string(backend_cfg->runtime.cookie_key));
 
 	zproxy_monitor_backend_state(&backend_cfg->runtime.addr, backend_cfg->service->name, &backend_state);

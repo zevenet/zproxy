@@ -640,8 +640,8 @@ static enum ws_responses handle_put(const std::string &req_path,
 
 		list_add_tail(&new_backend->list, &service->backend_list);
 		service->backend_list_size++;
-		if (service->session.sess_type == SESS_TYPE::SESS_BCK_COOKIE) {
-			setBackendCookieHeader(service, new_backend,
+		if (service->session.sess_type == SESS_TYPE::SESS_COOKIE_INSERT) {
+			zproxy_set_backend_cookie_insertion(service, new_backend,
 					       new_backend->cookie_set_header);
 		}
 

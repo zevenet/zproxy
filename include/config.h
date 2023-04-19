@@ -72,7 +72,7 @@ enum class SESS_TYPE {
 	SESS_NONE,
 	SESS_IP,
 	SESS_COOKIE,
-	SESS_BCK_COOKIE,
+	SESS_COOKIE_INSERT,
 	SESS_URL,
 	SESS_PARM,
 	SESS_HEADER,
@@ -411,7 +411,7 @@ struct zproxy_cfg *zproxy_cfg_clone(const struct zproxy_cfg *cfg);
 const struct zproxy_cfg *zproxy_cfg_get(const struct zproxy_cfg *cfg);
 void zproxy_cfg_free(const struct zproxy_cfg *cfg);
 
-void setBackendCookieHeader(struct zproxy_service_cfg *service,
+void zproxy_set_backend_cookie_insertion(struct zproxy_service_cfg *service,
 			    struct zproxy_backend_cfg *backend,
 			    char *set_cookie_header);
 struct zproxy_backend_cfg *zproxy_backend_cfg_alloc(void);
