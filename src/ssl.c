@@ -214,8 +214,6 @@ static regex_t **get_subjectaltnames(X509 *x509, unsigned int *count_)
 
 static int cfg_min_ssl_proto(uint64_t options)
 {
-	if (options & SSL_OP_NO_TLSv1_3)
-		return SSL2_VERSION;
 	if (options & SSL_OP_NO_TLSv1_2)
 		return TLS1_3_VERSION;
 	if (options & SSL_OP_NO_TLSv1_1)
