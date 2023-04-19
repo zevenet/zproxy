@@ -108,7 +108,7 @@ set(sources_c
 	"src/http.c"
 	"src/http_protocol.cpp"
 	"src/http_events.cpp"
-	"src/pico_http_parser.cpp"
+	"src/pico_http_parser.c"
 	"src/http_parser.cpp"
 	"src/http_request.cpp"
 	"src/http_response.cpp"
