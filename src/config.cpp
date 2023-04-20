@@ -1501,8 +1501,13 @@ static int zproxy_proxy_cfg_file(struct zproxy_cfg *cfg, struct zproxy_proxy_cfg
 				proxy->ssl.ssl_op_enable |=
 					SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 |
 					SSL_OP_NO_TLSv1_2;
-			else if (strcasecmp(lin + matches[1].rm_so, "TLSv1_3") == 0)
+			else if (strcasecmp(lin + matches[1].rm_so, "TLSv1_3") == 0) {
+				if (proxy->ssl.ssl_op_enable & SSL_OP_NO_TLSv1 &&
+					proxy->ssl.ssl_op_enable & SSL_OP_NO_TLSv1_1 &&
+					proxy->ssl.ssl_op_enable & SSL_OP_NO_TLSv1_2)
+					parse_error("There is no valid TLS protocol enabled");
 				proxy->ssl.ssl_op_enable |= SSL_OP_NO_TLSv1_3;
+			}
 		} else if (zproxy_regex_exec(CONFIG_REGEX_ECDHCurve, lin, matches)) { // NOT USED
 		} else if (zproxy_regex_exec(CONFIG_REGEX_SSLAllowClientRenegotiation, lin, matches)) {
 			require_ssl(proxy->runtime.ssl_enabled);
