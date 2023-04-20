@@ -56,6 +56,5 @@ void zproxy_session_delete_backend(struct zproxy_sessions *sessions, const struc
 int zproxy_session_delete(struct zproxy_sessions *sessions, const char *key);
 int zproxy_session_update(struct zproxy_sessions *sessions, const char *key, const struct sockaddr_in *bck, unsigned int timestamp);
 void zproxy_session_delete_old_backends(const struct zproxy_service_cfg *service, struct zproxy_sessions *sessions);
-json_t *zproxy_sessions_to_json(struct zproxy_sessions *sessions, const struct zproxy_service_cfg *service);
 
 #endif

@@ -244,29 +244,3 @@ void zproxy_session_delete_old_backends(const struct zproxy_service_cfg *service
 	}
 	pthread_mutex_unlock(&sessions->sessions_mutex);
 }
-
-json_t *zproxy_sessions_to_json(struct zproxy_sessions *sessions, const struct zproxy_service_cfg *service)
-{
-	json_t *jsessions = json_array();
-	json_t *jsession;
-	const struct zproxy_backend_cfg *backend_cfg;
-	const zproxy_session_node *session;
-	int i;
-
-	pthread_mutex_lock(&sessions->sessions_mutex);
-	for (i = 0; i < HASH_SESSION_SLOTS; i++) {
-		list_for_each_entry(session, &sessions->session_hashtable[i], hlist) {
-			jsession = json_object();
-			backend_cfg = zproxy_backend_cfg_lookup(service,
-						       &session->bck_addr);
-			json_object_set_new(jsession, "id", json_string(session->key));
-			json_object_set_new(jsession, "backend-id",
-				   json_string(backend_cfg->runtime.id));
-			json_object_set_new(jsession, "last-seen",
-				   json_integer((json_int_t)session->timestamp));
-			json_array_append_new(jsessions, jsession);
-		}
-	}
-	pthread_mutex_unlock(&sessions->sessions_mutex);
-	return jsessions;
-}

@@ -18,11 +18,12 @@
 #include <cstdio>
 #include <cstring>
 #include <jansson.h>
+#include <netdb.h>
+#include <pthread.h>
 #include <stdlib.h>
+#include <sys/socket.h>
 #include <sys/syslog.h>
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
 #include "json.h"
 #include "zcu_log.h"
 #include "zcu_network.h"
@@ -112,6 +113,39 @@ static json_t *serialize_service_backends(const struct zproxy_service_cfg *servi
 	return backends;
 }
 
+static json_t *serialize_session(const struct zproxy_session_node *session,
+				 const struct zproxy_service_cfg *service_cfg)
+{
+	json_t *jsession = json_object();
+	struct zproxy_backend_cfg *backend_cfg =
+		zproxy_backend_cfg_lookup(service_cfg, &session->bck_addr);
+
+	json_object_set_new(jsession, "id", json_string(session->key));
+	json_object_set_new(jsession, "backend-id",
+			    json_string(backend_cfg->runtime.id));
+	json_object_set_new(jsession, "last-seen",
+			    json_integer((json_int_t)session->timestamp));
+	return jsession;
+}
+
+static json_t *serialize_service_sessions(const struct zproxy_service_cfg *service_cfg,
+					  struct zproxy_sessions *sessions)
+{
+	json_t *jsessions = json_array();
+	const zproxy_session_node *session;
+
+	pthread_mutex_lock(&sessions->sessions_mutex);
+	for (int i = 0; i < HASH_SESSION_SLOTS; i++) {
+		list_for_each_entry(session, &sessions->session_hashtable[i], hlist) {
+			json_array_append_new(jsessions,
+					      serialize_session(session, service_cfg));
+		}
+	}
+	pthread_mutex_unlock(&sessions->sessions_mutex);
+
+	return jsessions;
+}
+
 static json_t *serialize_service(const struct zproxy_service_cfg *service_cfg,
 				 const struct zproxy_http_state *state)
 {
@@ -129,7 +163,7 @@ static json_t *serialize_service(const struct zproxy_service_cfg *service_cfg,
 	json_object_set_new(service, "name", json_string(service_cfg->name));
 	json_object_set_new(service, "priority", json_integer(service_state->priority));
 	json_object_set_new(service, "sessions",
-		zproxy_sessions_to_json(state->services.at(service_cfg->name)->sessions, service_cfg));
+			    serialize_service_sessions(service_cfg, state->services.at(service_cfg->name)->sessions));
 
 	return service;
 }
@@ -252,7 +286,7 @@ char *zproxy_json_encode_sessions(const zproxy_service_cfg *service,
 	json_t *sess_arr;
 	char *buf = NULL;
 
-	sess_arr = zproxy_sessions_to_json(sessions, service);
+	sess_arr = serialize_service_sessions(service, sessions);
 	if (!sess_arr)
 		return NULL;
 
