@@ -15,30 +15,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _ZPROXY_HTTP_RESPONSE_H_
-#define _ZPROXY_HTTP_RESPONSE_H_
+#ifndef _ZPROXY_HTTP_TOOLS_H_
+#define _ZPROXY_HTTP_TOOLS_H_
 
-#include "http_parser.h"
-#include "config.h"
+#include <pcreposix.h>
 
-class HttpResponse : public http_parser::HttpData {
-    public:
-    int http_status_code{0};
-    char *status_message{nullptr};
+int str_replace_regexp(char *buf, const char *ori_str, int ori_len,
+			   regex_t *match, char *replace_str);
 
-    phr_header *location{nullptr};
-    phr_header *content_location{nullptr};
+int str_find_str(int *off_start, int *off_end, const char *ori_str,
+		     int ori_len, const char *match_str, int match_len);
 
-    void reset();
-	http_parser::PARSE_RESULT parse(const char *data, size_t data_size,
-				   size_t *used_bytes);
+int str_replace_str(char *buf, const char *ori_str, int ori_len,
+			const char *match_str, int match_len, char *replace_str,
+			int replace_len);
 
-    void print(void) const;
-    std::string_view getResponseLine();
+int zproxy_http_encode_url(char *urldest, char *urlorig);
 
-    void manageHeaders(phr_header *header,
-			const struct zproxy_service_cfg *service,
-			std::string &session_key);
-};
 
 #endif

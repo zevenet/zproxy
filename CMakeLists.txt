@@ -39,7 +39,7 @@ set(PROJECT_GENERICNAME "zproxy")
 set(TARGET_NAME "zproxy")
 
 #options
-option(ENABLE_WAF "Compile zproxy using WAF features" ON)
+option(ENABLE_WAF "Compile zproxy using WAF features" OFF)
 option(DEBUG_ZCU_LOG "Compile with debug messages" ON)
 option(BUILD_DOC "Build documentation" OFF)
 # debug
@@ -82,14 +82,10 @@ set(sources_h
 	"include/state.h"
 	"include/http.h"
 	"include/http_log.h"
-	"include/http_protocol.h"
 	"include/pico_http_parser.h"
-	"include/http_parser.h"
-	"include/http_request.h"
-	"include/http_response.h"
-	"include/http_stream.h"
-	"include/http_manager.h"
 	"include/zproxy.h"
+	"include/http_handler.h"
+	"include/http_tools.h"
 )
 set(sources_c
 	"src/main.c"
@@ -106,14 +102,10 @@ set(sources_c
 	"src/state.cpp"
 	"src/json.cpp"
 	"src/http.c"
-	"src/http_protocol.cpp"
-	"src/http_events.cpp"
+	"src/http_tools.c"
+	"src/http_events.c"
 	"src/pico_http_parser.c"
-	"src/http_parser.cpp"
-	"src/http_request.cpp"
-	"src/http_response.cpp"
-	"src/http_stream.cpp"
-	"src/http_manager.cpp"
+	"src/http_handler.c"
 )
 
 if (ENABLE_WAF)

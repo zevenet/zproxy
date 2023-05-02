@@ -19,7 +19,7 @@
 #define _ZPROXY_SERVICE_H_
 
 #include "config.h"
-#include "http_request.h"
+#include "http.h"
 #include "state.h"
 #include <sys/socket.h>
 #include <string>
@@ -39,13 +39,9 @@ zproxy_service_backend_session(struct zproxy_service_cfg *service_config,
 			       const struct sockaddr_in *bck_addr,
 			       struct zproxy_http_state *http_state);
 
-bool zproxy_service_select(const HttpRequest *request,
-			   const struct zproxy_service_cfg *service_config);
+int zproxy_service_select(struct zproxy_http_ctx *ctx);
 
 struct zproxy_backend_cfg *
-zproxy_service_select_backend(struct zproxy_service_cfg *service_config,
-			      HttpRequest &request, const char *client_addr,
-			      struct zproxy_sessions *sessions,
-			      struct zproxy_http_state *http_state);
+zproxy_service_select_backend(struct zproxy_http_ctx *ctx);
 
 #endif

@@ -25,7 +25,7 @@
 
 #include "list.h"
 #include "config.h"
-#include "http_stream.h"
+#include "http_handler.h"
 
 enum zproxy_state {
 	ZPROXY_CONN_RECV_HTTP_REQ,
@@ -43,7 +43,7 @@ struct zproxy_backend;
 struct zproxy_conn {
 	struct list_head		list;
 	struct ev_timer			timer;
-	HttpStream 			*stream;
+	struct zproxy_http_parser	*parser;
 	enum zproxy_state		state;
 	struct {
 		struct ev_io		io;

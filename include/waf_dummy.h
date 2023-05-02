@@ -18,9 +18,6 @@
 #ifndef _ZPROXY_WAF_H
 #define _ZPROXY_WAF_H
 
-#include "http_request.h"
-#include "http_response.h"
-
 enum WAF_ACTION {
 	WAF_PASS = 0,
 	WAF_REDIRECTION,

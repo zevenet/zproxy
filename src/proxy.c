@@ -37,7 +37,6 @@
 #include "worker.h"
 #include "ssl.h"
 #include "list.h"
-#include "http_manager.h"
 
 static int zproxy_conn_raw_client_send(struct ev_loop *loop,
 				       const char *buf, uint32_t buflen,
@@ -69,7 +68,6 @@ static int __zproxy_conn_client_recv(struct ev_loop *loop,
 				     uint32_t *numbytes)
 {
 	int ret;
-
 	ret = recv(conn->client.io.fd, conn->client.buf + conn->client.buf_len,
 		   conn->client.buf_siz - conn->client.buf_len, 0);
 	if (ret < 0) {
@@ -179,7 +177,7 @@ void zproxy_conn_release(struct ev_loop *loop, struct zproxy_conn *conn, int err
 	free(conn->backend.buf);
 	zproxy_conn_backend_close(loop, conn);
 
-	delete conn->stream;
+	zproxy_http_parser_free(conn->parser);
 
 	if (err < 0)
 		level = LOG_ERR;
@@ -373,7 +371,7 @@ static int zproxy_backend_reconnect(struct ev_loop *loop, struct zproxy_conn *co
 	close(conn->backend.io.fd);
 	zproxy_conn_splice_release(conn);
 	conn->backend.setup = false;
-	conn->stream->updateStats(NEW_CONN);
+	//~ TODO: conn->stream->updateStats(NEW_CONN);
 	if (__zproxy_backend_reconnect(loop, conn) < 0) {
 		if (!conn->client.resp_buf)
 			return -1;
@@ -433,7 +431,7 @@ static void zproxy_backend_connect_cb(struct ev_loop *loop, struct ev_io *io, in
 				 EV_WRITE);
 	}
 
-	conn->stream->updateStats(ESTABLISHED);
+	//~ TODO: conn->stream->updateStats(ESTABLISHED);
 
 	return;
 
@@ -470,7 +468,6 @@ int zproxy_conn_backend_connect(struct ev_loop *loop, struct zproxy_conn *conn,
 	int backend_sd, ret;
 	if (zproxy_conn_splice_setup(conn) < 0)
 		return -1;
-
 	memcpy(&conn->backend.addr, &backend->addr, sizeof(backend->addr));
 	conn->backend.cfg = backend->cfg;
 
@@ -483,7 +480,7 @@ int zproxy_conn_backend_connect(struct ev_loop *loop, struct zproxy_conn *conn,
 		return __zproxy_backend_reconnect(loop, conn);
 	}
 
-	conn->stream->updateStats(BCK_CONN);
+	//~ TODO: conn->stream->updateStats(BCK_CONN);
 
 	conn->backend.setup = true;
 	conn->backend.ssl_enabled = backend->ssl_enabled;

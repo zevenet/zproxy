@@ -16,12 +16,6 @@
  */
 
 #include "waf.h"
-
-#include "config.h"
-#include "http_log.h"
-#include "http_manager.h"
-#include "http_request.h"
-#include "http_response.h"
 #include "state.h"
 #include "zcu_log.h"
 #include <string>

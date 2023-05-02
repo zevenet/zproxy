@@ -81,7 +81,7 @@ static int zproxy_conn_recv_http_resp(struct ev_loop *loop,
 {
 	struct zproxy_http_ctx ctx = {
 		.cfg		= conn->proxy->cfg,
-		.stream		= conn->stream,
+		.parser		= conn->parser,
 		.state		= conn->proxy->state,
 		.buf		= conn->backend.buf,
 		.buf_len	= conn->backend.buf_len,
@@ -348,7 +348,7 @@ static int zproxy_conn_recv_http_req(struct ev_loop *loop,
 {
 	struct zproxy_http_ctx ctx = {
 		.cfg		= conn->proxy->cfg,
-		.stream		= conn->stream,
+		.parser		= conn->parser,
 		.state		= conn->proxy->state,
 		.buf		= conn->client.buf,
 		.buf_len	= conn->client.buf_len,
@@ -362,8 +362,8 @@ static int zproxy_conn_recv_http_req(struct ev_loop *loop,
 
 	ret = zproxy_http_request_parser(&ctx);
 
-	if (ctx.stream != conn->stream)
-		conn->stream = ctx.stream;
+	if (ctx.parser != conn->parser)
+		conn->parser = ctx.parser;
 
 	if (ret < 0) {
 		conn->client.resp_buf = ctx.resp_buf;
@@ -593,7 +593,7 @@ static void zproxy_client_write(struct ev_loop *loop, struct zproxy_conn *conn, 
 			}
 			zproxy_conn_reset_state(loop, conn);
 
-			if (conn->stream && conn->stream->isTunnel()) {
+			if (conn->parser && conn->parser->websocket) {
 				zcu_log_print_th(LOG_DEBUG, "Switching to WebSocket mode");
 				conn->state = ZPROXY_CONN_PROXY_SPLICE;
 			} else {
@@ -673,7 +673,7 @@ static int zproxy_http_backend_reconnect(struct ev_loop *loop,
 {
 	struct zproxy_http_ctx ctx = {
 		.cfg		= conn->proxy->cfg,
-		.stream		= conn->stream,
+		.parser		= conn->parser,
 		.state		= conn->proxy->state,
 		.buf		= conn->client.buf_stash,
 		.buf_len	= conn->client.buf_stash_len,
@@ -733,7 +733,7 @@ static int __zproxy_http_timeout(struct ev_loop *loop, struct zproxy_conn *conn)
 {
 	struct zproxy_http_ctx ctx = {
 		.cfg		= conn->proxy->cfg,
-		.stream		= conn->stream,
+		.parser		= conn->parser,
 		.state		= conn->proxy->state,
 		.buf		= conn->client.buf,
 		.buf_len	= conn->client.buf_len,
@@ -781,7 +781,7 @@ static int zproxy_http_nossl(struct ev_loop *loop, struct zproxy_conn *conn,
 {
 	struct zproxy_http_ctx ctx = {
 		.cfg		= conn->proxy->cfg,
-		.stream		= conn->stream,
+		.parser		= conn->parser,
 		.state		= conn->proxy->state,
 		.buf		= conn->client.buf,
 		.buf_len	= conn->client.buf_len,

@@ -36,6 +36,7 @@
 #include "ctl.h"
 #include "zcu_environment.h"
 #include "zcu_backtrace.h"
+#include "zcu_log.h"
 
 #ifndef PROJECT_VERSION
 #define ZPROXY_VERSION		"0.1"

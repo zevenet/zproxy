@@ -73,8 +73,10 @@ static int send_msg(const struct zproxy_ctl_conn *ctl,
 	}
 
 	if (buf_len > 0) {
-		sprintf(resp_hdr, "%s%s%s%zu%s%s%s%s%s%s",
+		sprintf(resp_hdr, "%s%s%s%s%s%zu%s%s%s%s%s%s",
+			HTTP_PROTO,
 			ws_str_responses[resp_code],
+			HTTP_LINE_END,
 			content_type,
 			HTTP_HEADER_CONTENTLEN, buf_len, HTTP_LINE_END,
 			HTTP_HEADER_EXPIRES,
@@ -82,7 +84,8 @@ static int send_msg(const struct zproxy_ctl_conn *ctl,
 			HTTP_HEADER_SERVER,
 			HTTP_HEADER_CACHE_CONTROL, HTTP_LINE_END);
 	} else {
-		sprintf(resp_hdr, "%s%s%s%s%s%s",
+		sprintf(resp_hdr, "%s%s%s%s%s%s%s",
+			HTTP_PROTO,
 			ws_str_responses[resp_code],
 			HTTP_HEADER_EXPIRES,
 			HTTP_HEADER_PRAGMA_NO_CACHE,
@@ -759,7 +762,8 @@ static enum ws_responses handle_put(char *req_path,
 int ctl_handler_cb(const struct zproxy_ctl_conn *ctl,
 		const struct zproxy_cfg *cfg)
 {
-	size_t used_bytes;
+	int ret = 0;
+	/*size_t used_bytes;
 	HttpRequest request;
 	const http_parser::PARSE_RESULT parse_res =
 		request.parse(ctl->buf, ctl->buf_len, &used_bytes);
@@ -840,7 +844,7 @@ err_handler:
 	content_type = buf != NULL ? HTTP_HEADER_CONTENT_JSON : NULL;
 	buf_len = buf != NULL ? strlen(buf) : 0;
 	ret = send_msg(ctl, resp_code, content_type, buf, buf_len);
-	free(buf);
+	free(buf);*/
 
 	return ret;
 }

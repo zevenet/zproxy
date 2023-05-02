@@ -24,9 +24,12 @@
 #include <errno.h>
 #include <unistd.h>
 #include <mutex>
+#include <memory>
 #include "proxy.h"
 #include "config.h"
 #include "ssl.h"
+#include "zcu_log.h"
+#include "zcu_common.h"
 
 #ifndef SSL3_ST_SR_CLNT_HELLO_A
 #define SSL3_ST_SR_CLNT_HELLO_A (0x110 | SSL_ST_ACCEPT)

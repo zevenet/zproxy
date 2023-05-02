@@ -22,15 +22,12 @@
 #include <modsecurity/intervention.h>
 #include <modsecurity/rules.h>
 #include <modsecurity/transaction.h>
-#include <string>
 
 enum WAF_ACTION {
 	WAF_PASS = 0,
 	WAF_REDIRECTION,
 	WAF_BLOCK,
 };
-
-class HttpStream;
 
 int zproxy_waf_parse_conf(const char *file, void **rules);
 void zproxy_waf_destroy_rules(void *rules);

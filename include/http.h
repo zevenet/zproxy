@@ -19,10 +19,10 @@
 #define _ZPROXY_HTTP_H_
 
 #include "proxy.h"
-
+#include "http_handler.h"
 #include <stdint.h>
 
-enum class RETURN_HTTP {
+enum RETURN_HTTP {
 	// * http wants to send a error/redirect to client and closes the connection
 	// * it will respond 100 continue to the client and next, it will receive the
 	//		same request with the body appended. The HTTP lib should remove the
@@ -41,7 +41,7 @@ enum zproxy_http_origin {
 
 struct zproxy_http_ctx {
 	const struct zproxy_proxy_cfg	*cfg;
-	HttpStream			*stream;
+	struct zproxy_http_parser	*parser;
 	void				*state;
 
 	const char			*buf;
@@ -67,5 +67,6 @@ int zproxy_http_request_reconnect(struct zproxy_http_ctx *ctx);
 int zproxy_http_response_parser(struct zproxy_http_ctx *ctx);
 int zproxy_http_event_timeout(struct zproxy_http_ctx *ctx);
 int zproxy_http_event_nossl(struct zproxy_http_ctx *ctx);
+int zproxy_http_event_reply_error(struct zproxy_http_ctx *ctx, enum ws_responses code);
 
 #endif

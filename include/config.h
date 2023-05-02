@@ -77,7 +77,8 @@ struct err_resp_item {
 	char                data[CONFIG_MAXBUF];
 };
 
-inline char *zproxy_cfg_get_errmsg(struct list_head *list, int code) {
+inline char *zproxy_cfg_get_errmsg(const struct list_head *list, int code)
+{
 	char *ret = NULL;
 	struct err_resp_item *err_item;
 

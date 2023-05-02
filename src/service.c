@@ -25,7 +25,6 @@
 #include "monitor.h"
 #include "config.h"
 #include "list.h"
-#include "http_manager.h"
 
 #define HASH_SERVICE_SLOTS	64
 static pthread_mutex_t service_state_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -435,84 +434,160 @@ zproxy_service_backend_session(struct zproxy_service_cfg *service_config,
 	return selected_backend;
 }
 
-
-bool zproxy_service_select(const HttpRequest *request,
-			   const struct zproxy_service_cfg *service_config)
+int _zproxy_service_select(struct zproxy_http_ctx *ctx, struct zproxy_service_cfg *service)
 {
 	int i, found;
 	struct matcher *m, *next;
+	struct zproxy_http_parser *parser = ctx->parser;
+	regmatch_t eol;
 
 	/* check for request */
-	regmatch_t eol{ 0, static_cast<regoff_t>(request->path.length()) };
-	list_for_each_entry_safe(m, next, &service_config->runtime.req_url, list) {
-		if (regexec(&m->pat, request->path.data(), 1, &eol,
-				REG_STARTEND) != 0)
-			return false;
+	eol.rm_so = 0;
+	eol.rm_eo = (regoff_t)(parser->req.path_len);
+	list_for_each_entry_safe(m, next, &service->runtime.req_url, list) {
+		if (regexec(&m->pat, parser->req.path, 1, &eol, REG_STARTEND) != 0)
+			return 0;
 	}
 
 	/* check for required headers */
-	list_for_each_entry_safe(m, next, &service_config->runtime.req_head, list) {
+	list_for_each_entry_safe(m, next, &service->runtime.req_head, list) {
 		for (found = i = 0;
-			 i < (int)(request->num_headers) && !found; i++) {
+			 i < (int)(parser->req.num_headers) && !found; i++) {
 
 			eol.rm_so = 0;
-			eol.rm_eo = request->headers[i].line_size - 2;
-			if (regexec(&m->pat, request->headers[i].name, 1, &eol,
+			eol.rm_eo = parser->req.headers[i].line_size;
+			if (regexec(&m->pat, parser->req.headers[i].name, 1, &eol,
 					REG_STARTEND) == 0)
 				found = 1;
 		}
 		if (!found)
-			return false;
+			return 0;
 	}
 
 	/* check for forbidden headers */
-	list_for_each_entry_safe(m, next, &service_config->runtime.deny_head, list) {
-		for (i = 0; i < static_cast<int>(request->num_headers);
+	list_for_each_entry_safe(m, next, &service->runtime.deny_head, list) {
+		for (i = 0; i < static_cast<int>(parser->req.num_headers);
 			 i++) {
 			eol.rm_so = 0;
-			eol.rm_eo = request->headers[i].line_size - 2;
-			if (regexec(&m->pat, request->headers[i].name, 1, &eol,
+			eol.rm_eo = parser->req.headers[i].line_size;
+			if (regexec(&m->pat, parser->req.headers[i].name, 1, &eol,
 					REG_STARTEND) == 0)
-				return false;
+				return 0;
 		}
 	}
-	return true;
+	return 1;
 }
 
-struct zproxy_backend_cfg *
-zproxy_service_select_backend(struct zproxy_service_cfg *service_config,
-			      HttpRequest &request, const char *client_addr,
-			      struct zproxy_sessions *sessions,
-			      struct zproxy_http_state *http_state)
+int zproxy_service_select(struct zproxy_http_ctx *ctx)
+{
+	struct zproxy_service_cfg *service;
+
+	list_for_each_entry(service, &ctx->cfg->service_list, list) {
+		if (_zproxy_service_select(ctx, service)) {
+			ctx->parser->service_cfg = service;
+			// TODO: assign sessions
+			//parser->sessions = zproxy_state_get_session(service->name, &state->services);
+			// TODO: assign http_state
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+static int zproxy_service_get_session_key(struct zproxy_sessions *sessions,
+					  struct zproxy_http_ctx *ctx,
+					  const char *key,
+					  size_t *key_len)
+{
+/*	TODO: return pointer and len of the key.
+	std::string key;
+
+	switch (sessions->type) {
+	case SESS_TYPE::SESS_NONE:
+		break;
+	case SESS_TYPE::SESS_IP:
+		key = client_addr;
+		break;
+	case SESS_TYPE::SESS_COOKIE_INSERT:
+*/		/* fallthrough */
+/*	case SESS_TYPE::SESS_COOKIE:
+		if (!request.getHeaderValue(http::HTTP_HEADER_NAME::COOKIE, key))
+			key = "";
+		else
+			key = getCookieValue(key, sessions->id);
+		break;
+	case SESS_TYPE::SESS_URL: {
+		std::string url = request.getUrl();
+		key = getQueryParameter(url, sessions->id);
+		break;
+	} case SESS_TYPE::SESS_PARM: {
+		std::string url = request.getUrl();
+		key = getUrlParameter(url);
+		break;
+	} case SESS_TYPE::SESS_HEADER:
+		if (!request.getHeaderValue(sessions->id, key))
+			key = "";
+		break;
+	case SESS_TYPE::SESS_BASIC:
+		if (!request.getHeaderValue(
+				http::HTTP_HEADER_NAME::AUTHORIZATION,
+				key)) {
+			key = "";
+		} else {
+			std::stringstream string_to_iterate(key);
+			std::istream_iterator<std::string> begin(
+				string_to_iterate);
+			std::istream_iterator<std::string> end;
+			std::vector<std::string> header_value_parts(begin, end);
+			if (header_value_parts[0] != "Basic") {
+				key = "";
+			} else {
+				key = header_value_parts
+					[1]; // Currently it stores username:password
+			}
+		}
+		break;
+	default:
+		break;
+	}*/
+
+	return 0;
+}
+
+struct zproxy_backend_cfg *zproxy_service_select_backend(struct zproxy_http_ctx *ctx)
 {
 	struct zproxy_backend_cfg *selected_backend = nullptr;
+	struct zproxy_sessions *sessions = ctx->parser->sessions;
+	struct zproxy_http_state *http_state = ctx->parser->http_state;
 	struct zproxy_session_node *session;
-	std::string session_key;
+	struct zproxy_service_cfg *service;
+	char session_key[MAX_HEADER_LEN];
+	size_t session_len = 0;
 
-	if (list_empty(&service_config->backend_list))
+	service = ctx->parser->service_cfg;
+	if (list_empty(&service->backend_list))
 		return nullptr;
 
 	// check sessions table
-	if (service_config->session.sess_type != SESS_TYPE::SESS_NONE) {
-		session_key = zproxy_service_get_session_key(sessions,
-							     client_addr,
-							     request);
-		session = zproxy_session_get(sessions, session_key.data());
+	if (service->session.sess_type != SESS_TYPE::SESS_NONE) {
+		zproxy_service_get_session_key(sessions, ctx, session_key, &session_len);
+		if (!session_len)
+			goto select_backend;
+		session = zproxy_session_get(sessions, session_key);
 		if (session) {
-			selected_backend = zproxy_service_backend_session(service_config, &session->bck_addr, http_state);
-			zproxy_session_free(&session);
+			selected_backend = zproxy_service_backend_session(service, &session->bck_addr, http_state);
 			if (selected_backend)
 				return selected_backend;
 		}
 	}
 
-	selected_backend = (struct zproxy_backend_cfg *)zproxy_service_schedule(service_config, http_state);
+select_backend:
+	selected_backend = (struct zproxy_backend_cfg *)zproxy_service_schedule(service, (struct zproxy_http_state *)ctx->state);
 
-	if (selected_backend && !session_key.empty() &&
-		service_config->session.sess_type != SESS_TYPE::SESS_NONE) {
-		session = zproxy_session_add(sessions, session_key.data(), &selected_backend->runtime.addr);
-		zproxy_session_free(&session);
-	}
+	if (selected_backend && session_len &&
+		service->session.sess_type != SESS_TYPE::SESS_NONE)
+		zproxy_session_add(sessions, session_key, &selected_backend->runtime.addr);
 
 	return selected_backend;
 }

@@ -32,7 +32,6 @@
 #include "zproxy.h"
 #include "socket.h"
 #include "ctl.h"
-#include "http_request.h"
 #include "worker.h"
 #include "config.h"
 
