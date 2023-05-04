@@ -700,6 +700,7 @@ int ctl_handler_cb(const struct zproxy_ctl_conn *ctl,
 
 	switch (request.getRequestMethod()) {
 	case http::REQUEST_METHOD::GET: {
+		zcu_log_print(LOG_DEBUG, "CTL GET %s", request.path.c_str());
 		resp_code = handle_get(request.path, cfg, &buf);
 		if (resp_code == WS_HTTP_200)
 			zcu_log_print(LOG_INFO, "JSON object encoding successful");
@@ -708,6 +709,7 @@ int ctl_handler_cb(const struct zproxy_ctl_conn *ctl,
 		break;
 	}
 	case http_parser::REQUEST_METHOD::PATCH: {
+		zcu_log_print(LOG_DEBUG, "CTL PATCH %s", request.path.c_str());
 		resp_code = handle_patch(request.path, request.message, cfg, &buf);
 		if (resp_code == WS_HTTP_200)
 			zcu_log_print(LOG_INFO, "Object patching successful");
@@ -716,6 +718,7 @@ int ctl_handler_cb(const struct zproxy_ctl_conn *ctl,
 		break;
 	}
 	case http_parser::REQUEST_METHOD::DELETE: {
+		zcu_log_print(LOG_DEBUG, "CTL DELETE %s", request.path.c_str());
 		resp_code = handle_delete(request.path, request.message, cfg, &buf);
 		if (resp_code == WS_HTTP_204)
 			zcu_log_print(LOG_INFO, "Object deletion successful");
@@ -724,6 +727,7 @@ int ctl_handler_cb(const struct zproxy_ctl_conn *ctl,
 		break;
 	}
 	case http_parser::REQUEST_METHOD::PUT: {
+		zcu_log_print(LOG_DEBUG, "CTL PUT %s", request.path.c_str());
 		resp_code = handle_put(request.path, request.message, cfg, &buf);
 		if (resp_code == WS_HTTP_204)
 			zcu_log_print(LOG_INFO, "Object creation successful");
