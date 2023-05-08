@@ -33,6 +33,7 @@
 
 #define CTL_PATH_MAX_PARAMS  4
 
+#define API_REGEX_SELECT_LISTENERS          "^[/]+listeners[/]*$"
 #define API_REGEX_SELECT_LISTENER           "^[/]+listener[/]+([0-9]+)[/]*$"
 #define API_REGEX_SELECT_LISTENER_SERVICES  "^[/]+listener[/]+([0-9]+)[/]+services[/]*$"
 #define API_REGEX_SELECT_SERVICE            "^[/]+listener[/]+([0-9]+)[/]+service[/]+([a-zA-Z0-9-_. ]+)[/]*$"
@@ -160,8 +161,14 @@ static enum ws_responses handle_get(const std::string &req_path,
 	regmatch_t matches[CTL_PATH_MAX_PARAMS];
 	*resp_buf = NULL;
 
-	if (zproxy_regex_exec(API_REGEX_SELECT_LISTENER, req_path.c_str(),
+	if (zproxy_regex_exec(API_REGEX_SELECT_LISTENERS, req_path.c_str(),
 			      matches)) {
+		if (!(*resp_buf = zproxy_json_encode_listeners(cfg))) {
+			*resp_buf = zproxy_json_return_err("Failed to serialize listeners.");
+			return WS_HTTP_500;
+		}
+	} else if (zproxy_regex_exec(API_REGEX_SELECT_LISTENER, req_path.c_str(),
+				     matches)) {
 		GET_MATCH_1PARAM(req_path, param);
 		const int listener_id = atoi(param.c_str());
 		const struct zproxy_proxy_cfg *proxy =

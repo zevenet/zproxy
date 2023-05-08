@@ -211,6 +211,32 @@ static json_t *serialize_proxy(const struct zproxy_proxy_cfg *proxy_cfg,
 	return proxy;
 }
 
+char *zproxy_json_encode_listeners(const struct zproxy_cfg *cfg)
+{
+	char *buf;
+	const struct zproxy_proxy_cfg *proxy = NULL;
+	struct zproxy_http_state *state = NULL;
+	json_t *json_obj = json_array();
+
+	if (!json_obj)
+		return NULL;
+
+	list_for_each_entry(proxy, &cfg->proxy_list, list) {
+		state = zproxy_state_lookup(proxy->id);
+		if (!state)
+			continue;
+
+		json_array_append_new(json_obj, serialize_proxy(proxy, state));
+
+		zproxy_state_release(&state);
+	}
+
+	buf = json_dumps(json_obj, JSON_REAL_PRECISION(3) | JSON_INDENT(8));
+	json_decref(json_obj);
+
+	return buf;
+}
+
 char *zproxy_json_encode_listener(const struct zproxy_proxy_cfg *proxy)
 {
 	struct zproxy_http_state *state = NULL;

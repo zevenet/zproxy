@@ -60,6 +60,7 @@ inline char *zproxy_json_return_err(const char *format, ...)
 }
 
 /* ENCODING */
+char *zproxy_json_encode_listeners(const struct zproxy_cfg *cfg);
 char *zproxy_json_encode_listener(const struct zproxy_proxy_cfg *proxy);
 char *zproxy_json_encode_services(const struct zproxy_proxy_cfg *proxy);
 char *zproxy_json_encode_service(const struct zproxy_service_cfg *service);

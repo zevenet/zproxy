@@ -9,6 +9,12 @@ You can receive statistics and other general data on the current state of Zproxy
 and its logical components. This can be done by sending a GET request specifying
 in the path the component you wish to enquire of.
 
+- Get the stats for all listeners
+
+```
+GET /listeners
+```
+
 - Get the stats for a listener with 'listener\_id'
 
 ```
