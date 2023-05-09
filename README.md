@@ -789,7 +789,7 @@ specification](/doc/ctl-api.md).
 
 ## License
 
-Copyright &copy; 2019 ZEVENET. Licensed under the terms & conditions of the GNU
+Copyright &copy; 2023 ZEVENET. Licensed under the terms & conditions of the GNU
 Affero General Public License (AGPL-3.0).
 
 ## Authors
