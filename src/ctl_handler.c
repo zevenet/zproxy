@@ -321,8 +321,17 @@ static enum ws_responses handle_patch(const std::string &req_path,
 			struct zproxy_backend_cfg *backend =
 				find_backend(cfg, listener_id, service_id.c_str(),
 					     i.backend_id.c_str());
-			zproxy_session_node *sess = 
+			if (!backend) {
+				*resp_buf = zproxy_json_return_err("Backend %s doesn't exist.",
+								   i.backend_id.c_str());
+				return WS_HTTP_500;
+			}
+			zproxy_session_node *sess =
 				zproxy_session_add(sessions, i.id.data(), &backend->runtime.addr);
+			if (!sess) {
+				*resp_buf = zproxy_json_return_err("Failed to create session");
+				return WS_HTTP_500;
+			}
 			sess->timestamp = i.last_seen;
 		}
 
@@ -436,10 +445,19 @@ static enum ws_responses handle_patch(const std::string &req_path,
 					struct zproxy_backend_cfg *backend =
 						find_backend(cfg, i.id, j.name,
 							     k.backend_id.c_str());
+					if (!backend) {
+						*resp_buf = zproxy_json_return_err("Backend %s doesn't exist.",
+										   k.backend_id.c_str());
+						return WS_HTTP_500;
+					}
 					zproxy_session_node *sess =
 						zproxy_session_add(sessions,
 								   k.id.data(),
 								   &backend->runtime.addr);
+					if (!sess) {
+						*resp_buf = zproxy_json_return_err("Failed to create session");
+						return WS_HTTP_500;
+					}
 					sess->timestamp = k.last_seen;
 				}
 			}
