@@ -243,5 +243,39 @@ PATCH '{"backend-id":"<backend_id>","last-seen":<last_seen>}' /listener/<listene
 - Synchronize sessions from JSON array
 
 ```
-PATCH '[{"backend-id":"<backend_id>","last-seen":<last_seen>},...]' /listener/<listener_id>/service/<service_id>/sessions
+PATCH
+'[
+        {
+                "id": "<id>",
+                "backend-id": "<backend_id>",
+                "last-seen": <last_seen>
+        },
+        ...
+]' /listener/<listener_id>/service/<service_id>/sessions
+```
+
+- Synchronize sessions in all listeners
+
+```
+PATCH
+'[
+        {
+                "id": <listener_id>,
+                "services": [
+                        {
+                                "name": "<service_name>",
+                                "sessions": [
+                                        {
+                                                "id":"<sess_id>",
+                                                "backend-id":"<backend_id>",
+                                                "last-seen":<last_seen>
+                                        },
+                                        ...
+                                ]
+                        },
+                        ...
+                ]
+        },
+        ...
+]' /sessions
 ```

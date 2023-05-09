@@ -306,6 +306,51 @@ char *zproxy_json_encode_service(const struct zproxy_service_cfg *service)
 	return buf;
 }
 
+char *zproxy_json_encode_glob_sessions(const struct zproxy_cfg *cfg)
+{
+	char *buf;
+	const struct zproxy_proxy_cfg *proxy = NULL;
+	const struct zproxy_service_cfg *service = NULL;
+	struct zproxy_http_state *state = NULL;
+	json_t *json_obj = json_array();
+
+	if (!json_obj)
+		return NULL;
+
+	list_for_each_entry(proxy, &cfg->proxy_list, list) {
+		state = zproxy_state_lookup(proxy->id);
+		if (!state)
+			continue;
+
+		json_t *proxy_obj = json_object();
+		json_object_set_new(proxy_obj, "id", json_integer(proxy->id));
+
+		json_t *serv_arr = json_array();
+		list_for_each_entry(service, &proxy->service_list, list) {
+			json_t *serv_obj = json_object();
+
+			json_object_set_new(serv_obj, "name",
+					    json_string(service->name));
+
+			json_t *sess_arr =
+				serialize_service_sessions(service,
+							   state->services.at(service->name)->sessions);
+			json_object_set_new(serv_obj, "sessions", sess_arr);
+			json_array_append_new(serv_arr, serv_obj);
+		}
+
+		zproxy_state_release(&state);
+
+		json_object_set_new(proxy_obj, "services", serv_arr);
+		json_array_append_new(json_obj, proxy_obj);
+	}
+
+	buf = json_dumps(json_obj, JSON_REAL_PRECISION(3) | JSON_INDENT(8));
+	json_decref(json_obj);
+
+	return buf;
+}
+
 char *zproxy_json_encode_sessions(const zproxy_service_cfg *service,
 				  zproxy_sessions *sessions)
 {
@@ -450,6 +495,62 @@ int zproxy_json_decode_session(const char *buf, char *sess_id, size_t sess_id_le
 	}
 
 	json_decref(obj);
+
+	return 1;
+}
+
+int zproxy_json_decode_glob_sessions(const char *buf,
+				     std::vector<struct json_sess_listener> &listeners)
+{
+	json_error_t json_err;
+	json_t *listener_arr, *listener_obj, *service_arr, *service_obj,
+	       *session_arr, *session_obj, *req_var;
+	size_t i, j, k;
+
+	if (!buf)
+		return -1;
+
+	if (!(listener_arr = json_loads(buf, 0, &json_err))) {
+		zcu_log_print(LOG_WARNING, "Failed to decode JSON buffer.");
+		return -1;
+	}
+
+	json_array_foreach(listener_arr, i, listener_obj) {
+		struct json_sess_listener listener;
+		req_var = json_object_get(listener_obj, "id");
+		listener.id = json_integer_value(req_var);
+
+		service_arr = json_object_get(listener_obj, "services");
+		json_array_foreach(service_arr, j, service_obj) {
+			struct json_sess_service service;
+			req_var = json_object_get(service_obj, "name");
+			snprintf(service.name, CONFIG_IDENT_MAX,
+				 json_string_value(req_var), "%s");
+
+			session_arr = json_object_get(service_obj, "sessions");
+			json_array_foreach(session_arr, k, session_obj) {
+				struct json_session session;
+				if ((req_var = json_object_get(session_obj, "id")))
+					session.id = json_string_value(req_var);
+
+				if ((req_var = json_object_get(session_obj, "backend-id")))
+					session.backend_id = json_string_value(req_var);
+
+				if ((req_var = json_object_get(session_obj, "last-seen")))
+					session.last_seen = (time_t)json_integer_value(req_var);
+				else
+					session.last_seen = -1;
+
+				service.sessions.push_back(session);
+			}
+
+			listener.services.push_back(service);
+		}
+
+		listeners.push_back(listener);
+	}
+
+	json_decref(listener_arr);
 
 	return 1;
 }

@@ -15,3 +15,14 @@ CMD=ctl
 URL="/listener/0/service/default/sessions"
 METHOD="PATCH"
 BODY=sync-sess.json
+######################################
+DESCRIPTION="Clear sessions"
+CMD=ctl
+URL="/listener/0/service/default/sessions"
+METHOD="DELETE"
+######################################
+DESCRIPTION="Sync sessions globally"
+CMD=ctl
+URL="/sessions"
+METHOD="PATCH"
+BODY=full-sync.json

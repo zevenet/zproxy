@@ -43,6 +43,7 @@
 #define API_REGEX_SELECT_BACKEND            "^[/]+listener[/]+([0-9]+)[/]+service[/]+([a-zA-Z0-9-_. ]+)[/]+backend[/]+([0-9.]+-[0-9]+)[/]*$"
 #define API_REGEX_SELECT_BACKEND_STATUS     "^[/]+listener[/]+([0-9]+)[/]+service[/]+([a-zA-Z0-9-_. ]+)[/]+backend[/]+([0-9.]+-[0-9]+)[/]+status$"
 #define API_REGEX_SELECT_CONFIG             "^[/]+config[/]*$"
+#define API_REGEX_SELECT_SESSIONS           "^[/]+sessions[/]*$"
 
 #define GET_MATCH_1PARAM(str, p1)                                              \
 	const std::string p1 =                                                 \
@@ -268,6 +269,12 @@ static enum ws_responses handle_get(const std::string &req_path,
 							   backend_id.c_str());
 			return WS_HTTP_500;
 		}
+	} else if (zproxy_regex_exec(API_REGEX_SELECT_SESSIONS,
+				     req_path.c_str(), matches)) {
+		if (!(*resp_buf = zproxy_json_encode_glob_sessions(cfg))) {
+			*resp_buf = zproxy_json_return_err("Failed to encode sessions.");
+			return WS_HTTP_500;
+		}
 	} else {
 		return WS_HTTP_400;
 	}
@@ -399,6 +406,44 @@ static enum ws_responses handle_patch(const std::string &req_path,
 		if (zproxy_cfg_file_reload() < 0) {
 			*resp_buf = zproxy_json_return_err("Failed to reload configuration.");
 			return WS_HTTP_500;
+		}
+	} else if (zproxy_regex_exec(API_REGEX_SELECT_SESSIONS,
+				     req_path.c_str(), matches)) {
+		struct zproxy_http_state *state;
+		std::vector<struct json_sess_listener> sess_listeners;
+		if (zproxy_json_decode_glob_sessions(req_msg, sess_listeners) < 0) {
+			*resp_buf = zproxy_json_return_err("Failed to decode JSON.");
+			return WS_HTTP_500;
+		}
+
+		for (auto &i : sess_listeners) {
+			state = zproxy_state_lookup(i.id);
+			if (!state) {
+				*resp_buf = zproxy_json_return_err("Listener %d doesn't exist.",
+								   i.id);
+				return WS_HTTP_500;
+			}
+			for (auto &j : i.services) {
+				struct zproxy_sessions *sessions;
+				sessions = zproxy_state_get_session(j.name, &state->services);
+				if (!sessions) {
+					*resp_buf = zproxy_json_return_err("Service %s doesn't exist.",
+									   j.name);
+					return WS_HTTP_500;
+				}
+				zproxy_sessions_flush(sessions);
+				for (auto &k : j.sessions) {
+					struct zproxy_backend_cfg *backend =
+						find_backend(cfg, i.id, j.name,
+							     k.backend_id.c_str());
+					zproxy_session_node *sess =
+						zproxy_session_add(sessions,
+								   k.id.data(),
+								   &backend->runtime.addr);
+					sess->timestamp = k.last_seen;
+				}
+			}
+			zproxy_state_release(&state);
 		}
 	} else {
 		return WS_HTTP_400;

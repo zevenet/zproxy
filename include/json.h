@@ -66,6 +66,7 @@ char *zproxy_json_encode_services(const struct zproxy_proxy_cfg *proxy);
 char *zproxy_json_encode_service(const struct zproxy_service_cfg *service);
 char *zproxy_json_encode_sessions(const zproxy_service_cfg *service,
 				  zproxy_sessions *sessions);
+char *zproxy_json_encode_glob_sessions(const struct zproxy_cfg *cfg);
 char *zproxy_json_encode_backends(const struct zproxy_service_cfg *service);
 char *zproxy_json_encode_backend(const struct zproxy_backend_cfg *backend);
 
@@ -80,10 +81,19 @@ struct json_session {
 	std::string backend_id;
 	time_t last_seen;
 };
+struct json_sess_service {
+	char name[CONFIG_IDENT_MAX];
+	std::vector<struct json_session> sessions;
+};
+struct json_sess_listener {
+	uint32_t id;
+	std::vector<struct json_sess_service> services;
+};
 
+int zproxy_json_decode_glob_sessions(const char *buf,
+				     std::vector<struct json_sess_listener> &listeners);
 int zproxy_json_decode_sessions(const char *buf,
 				std::vector<struct json_session> &sessions);
-
 int zproxy_json_decode_backend(const char *buf, char *id, size_t id_len,
 			       char *address, size_t address_len, int *port,
 			       int *https, int *weight, int *priority,

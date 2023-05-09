@@ -1,0 +1,22 @@
+[
+        {
+                "id": 0,
+                "services": [
+                        {
+                                "name": "default",
+                                "sessions": [
+                                        {
+                                                "id": "sess0",
+                                                "backend-id": "10.2.1.1-80",
+                                                "last-seen": 0
+                                        },
+                                        {
+                                                "id": "sess1",
+                                                "backend-id": "10.2.1.2-80",
+                                                "last-seen": 0
+                                        }
+                                ]
+                        }
+                ]
+        }
+]
