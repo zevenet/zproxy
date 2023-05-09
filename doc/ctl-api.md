@@ -205,7 +205,14 @@ PATCH '{"status":"active"}' /listener/<listener_id>/service/<service_id>/backend
 - Add backend in runtime
 
 ```
-PUT '{"id":"<backend_id>","address":"<address>","https":<bool>, "port": <port>, "weight": <weight>}' /listener/<listener_id>/service/<service_id>/backends
+PUT
+'{
+        "id": "<backend_id>",
+        "address": "<address>",
+        "https": <bool>,
+        "port": <port>,
+        "weight": <weight>
+}' /listener/<listener_id>/service/<service_id>/backends
 ```
 
 ### Session
@@ -213,7 +220,12 @@ PUT '{"id":"<backend_id>","address":"<address>","https":<bool>, "port": <port>, 
 - Create new session
 
 ```
-PUT '{"backend-id":"<backend_id>","id":"<session_id>","last-seen":<last_seen>}' /listener/<listener_id>/service/<service_id>/sessions
+PUT
+'{
+        "backend-id": "<backend_id>",
+        "id": "<session_id>",
+        "last-seen": <last_seen>
+}' /listener/<listener_id>/service/<service_id>/sessions
 ```
 
 - Flush service sessions
@@ -237,7 +249,11 @@ DELETE '{"backend-id":"<backend_id>"}' /listener/<listener_id>/service/<service_
 - Modify session
 
 ```
-PATCH '{"backend-id":"<backend_id>","last-seen":<last_seen>}' /listener/<listener_id>/service/<service_id>/session/<session_id>
+PATCH
+'{
+        "backend-id": "<backend_id>",
+        "last-seen": <last_seen>
+}' /listener/<listener_id>/service/<service_id>/session/<session_id>
 ```
 
 - Synchronize sessions from JSON array
@@ -266,9 +282,9 @@ PATCH
                                 "name": "<service_name>",
                                 "sessions": [
                                         {
-                                                "id":"<sess_id>",
-                                                "backend-id":"<backend_id>",
-                                                "last-seen":<last_seen>
+                                                "id": "<sess_id>",
+                                                "backend-id": "<backend_id>",
+                                                "last-seen": <last_seen>
                                         },
                                         ...
                                 ]
