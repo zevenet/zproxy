@@ -1,1 +1,0 @@
-ip netns exec cl-ns-1 /usr/bin/curl -X GET   -H "X-Forwarded-For: 5.21.8.2" --connect-timeout 2 -s -k --show-error -w 'HTTP_VERSION: %{http_version}\n' -D test_9_curl/response_headers.out.tmp -o test_9_curl/body.out.tmp  https://10.1.2.1:80/headers >test_9_curl/extended.out.tmp 2>test_9_curl/error.out.tmp 

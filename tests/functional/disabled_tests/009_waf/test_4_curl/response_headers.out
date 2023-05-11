@@ -1,8 +1,0 @@
-HTTP/1.0 401 Unauthorized
-Content-Type: text/html
-Content-Length: 19
-Expires: now
-Pragma: no-cache
-Server: zproxy/VERSION
-Cache-control: no-cache,no-store
-
