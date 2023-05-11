@@ -1,0 +1,41 @@
+DESCRIPTION="This request must be allowed and it will wait the expect-100-continue timeout"
+CMD=curl
+CL=1
+BODY=xss_body.txt
+METHOD="POST"
+URL="/echo"
+########################
+CMD=reload
+FILE="zproxy_100cont.cfg"
+########################
+DESCRIPTION="This request must be allowed and it will NOT wait the expect-100-continue timeout"
+CMD=curl
+CL=1
+BODY=xss_body.txt
+METHOD="POST"
+URL="/echo"
+########################
+CMD=reload
+FILE="zproxy_waf.cfg"
+########################
+DESCRIPTION="This request must be blocked and it will wait the expect-100-continue timeout"
+CMD=curl
+CL=1
+BODY=xss_body.txt
+METHOD="POST"
+URL="/echo"
+########################
+CMD=reload
+FILE="zproxy_100cont_waf.cfg"
+########################
+DESCRIPTION="This request must be blocked and it will NOT wait the expect-100-continue timeout"
+CMD=curl
+CL=1
+BODY=xss_body.txt
+METHOD="POST"
+URL="/echo"
+#########################
+DESCRIPTION="Get stats to check counters"
+CMD=ctl
+URL="/listener/0"
+METHOD="GET"
