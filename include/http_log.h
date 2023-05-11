@@ -47,13 +47,12 @@
 			url);                                                  \
 	}
 
-// TODO: perhaps change LOG_INFO to LOG_ERR or at least LOG_WARNING
 #define streamLogError(s, code, code_string)                           \
 	{                                                                      \
 		auto tag = const_cast<HttpStream *>(s)->logTag(LOG_INFO, "error");       \
 		auto req = const_cast<HttpStream *>(s)->request;               \
 		auto host = req.virtual_host;                                  \
-		zcu_log_print_th(LOG_INFO, "%s e%d %s \"Host:%s\" \"%s\"",        \
+		zcu_log_print_th(LOG_ERR, "%s e%d %s \"Host:%s\" \"%s\"",        \
 			      tag.data(), static_cast<int>(code),              \
 			      code_string.data(), host.data(),                 \
 				  req.http_message_str.data());                \
