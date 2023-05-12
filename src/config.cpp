@@ -1307,6 +1307,7 @@ static int zproxy_proxy_cfg_prepare(struct zproxy_proxy_cfg *proxy)
 			zcu_log_print(LOG_ERR, "Failed to load WAF Rules");
 			return -1;
 		}
+		zproxy_waf_dump_rules(proxy->runtime.waf_rules);
 	}
 
 	if (regcomp(&proxy->runtime.req_url_pat_reg, proxy->request.url_pat_str,
@@ -1551,7 +1552,6 @@ static int zproxy_proxy_cfg_file(struct zproxy_cfg *cfg, struct zproxy_proxy_cfg
 				parse_error("ListenHTTP missing Address or Port");
 			if (ssl_enabled && proxy->runtime.ssl_certs_cnt == 0)
 				parse_error("ListenHTTPS missing SSL certificate");
-			zproxy_waf_dump_rules(proxy->runtime.waf_rules);
 			list_add_tail(&proxy->list, &cfg->proxy_list);
 			return 0;
 		} else
