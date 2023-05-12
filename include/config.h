@@ -68,6 +68,11 @@ struct replace_header {
 	char				replace[CONFIG_IDENT_MAX];
 };
 
+struct path_item {
+	struct list_head        list;
+	char                    path[PATH_MAX];
+};
+
 enum class SESS_TYPE {
 	SESS_NONE,
 	SESS_IP,
@@ -345,7 +350,7 @@ struct zproxy_proxy_cfg {
 		char			errwaf_path[PATH_MAX];
 	} error;
 
-	char                            waf_rules_path[CONFIG_IDENT_MAX];
+	struct list_head                waf_rule_paths;
 
 	struct {
 		char			err414_msg[CONFIG_MAXBUF];

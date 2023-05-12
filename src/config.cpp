@@ -245,6 +245,7 @@ static void zproxy_proxy_cfg_init(struct zproxy_cfg *cfg,
 	proxy->log_level = cfg->args.log_level;
 	proxy->error.errnossl_code = CONFIG_DEFAULT_ErrNoSsl_Code;
 
+	INIT_LIST_HEAD(&proxy->waf_rule_paths);
 	INIT_LIST_HEAD(&proxy->runtime.replace_header_req);
 	INIT_LIST_HEAD(&proxy->runtime.replace_header_res);
 	INIT_LIST_HEAD(&proxy->runtime.del_header_req);
@@ -1160,6 +1161,12 @@ static void _zproxy_proxy_cfg_free(struct zproxy_cfg *cfg,
 	if (proxy->runtime.ssl_enabled)
 		zproxy_proxy_ssl_cfg_free(proxy);
 
+	struct path_item *waf_path, *wpnext;
+	list_for_each_entry_safe(waf_path, wpnext, &proxy->waf_rule_paths, list) {
+		list_del(&waf_path->list);
+		free(waf_path);
+	}
+
 	zproxy_replace_header_list_cfg_free(&proxy->runtime.replace_header_req);
 	zproxy_replace_header_list_cfg_free(&proxy->runtime.replace_header_res);
 	zproxy_matcher_list_cfg_free(&proxy->runtime.del_header_req);
@@ -1294,7 +1301,9 @@ static int zproxy_proxy_cfg_prepare(struct zproxy_proxy_cfg *proxy)
 		}
 	}
 
-	if (proxy->waf_rules_path[0]) {
+	struct path_item *waf_path;
+	list_for_each_entry(waf_path, &proxy->waf_rule_paths, list) {
+
 		struct zproxy_cfg *cfg = (struct zproxy_cfg*)proxy->cfg;
 		// initialize WAF if we haven't already
 		if (cfg->runtime.waf_refs == 0) {
@@ -1302,7 +1311,7 @@ static int zproxy_proxy_cfg_prepare(struct zproxy_proxy_cfg *proxy)
 		}
 		cfg->runtime.waf_refs++;
 
-		if (zproxy_waf_parse_conf(proxy->waf_rules_path,
+		if (zproxy_waf_parse_conf(waf_path->path,
 					  &proxy->runtime.waf_rules) < 0) {
 			zcu_log_print(LOG_ERR, "Failed to load WAF Rules");
 			return -1;
@@ -1388,11 +1397,17 @@ static int zproxy_proxy_cfg_file(struct zproxy_cfg *cfg, struct zproxy_proxy_cfg
 			proxy->runtime.addr.sin_family = AF_INET;
 			has_addr = 1;
 		} else if (zproxy_regex_exec(CONFIG_REGEX_WafRules, lin, matches)) {
-			auto file = std::string(lin + matches[1].rm_so,
-						matches[1].rm_eo -
-							matches[1].rm_so);
-			snprintf(proxy->waf_rules_path, CONFIG_IDENT_MAX,
-				 "%s", file.data());
+			struct path_item *rulepath =
+				(struct path_item*)calloc(1, sizeof(struct path_item));
+			if (!rulepath)
+				parse_error("Failed to allocate memory (OOM).");
+
+			size_t path_len = matches[1].rm_eo - matches[1].rm_so;
+			snprintf(rulepath->path,
+				 PATH_MAX <= path_len ? PATH_MAX : path_len + 1,
+				 "%s", lin + matches[1].rm_so);
+
+			list_add_tail(&rulepath->list, &proxy->waf_rule_paths);
 		} else if (zproxy_regex_exec(CONFIG_REGEX_ErrWAF, lin, matches)) {
 			lin[matches[1].rm_eo] = '\0';
 			snprintf(proxy->error.errwaf_path, PATH_MAX, "%s", lin + matches[1].rm_so);
@@ -1627,6 +1642,7 @@ zproxy_proxy_cfg_clone(const struct zproxy_proxy_cfg *proxy_cfg,
 {
 	struct zproxy_proxy_cfg *new_proxy;
 	struct cert_path *cert_path;
+	struct path_item *waf_path;
 
 	zcu_log_print(LOG_DEBUG, "Clone Listener: %s", proxy_cfg->name);
 
@@ -1638,6 +1654,7 @@ zproxy_proxy_cfg_clone(const struct zproxy_proxy_cfg *proxy_cfg,
 	new_proxy->cfg = cfg;
 	INIT_LIST_HEAD(&new_proxy->service_list);
 	INIT_LIST_HEAD(&new_proxy->ssl.cert_paths);
+	INIT_LIST_HEAD(&new_proxy->waf_rule_paths);
 	INIT_LIST_HEAD(&new_proxy->runtime.ssl_certs);
 	INIT_LIST_HEAD(&new_proxy->runtime.del_header_req);
 	INIT_LIST_HEAD(&new_proxy->runtime.del_header_res);
@@ -1654,6 +1671,17 @@ zproxy_proxy_cfg_clone(const struct zproxy_proxy_cfg *proxy_cfg,
 		*cert_path_clone = *cert_path;
 
 		list_add_tail(&cert_path_clone->list, &new_proxy->ssl.cert_paths);
+	}
+
+	list_for_each_entry(waf_path, &proxy_cfg->waf_rule_paths, list) {
+		struct path_item *new_wpath =
+			(struct path_item*)calloc(1, sizeof(struct path_item));
+		if (!new_wpath)
+			goto err_cert_path;
+
+		strcpy(new_wpath->path, waf_path->path);
+
+		list_add_tail(&new_wpath->list, &new_proxy->waf_rule_paths);
 	}
 
 	return new_proxy;
