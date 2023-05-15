@@ -1,0 +1,5 @@
+HTTP/1.0 307 Temporary Redirect
+Content-Type: text/html
+Content-Length: #######
+Location: https://github.com
+

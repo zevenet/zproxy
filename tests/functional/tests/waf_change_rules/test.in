@@ -1,0 +1,28 @@
+DESCRIPTION="Run a command that will be caught by WAF"
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/redirect"
+SSL=1
+#########################
+DESCRIPTION="Reload with non-WAF config"
+CMD=reload
+FILE=zproxy_no_waf.cfg
+#########################
+DESCRIPTION="Same command should not get a WAF response"
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/redirect"
+SSL=1
+#########################
+DESCRIPTION="Re-enable the WAF configuration"
+CMD=reload
+FILE=zproxy.cfg
+#########################
+DESCRIPTION="We should not get the WAF response again"
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/redirect"
+SSL=1
