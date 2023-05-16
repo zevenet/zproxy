@@ -272,9 +272,13 @@ is customary for them to be at the start. They may appear in any order.
   only to the request path - Zproxy will still check that the request is
   syntactically correct.
 
-* **ErrWAF** "filename"
+* **ErrWAF** [code] "filename"
 
-  A file with the text to be displayed if the WAF reject a request.  Default:
+  Define the response given when a request is rejected by WAF. If a code is
+  specified then the file contents will only be used for WAF responses using
+  that status code. If a code is unspecified then it will be used as a general
+  response for all WAF rejection responses.
+  Default:
   "The request was rejected by the server.". Maximum file size: 4KB.
 
 * **Err414** "filename"

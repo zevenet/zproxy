@@ -73,6 +73,28 @@ struct path_item {
 	char                    path[PATH_MAX];
 };
 
+struct err_resp_item {
+	struct list_head    list;
+	int                 code;  ///< If 0 it is the default response
+	char                path[PATH_MAX];
+	char                data[CONFIG_MAXBUF];
+};
+
+inline char *zproxy_cfg_get_errmsg(struct list_head *list, int code) {
+	char *ret = NULL;
+	struct err_resp_item *err_item;
+
+	list_for_each_entry(err_item, list, list) {
+		if (err_item->code == code) {
+			ret = err_item->data;
+			return ret;
+		} else if (err_item->code == 0 && !ret) {
+			ret = err_item->data;
+		}
+	}
+	return ret;
+}
+
 enum class SESS_TYPE {
 	SESS_NONE,
 	SESS_IP,
@@ -344,10 +366,10 @@ struct zproxy_proxy_cfg {
 		char			err501_path[PATH_MAX];
 		char			err503_path[PATH_MAX];
 		char			errnossl_path[PATH_MAX];
+		struct list_head        errwaf_msgs;
 		char			nosslredirect_url[PATH_MAX];
 		enum ws_responses       nosslredirect_code;
 		enum ws_responses       errnossl_code;
-		char			errwaf_path[PATH_MAX];
 	} error;
 
 	struct list_head                waf_rule_paths;
@@ -358,7 +380,6 @@ struct zproxy_proxy_cfg {
 		char			err501_msg[CONFIG_MAXBUF];
 		char			err503_msg[CONFIG_MAXBUF];
 		char			errnossl_msg[CONFIG_MAXBUF];
-		char			errwaf_msg[CONFIG_MAXBUF];
 		void                    *waf_rules;
 		regex_t			req_url_pat_reg;
 		regex_t			req_verb_reg;

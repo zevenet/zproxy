@@ -136,7 +136,7 @@
 #define CONFIG_REGEX_ReplaceHeader		"^[ \t]*ReplaceHeader[ \t]+(Request|Response)[ \t]+\"(.+)\"[ \t]+\"(.+)\"[ \t]+\"(.*)\"[ \t]*$"
 
 /* WAF */
-#define CONFIG_REGEX_ErrWAF			"^[ \t]*ErrWAF[ \t]+\"(.+)\"[ \t]*$"
+#define CONFIG_REGEX_ErrWAF			"^[ \t]*ErrWAF[ \t]+([345][0-9][0-9])?[ \t]*\"(.+)\"[ \t]*$"
 #define CONFIG_REGEX_WafRules			"^[ \t]*WafRules[ \t]+\"(.+)\"[ \t]*$"
 
 static int n_lin = 0;
@@ -245,6 +245,7 @@ static void zproxy_proxy_cfg_init(struct zproxy_cfg *cfg,
 	proxy->log_level = cfg->args.log_level;
 	proxy->error.errnossl_code = CONFIG_DEFAULT_ErrNoSsl_Code;
 
+	INIT_LIST_HEAD(&proxy->error.errwaf_msgs);
 	INIT_LIST_HEAD(&proxy->waf_rule_paths);
 	INIT_LIST_HEAD(&proxy->runtime.replace_header_req);
 	INIT_LIST_HEAD(&proxy->runtime.replace_header_res);
@@ -1149,6 +1150,8 @@ static void _zproxy_proxy_cfg_free(struct zproxy_cfg *cfg,
 				  struct zproxy_proxy_cfg *proxy)
 {
 	zproxy_service_cfg *service, *next;
+	struct path_item *waf_path, *wpnext;
+	struct err_resp_item *err_item, *err_next;
 
 	list_for_each_entry_safe(service, next, &proxy->service_list, list)
 		zproxy_service_cfg_free(service);
@@ -1161,10 +1164,15 @@ static void _zproxy_proxy_cfg_free(struct zproxy_cfg *cfg,
 	if (proxy->runtime.ssl_enabled)
 		zproxy_proxy_ssl_cfg_free(proxy);
 
-	struct path_item *waf_path, *wpnext;
 	list_for_each_entry_safe(waf_path, wpnext, &proxy->waf_rule_paths, list) {
 		list_del(&waf_path->list);
 		free(waf_path);
+	}
+
+	list_for_each_entry_safe(err_item, err_next,
+				 &proxy->error.errwaf_msgs, list) {
+		list_del(&err_item->list);
+		free(err_item);
 	}
 
 	zproxy_replace_header_list_cfg_free(&proxy->runtime.replace_header_req);
@@ -1219,6 +1227,7 @@ static int zproxy_cfg_errmsg_file(const char *path, char *errmsg)
 static int zproxy_proxy_cfg_prepare(struct zproxy_proxy_cfg *proxy)
 {
 	int err;
+	struct err_resp_item *err_item;
 	struct replace_header *tmp_replace_header;
 	struct zproxy_service_cfg *service;
 	struct matcher *tmp_matcher;
@@ -1249,9 +1258,11 @@ static int zproxy_proxy_cfg_prepare(struct zproxy_proxy_cfg *proxy)
 			return -1;
 	}
 
-	if (zproxy_cfg_errmsg_file(proxy->error.errwaf_path,
-				   proxy->runtime.errwaf_msg) < 0)
-		return -1;
+	list_for_each_entry(err_item, &proxy->error.errwaf_msgs, list) {
+		if (zproxy_cfg_errmsg_file(err_item->path,
+					   err_item->data) < 0)
+			return -1;
+	}
 
 	list_for_each_entry(tmp_replace_header, &proxy->runtime.replace_header_req,
 			    list) {
@@ -1409,8 +1420,29 @@ static int zproxy_proxy_cfg_file(struct zproxy_cfg *cfg, struct zproxy_proxy_cfg
 
 			list_add_tail(&rulepath->list, &proxy->waf_rule_paths);
 		} else if (zproxy_regex_exec(CONFIG_REGEX_ErrWAF, lin, matches)) {
-			lin[matches[1].rm_eo] = '\0';
-			snprintf(proxy->error.errwaf_path, PATH_MAX, "%s", lin + matches[1].rm_so);
+			struct err_resp_item *err_item =
+				(struct err_resp_item*)calloc(1, sizeof(struct err_resp_item));
+			if (!err_item)
+				parse_error("Failed to allocate memory (OOM).");
+
+			if (matches[1].rm_eo != matches[1].rm_so) {
+				lin[matches[1].rm_eo] = '\0';
+				err_item->code = (int)strtol(lin + matches[1].rm_so,
+							     NULL, 10);
+				if (!IN_RANGE(err_item->code, 300, 599)) {
+					free(err_item);
+					parse_error("Invalid status code. Range is 300-599");
+				}
+			} else {
+				err_item->code = 0;
+			}
+
+			lin[matches[2].rm_eo] = '\0';
+			snprintf(err_item->path, PATH_MAX, "%s",
+				 lin + matches[2].rm_so);
+
+			list_add_tail(&err_item->list,
+				      &proxy->error.errwaf_msgs);
 		} else if (zproxy_regex_exec(CONFIG_REGEX_Name, lin, matches)) {
 			lin[matches[1].rm_eo] = '\0';
 			snprintf(proxy->name, CONFIG_IDENT_MAX, "%s", lin + matches[1].rm_so);
@@ -1643,6 +1675,7 @@ zproxy_proxy_cfg_clone(const struct zproxy_proxy_cfg *proxy_cfg,
 	struct zproxy_proxy_cfg *new_proxy;
 	struct cert_path *cert_path;
 	struct path_item *waf_path;
+	struct err_resp_item *err_item;
 
 	zcu_log_print(LOG_DEBUG, "Clone Listener: %s", proxy_cfg->name);
 
@@ -1654,12 +1687,24 @@ zproxy_proxy_cfg_clone(const struct zproxy_proxy_cfg *proxy_cfg,
 	new_proxy->cfg = cfg;
 	INIT_LIST_HEAD(&new_proxy->service_list);
 	INIT_LIST_HEAD(&new_proxy->ssl.cert_paths);
+	INIT_LIST_HEAD(&new_proxy->error.errwaf_msgs);
 	INIT_LIST_HEAD(&new_proxy->waf_rule_paths);
 	INIT_LIST_HEAD(&new_proxy->runtime.ssl_certs);
 	INIT_LIST_HEAD(&new_proxy->runtime.del_header_req);
 	INIT_LIST_HEAD(&new_proxy->runtime.del_header_res);
 	INIT_LIST_HEAD(&new_proxy->runtime.replace_header_req);
 	INIT_LIST_HEAD(&new_proxy->runtime.replace_header_res);
+
+	list_for_each_entry(err_item, &proxy_cfg->error.errwaf_msgs, list) {
+		struct err_resp_item *new_err_item =
+			(struct err_resp_item*)calloc(1, sizeof(struct err_resp_item));
+		if (!new_err_item)
+			goto err_cert_path;
+
+		*new_err_item = *err_item;
+		list_add_tail(&new_err_item->list,
+			      &new_proxy->error.errwaf_msgs);
+	}
 
 	list_for_each_entry(cert_path, &proxy_cfg->ssl.cert_paths, list) {
 		struct cert_path *cert_path_clone;

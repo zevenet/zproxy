@@ -193,9 +193,16 @@ char *zproxy_waf_stream_response(struct zproxy_waf_stream *waf_stream,
 		free(it->url);
 	} else {
 		http::Code code = (http::Code)it->status;
+		const char *html_msg =
+			zproxy_cfg_get_errmsg(&stream->listener_config->error.errwaf_msgs,
+					      it->status);
+		// default to empty string so replyError() will format a default
+		// response
+		if (!html_msg)
+			html_msg = "";
 		resp = http_manager::replyError(stream, code,
 						http_info::http_status_code_strings.at(code),
-						stream->listener_config->runtime.errwaf_msg);
+						html_msg);
 	}
 
 	if (it->log)
