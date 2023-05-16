@@ -143,9 +143,10 @@ static int listener_counter = 0;
 	fprintf(stderr, fmt, __VA_ARGS__);                                     \
 	syslog(lvl, fmt, __VA_ARGS__)
 
-#define parse_error(str){ \
+#define parse_error(...){ \
 	fprintf(stderr, "config_error(line %d): ", n_lin); \
-	fprintf(stderr, str": %s\n", lin); \
+	fprintf(stderr, __VA_ARGS__); \
+	fprintf(stderr, ": %s\n", lin); \
 	goto err; \
 }
 
