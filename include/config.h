@@ -298,13 +298,8 @@ struct cert_path {
  * @param header.rw_destination		rewrite destination header
  * @param header.rw_host		rewrite host header
  * @param error.parse_req_msg		?
- * @param error.err414			?
- * @param error.err500			?
- * @param error.err501			?
- * @param error.err503			?
  * @param error.errnossl		?
  * @param error.nossl_url		?
- * @param error.errwaf			?
  * @param runtime.waf_rules		?
  * @param runtime.ssl_dh_params		?
  * @param runtime.ssl_ecdh_curve_nid	?
@@ -361,11 +356,8 @@ struct zproxy_proxy_cfg {
 
 	struct {
 		char			parse_req_msg[CONFIG_MAXBUF];
-		char			err414_path[PATH_MAX];
-		char			err500_path[PATH_MAX];
-		char			err501_path[PATH_MAX];
-		char			err503_path[PATH_MAX];
 		char			errnossl_path[PATH_MAX];
+		struct list_head        err_msgs;
 		struct list_head        errwaf_msgs;
 		char			nosslredirect_url[PATH_MAX];
 		enum ws_responses       nosslredirect_code;
@@ -375,10 +367,6 @@ struct zproxy_proxy_cfg {
 	struct list_head                waf_rule_paths;
 
 	struct {
-		char			err414_msg[CONFIG_MAXBUF];
-		char			err500_msg[CONFIG_MAXBUF];
-		char			err501_msg[CONFIG_MAXBUF];
-		char			err503_msg[CONFIG_MAXBUF];
 		char			errnossl_msg[CONFIG_MAXBUF];
 		void                    *waf_rules;
 		regex_t			req_url_pat_reg;

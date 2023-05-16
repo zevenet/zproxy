@@ -277,30 +277,18 @@ is customary for them to be at the start. They may appear in any order.
   Define the response given when a request is rejected by WAF. If a code is
   specified then the file contents will only be used for WAF responses using
   that status code. If a code is unspecified then it will be used as a general
-  response for all WAF rejection responses.
-  Default:
-  "The request was rejected by the server.". Maximum file size: 4KB.
+  response for all WAF rejection responses. Default: "The request was rejected
+  by the server.". Maximum file size: 4KB.
 
-* **Err414** "filename"
+* **Err** \<code\> "filename"
 
-  A file with the text to be displayed if an Error 414 occurs.  Default:
-  "Request URI is too long.". Maximum file size: 4KB.
+  Define a response message given when the proxy returns a specified error
+  response. The maximum file size is 4KB. The default responses are as follows:
 
-* **Err500** "filename"
-
-  A file with the text to be displayed if an Error 500 occurs.  Default: "An
-  internal server error occurred. Please try again later.". Maximum file size:
-  4KB.
-
-* **Err501** "filename"
-
-  A file with the text to be displayed if an Error 501 occurs.  Default: "This
-  method may not be used.". Maximum file size: 4KB.
-
-* **Err503** "filename"
-
-  A file with the text to be displayed if an Error 503 occurs.  Default: "The
-  service is not available. Please try again later.". Maximum file size: 4KB.
+  * 414 response: "Request URI is too long."
+  * 500 response: "An internal server error occurred. Please try again later."
+  * 501 response: "This method may not be used."
+  * 503 response: "The service is not available. Please try again later."
 
 * **ErrNoSsl** [code] "filename"
 

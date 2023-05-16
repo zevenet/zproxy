@@ -76,10 +76,7 @@
 #define CONFIG_REGEX_CheckURL			"^[ \t]*CheckURL[ \t]+\"(.+)\"[ \t]*$"
 #define CONFIG_REGEX_SSLConfigFile		"^[ \t]*SSLConfigFile[ \t]+\"(.+)\"[ \t]*$"
 #define CONFIG_REGEX_ErrNoSsl			"^[ \t]*ErrNoSsl[ \t]+([45][0-9][0-9][ \t]+)?\"(.+)\"[ \t]*$"
-#define CONFIG_REGEX_Err414			"^[ \t]*Err414[ \t]+\"(.+)\"[ \t]*$"
-#define CONFIG_REGEX_Err500			"^[ \t]*Err500[ \t]+\"(.+)\"[ \t]*$"
-#define CONFIG_REGEX_Err501			"^[ \t]*Err501[ \t]+\"(.+)\"[ \t]*$"
-#define CONFIG_REGEX_Err503			"^[ \t]*Err503[ \t]+\"(.+)\"[ \t]*$"
+#define CONFIG_REGEX_Err                        "^[ \t]*Err[ \t]*([345][0-9][0-9])[ \t]+\"(.+)\"[ \t]*$"
 #define CONFIG_REGEX_NoSslRedirect		"^[ \t]*NoSslRedirect[ \t]+(30[127][ \t]+)?\"(.+)\"[ \t]*$"
 #define CONFIG_REGEX_SSLConfigSection		"^[ \t]*SSLConfigSection[ \t]+([^ \t]+)[ \t]*$"
 #define CONFIG_REGEX_MaxRequest			"^[ \t]*MaxRequest[ \t]+([1-9][0-9]*)[ \t]*$"
@@ -245,6 +242,7 @@ static void zproxy_proxy_cfg_init(struct zproxy_cfg *cfg,
 	proxy->log_level = cfg->args.log_level;
 	proxy->error.errnossl_code = CONFIG_DEFAULT_ErrNoSsl_Code;
 
+	INIT_LIST_HEAD(&proxy->error.err_msgs);
 	INIT_LIST_HEAD(&proxy->error.errwaf_msgs);
 	INIT_LIST_HEAD(&proxy->waf_rule_paths);
 	INIT_LIST_HEAD(&proxy->runtime.replace_header_req);
@@ -1170,6 +1168,12 @@ static void _zproxy_proxy_cfg_free(struct zproxy_cfg *cfg,
 	}
 
 	list_for_each_entry_safe(err_item, err_next,
+				 &proxy->error.err_msgs, list) {
+		list_del(&err_item->list);
+		free(err_item);
+	}
+
+	list_for_each_entry_safe(err_item, err_next,
 				 &proxy->error.errwaf_msgs, list) {
 		list_del(&err_item->list);
 		free(err_item);
@@ -1233,28 +1237,18 @@ static int zproxy_proxy_cfg_prepare(struct zproxy_proxy_cfg *proxy)
 	struct matcher *tmp_matcher;
 	struct cert_path *path;
 
-	if (zproxy_cfg_errmsg_file(proxy->error.err414_path,
-				   proxy->runtime.err414_msg) < 0)
-		return -1;
-
-	if (zproxy_cfg_errmsg_file(proxy->error.err500_path,
-				   proxy->runtime.err500_msg) < 0)
-		return -1;
-
-	if (zproxy_cfg_errmsg_file(proxy->error.err501_path,
-				   proxy->runtime.err501_msg) < 0)
-		return -1;
-
-	if (zproxy_cfg_errmsg_file(proxy->error.err503_path,
-				   proxy->runtime.err503_msg) < 0)
-		return -1;
-
 	if (proxy->error.errnossl_path[0] == '\0') {
 		snprintf(proxy->runtime.errnossl_msg, CONFIG_MAXBUF, "%s",
 			 CONFIG_DEFAULT_ErrNoSsl);
 	} else {
 		if (zproxy_cfg_errmsg_file(proxy->error.errnossl_path,
 					   proxy->runtime.errnossl_msg) < 0)
+			return -1;
+	}
+
+	list_for_each_entry(err_item, &proxy->error.err_msgs, list) {
+		if (zproxy_cfg_errmsg_file(err_item->path,
+					   err_item->data) < 0)
 			return -1;
 	}
 
@@ -1460,18 +1454,26 @@ static int zproxy_proxy_cfg_file(struct zproxy_cfg *cfg, struct zproxy_proxy_cfg
 				parse_error("CheckURL multiple pattern");
 			lin[matches[1].rm_eo] = '\0';
 			snprintf(proxy->request.url_pat_str, CONFIG_IDENT_MAX, "%s", lin + matches[1].rm_so);
-		} else if (zproxy_regex_exec(CONFIG_REGEX_Err414, lin, matches)) {
+		} else if (zproxy_regex_exec(CONFIG_REGEX_Err, lin, matches)) {
+			struct err_resp_item *err_item =
+				(struct err_resp_item*)calloc(1, sizeof(struct err_resp_item));
+			if (!err_item)
+				parse_error("Failed to allocate memory (OOM).");
+
 			lin[matches[1].rm_eo] = '\0';
-			snprintf(proxy->error.err414_path, PATH_MAX, "%s", lin + matches[1].rm_so);
-		} else if (zproxy_regex_exec(CONFIG_REGEX_Err500, lin, matches)) {
-			lin[matches[1].rm_eo] = '\0';
-			snprintf(proxy->error.err500_path, PATH_MAX, "%s", lin + matches[1].rm_so);
-		} else if (zproxy_regex_exec(CONFIG_REGEX_Err501, lin, matches)) {
-			lin[matches[1].rm_eo] = '\0';
-			snprintf(proxy->error.err501_path, PATH_MAX, "%s", lin + matches[1].rm_so);
-		} else if (zproxy_regex_exec(CONFIG_REGEX_Err503, lin, matches)) {
-			lin[matches[1].rm_eo] = '\0';
-			snprintf(proxy->error.err503_path, PATH_MAX, "%s", lin + matches[1].rm_so);
+			err_item->code = (int)strtol(lin + matches[1].rm_so,
+						     NULL, 10);
+			if (!IN_RANGE(err_item->code, 300, 599)) {
+				free(err_item);
+				parse_error("Invalid status code. Range is 300-599");
+			}
+
+			lin[matches[2].rm_eo] = '\0';
+			snprintf(err_item->path, PATH_MAX, "%s",
+				 lin + matches[2].rm_so);
+
+			list_add_tail(&err_item->list,
+				      &proxy->error.err_msgs);
 		} else if (zproxy_regex_exec(CONFIG_REGEX_ErrNoSsl, lin, matches)) {
 			if (matches[1].rm_eo != matches[1].rm_so) {
 				lin[matches[1].rm_eo] = '\0';
@@ -1687,6 +1689,7 @@ zproxy_proxy_cfg_clone(const struct zproxy_proxy_cfg *proxy_cfg,
 	new_proxy->cfg = cfg;
 	INIT_LIST_HEAD(&new_proxy->service_list);
 	INIT_LIST_HEAD(&new_proxy->ssl.cert_paths);
+	INIT_LIST_HEAD(&new_proxy->error.err_msgs);
 	INIT_LIST_HEAD(&new_proxy->error.errwaf_msgs);
 	INIT_LIST_HEAD(&new_proxy->waf_rule_paths);
 	INIT_LIST_HEAD(&new_proxy->runtime.ssl_certs);
@@ -1694,6 +1697,17 @@ zproxy_proxy_cfg_clone(const struct zproxy_proxy_cfg *proxy_cfg,
 	INIT_LIST_HEAD(&new_proxy->runtime.del_header_res);
 	INIT_LIST_HEAD(&new_proxy->runtime.replace_header_req);
 	INIT_LIST_HEAD(&new_proxy->runtime.replace_header_res);
+
+	list_for_each_entry(err_item, &proxy_cfg->error.err_msgs, list) {
+		struct err_resp_item *new_err_item =
+			(struct err_resp_item*)calloc(1, sizeof(struct err_resp_item));
+		if (!new_err_item)
+			goto err_cert_path;
+
+		*new_err_item = *err_item;
+		list_add_tail(&new_err_item->list,
+			      &new_proxy->error.err_msgs);
+	}
 
 	list_for_each_entry(err_item, &proxy_cfg->error.errwaf_msgs, list) {
 		struct err_resp_item *new_err_item =

@@ -61,12 +61,16 @@ int zproxy_http_request_reconnect(struct zproxy_http_ctx *ctx)
 			stream->request, stream->client_addr, stream->session,
 			static_cast<struct zproxy_http_state*>(ctx->state));
 	if (backend == nullptr) {
+		const char *html_msg =
+			zproxy_cfg_get_errmsg(&ctx->stream->listener_config->error.err_msgs, 503);
+		if (!html_msg)
+			html_msg = "";
 		ctx->resp_buf = http_manager::replyError(
 			stream, http::Code::ServiceUnavailable,
 				validation::request_result_reason.at(
 					validation::REQUEST_RESULT::
 						BACKEND_NOT_FOUND),
-				std::string(stream->listener_config->runtime.err503_msg));
+				html_msg);
 		return -1;
 	}
 	zproxy_set_backend(backend, ctx, stream);
@@ -74,10 +78,14 @@ int zproxy_http_request_reconnect(struct zproxy_http_ctx *ctx)
 	stream->request.setHeaderSent(false);
 	ctx->buf_len = ctx->stream->request.prepareToSend(&buf);
 	if (ctx->buf_len == 0) {
+		const char *html_msg =
+			zproxy_cfg_get_errmsg(&ctx->stream->listener_config->error.err_msgs, 500);
+		if (!html_msg)
+			html_msg = "";
 		ctx->resp_buf = http_manager::replyError(
 			stream, http::Code::InternalServerError,
 				http::reasonPhrase(http::Code::InternalServerError),
-				std::string(stream->listener_config->runtime.err500_msg));
+				html_msg);
 		return -1;
 	}
 	ctx->buf = buf;
@@ -116,10 +124,14 @@ static int zproxy_http_request_head_rcv(struct zproxy_http_ctx *ctx)
 			return 0;
 	}
 	if (parse_status == http_parser::PARSE_RESULT::TOOLONG) {
+		const char *html_msg =
+			zproxy_cfg_get_errmsg(&stream->listener_config->error.err_msgs, 414);
+		if (!html_msg)
+			html_msg = "";
 		ctx->resp_buf = http_manager::replyError(
 			stream, http::Code::URITooLong,
 			http::reasonPhrase(http::Code::URITooLong),
-			std::string(stream->listener_config->runtime.err414_msg));
+			html_msg);
 		return -1;
 	}
 	if (parse_status == http_parser::PARSE_RESULT::FAILED) {
@@ -133,16 +145,24 @@ static int zproxy_http_request_head_rcv(struct zproxy_http_ctx *ctx)
 	auto valid = http_manager::validateRequestLine(stream);
 
 	if (valid == validation::REQUEST_RESULT::METHOD_NOT_ALLOWED) {
+		const char *html_msg =
+			zproxy_cfg_get_errmsg(&stream->listener_config->error.err_msgs, 501);
+		if (!html_msg)
+			html_msg = "";
 		ctx->resp_buf = http_manager::replyError(
 			stream, http::Code::MethodNotAllowed,
 			validation::request_result_reason.at(valid),
-			std::string(stream->listener_config->runtime.err501_msg));
+			html_msg);
 		return -1;
 	} else if (valid != validation::REQUEST_RESULT::OK) {
+		const char *html_msg =
+			zproxy_cfg_get_errmsg(&stream->listener_config->error.err_msgs, 503);
+		if (!html_msg)
+			html_msg = "";
 		ctx->resp_buf = http_manager::replyError(
 			stream, http::Code::ServiceUnavailable,
 			validation::request_result_reason.at(valid),
-			std::string(stream->listener_config->runtime.err503_msg));
+			html_msg);
 		return -1;
 	}
 
@@ -160,11 +180,15 @@ static int zproxy_http_request_head_rcv(struct zproxy_http_ctx *ctx)
 	}
 
 	if (stream->service_config == nullptr) {
+		const char *html_msg =
+			zproxy_cfg_get_errmsg(&stream->listener_config->error.err_msgs, 503);
+		if (!html_msg)
+			html_msg = "";
 		ctx->resp_buf = http_manager::replyError(
 			stream, http::Code::ServiceUnavailable,
 			validation::request_result_reason.at(
 				validation::REQUEST_RESULT::SERVICE_NOT_FOUND),
-			std::string(stream->listener_config->runtime.err503_msg));
+			html_msg);
 		return -1;
 	}
 
@@ -179,10 +203,14 @@ static int zproxy_http_request_head_rcv(struct zproxy_http_ctx *ctx)
 
 	valid = http_manager::validateRequest(stream);
 	if (valid != validation::REQUEST_RESULT::OK) {
+		const char *html_msg =
+			zproxy_cfg_get_errmsg(&stream->listener_config->error.err_msgs, 501);
+		if (!html_msg)
+			html_msg = "";
 		ctx->resp_buf = http_manager::replyError(
 			stream, http::Code::NotImplemented,
 			validation::request_result_reason.at(valid),
-			std::string(stream->listener_config->runtime.err501_msg));
+			html_msg);
 		return -1;
 	}
 
@@ -201,12 +229,16 @@ static int zproxy_http_request_head_rcv(struct zproxy_http_ctx *ctx)
 				stream->request, stream->client_addr, stream->session,
 				state);
 		if (backend == nullptr) {
+			const char *html_msg =
+				zproxy_cfg_get_errmsg(&stream->listener_config->error.err_msgs, 503);
+			if (!html_msg)
+				html_msg = "";
 			ctx->resp_buf = http_manager::replyError(
 				stream, http::Code::ServiceUnavailable,
 				validation::request_result_reason.at(
 					validation::REQUEST_RESULT::
 					BACKEND_NOT_FOUND),
-				std::string(stream->listener_config->runtime.err503_msg));
+				html_msg);
 			return -1;
 		}
 		stream->new_backend = backend;
@@ -226,10 +258,14 @@ static int zproxy_http_request_head_rcv(struct zproxy_http_ctx *ctx)
 
 	ctx->buf_len = ctx->stream->request.prepareToSend(&buf);
 	if (ctx->buf_len == 0) {
+		const char *html_msg =
+			zproxy_cfg_get_errmsg(&stream->listener_config->error.err_msgs, 500);
+		if (!html_msg)
+			html_msg = "";
 		ctx->resp_buf = http_manager::replyError(
 			ctx->stream, http::Code::InternalServerError,
 			http::reasonPhrase(http::Code::InternalServerError),
-			std::string(ctx->stream->listener_config->runtime.err500_msg));
+			html_msg);
 		return -1;
 	}
 	ctx->buf_tail_len = ctx->buf_len;
@@ -267,10 +303,14 @@ static int zproxy_http_request_100_cont(struct zproxy_http_ctx *ctx)
 	ctx->buf_len = ctx->stream->request.prepareToSend(&buf);
 
 	if (ctx->buf_len == 0) {
+		const char *html_msg =
+			zproxy_cfg_get_errmsg(&ctx->stream->listener_config->error.err_msgs, 500);
+		if (!html_msg)
+			html_msg = "";
 		ctx->resp_buf = http_manager::replyError(
 			ctx->stream, http::Code::InternalServerError,
 			http::reasonPhrase(http::Code::InternalServerError),
-			std::string(ctx->stream->listener_config->runtime.err500_msg));
+			html_msg);
 		return -1;
 	}
 	ctx->buf_tail_len = ctx->buf_len;
@@ -393,10 +433,14 @@ int zproxy_http_response_parser(struct zproxy_http_ctx *ctx)
 		if (parse_status == http_parser::PARSE_RESULT::INCOMPLETE)
 			return 0;
 		if (parse_status == http_parser::PARSE_RESULT::FAILED) {
+			const char *html_msg =
+				zproxy_cfg_get_errmsg(&ctx->stream->listener_config->error.err_msgs, 500);
+			if (!html_msg)
+				html_msg = "";
 			ctx->buf = http_manager::replyError(
 				stream, http::Code::InternalServerError,
 				http::reasonPhrase(http::Code::InternalServerError),
-				std::string(stream->listener_config->runtime.err500_msg));
+				html_msg);
 			ctx->buf_len = strlen(ctx->buf);
 			return -1;
 		}
@@ -411,10 +455,14 @@ int zproxy_http_response_parser(struct zproxy_http_ctx *ctx)
 		// build the response
 		ctx->buf_len = ctx->stream->response.prepareToSend(&buf);
 		if (ctx->buf_len == 0) {
+			const char *html_msg =
+				zproxy_cfg_get_errmsg(&ctx->stream->listener_config->error.err_msgs, 500);
+			if (!html_msg)
+				html_msg = "";
 			ctx->buf = http_manager::replyError(
 				ctx->stream, http::Code::InternalServerError,
 					http::reasonPhrase(http::Code::InternalServerError),
-					std::string(ctx->stream->listener_config->runtime.err500_msg));
+					html_msg);
 			ctx->buf_len = strlen(ctx->buf);
 			return -1;
 		}
