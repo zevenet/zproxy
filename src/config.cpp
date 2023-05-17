@@ -17,6 +17,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <sys/syslog.h>
 #include <unistd.h>
 #include <dirent.h>
 #include <iostream>
@@ -33,6 +34,7 @@
 #include "config.h"
 #include "list.h"
 #include "zcu_common.h"
+#include "zcu_log.h"
 #include "zcu_network.h"
 #include "ssl.h"
 #include "state.h"
@@ -147,6 +149,9 @@ static int listener_counter = 0;
 	fprintf(stderr, "config_error(line %d): ", n_lin); \
 	fprintf(stderr, __VA_ARGS__); \
 	fprintf(stderr, ": %s\n", lin); \
+	zcu_log_print(LOG_ERR, "config_error(line %d): ", n_lin); \
+	zcu_log_print(LOG_ERR, __VA_ARGS__); \
+	zcu_log_print(LOG_ERR, ": %s\n", lin); \
 	goto err; \
 }
 
