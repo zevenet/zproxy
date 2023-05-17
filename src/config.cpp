@@ -78,7 +78,7 @@
 #define CONFIG_REGEX_CheckURL			"^[ \t]*CheckURL[ \t]+\"(.+)\"[ \t]*$"
 #define CONFIG_REGEX_SSLConfigFile		"^[ \t]*SSLConfigFile[ \t]+\"(.+)\"[ \t]*$"
 #define CONFIG_REGEX_ErrNoSsl			"^[ \t]*ErrNoSsl[ \t]+([45][0-9][0-9][ \t]+)?\"(.+)\"[ \t]*$"
-#define CONFIG_REGEX_Err                        "^[ \t]*Err[ \t]*([345][0-9][0-9])[ \t]+\"(.+)\"[ \t]*$"
+#define CONFIG_REGEX_Err                        "^[ \t]*Err(WAF)?[ \t]*([0-9][0-9][0-9])?[ \t]+\"(.+)\"[ \t]*$"
 #define CONFIG_REGEX_NoSslRedirect		"^[ \t]*NoSslRedirect[ \t]+(30[127][ \t]+)?\"(.+)\"[ \t]*$"
 #define CONFIG_REGEX_SSLConfigSection		"^[ \t]*SSLConfigSection[ \t]+([^ \t]+)[ \t]*$"
 #define CONFIG_REGEX_MaxRequest			"^[ \t]*MaxRequest[ \t]+([1-9][0-9]*)[ \t]*$"
@@ -135,7 +135,6 @@
 #define CONFIG_REGEX_ReplaceHeader		"^[ \t]*ReplaceHeader[ \t]+(Request|Response)[ \t]+\"(.+)\"[ \t]+\"(.+)\"[ \t]+\"(.*)\"[ \t]*$"
 
 /* WAF */
-#define CONFIG_REGEX_ErrWAF			"^[ \t]*ErrWAF[ \t]+([345][0-9][0-9])?[ \t]*\"(.+)\"[ \t]*$"
 #define CONFIG_REGEX_WafRules			"^[ \t]*WafRules[ \t]+\"(.+)\"[ \t]*$"
 
 static int n_lin = 0;
@@ -1419,30 +1418,6 @@ static int zproxy_proxy_cfg_file(struct zproxy_cfg *cfg, struct zproxy_proxy_cfg
 				 "%s", lin + matches[1].rm_so);
 
 			list_add_tail(&rulepath->list, &proxy->waf_rule_paths);
-		} else if (zproxy_regex_exec(CONFIG_REGEX_ErrWAF, lin, matches)) {
-			struct err_resp_item *err_item =
-				(struct err_resp_item*)calloc(1, sizeof(struct err_resp_item));
-			if (!err_item)
-				parse_error("Failed to allocate memory (OOM).");
-
-			if (matches[1].rm_eo != matches[1].rm_so) {
-				lin[matches[1].rm_eo] = '\0';
-				err_item->code = (int)strtol(lin + matches[1].rm_so,
-							     NULL, 10);
-				if (!IN_RANGE(err_item->code, 300, 599)) {
-					free(err_item);
-					parse_error("Invalid status code. Range is 300-599");
-				}
-			} else {
-				err_item->code = 0;
-			}
-
-			lin[matches[2].rm_eo] = '\0';
-			snprintf(err_item->path, PATH_MAX, "%s",
-				 lin + matches[2].rm_so);
-
-			list_add_tail(&err_item->list,
-				      &proxy->error.errwaf_msgs);
 		} else if (zproxy_regex_exec(CONFIG_REGEX_Name, lin, matches)) {
 			lin[matches[1].rm_eo] = '\0';
 			snprintf(proxy->name, CONFIG_IDENT_MAX, "%s", lin + matches[1].rm_so);
@@ -1461,25 +1436,35 @@ static int zproxy_proxy_cfg_file(struct zproxy_cfg *cfg, struct zproxy_proxy_cfg
 			lin[matches[1].rm_eo] = '\0';
 			snprintf(proxy->request.url_pat_str, CONFIG_IDENT_MAX, "%s", lin + matches[1].rm_so);
 		} else if (zproxy_regex_exec(CONFIG_REGEX_Err, lin, matches)) {
+			const bool is_waf = matches[1].rm_eo != matches[1].rm_so;
 			struct err_resp_item *err_item =
 				(struct err_resp_item*)calloc(1, sizeof(struct err_resp_item));
 			if (!err_item)
 				parse_error("Failed to allocate memory (OOM).");
 
-			lin[matches[1].rm_eo] = '\0';
-			err_item->code = (int)strtol(lin + matches[1].rm_so,
-						     NULL, 10);
-			if (!IN_RANGE(err_item->code, 300, 599)) {
+			if (matches[2].rm_eo != matches[2].rm_so) {
+				lin[matches[2].rm_eo] = '\0';
+				err_item->code = (int)strtol(lin + matches[2].rm_so,
+							     NULL, 10);
+				if (!IN_RANGE(err_item->code, 300, 599)) {
+					free(err_item);
+					parse_error("Invalid status code. Range is 300-599");
+				}
+			} else if (!is_waf) {
 				free(err_item);
-				parse_error("Invalid status code. Range is 300-599");
+				parse_error("Err directive requires a status code.");
 			}
 
-			lin[matches[2].rm_eo] = '\0';
+			lin[matches[3].rm_eo] = '\0';
 			snprintf(err_item->path, PATH_MAX, "%s",
-				 lin + matches[2].rm_so);
+				 lin + matches[3].rm_so);
 
-			list_add_tail(&err_item->list,
-				      &proxy->error.err_msgs);
+			if (is_waf)
+				list_add_tail(&err_item->list,
+					      &proxy->error.errwaf_msgs);
+			else
+				list_add_tail(&err_item->list,
+					      &proxy->error.err_msgs);
 		} else if (zproxy_regex_exec(CONFIG_REGEX_ErrNoSsl, lin, matches)) {
 			if (matches[1].rm_eo != matches[1].rm_so) {
 				lin[matches[1].rm_eo] = '\0';
