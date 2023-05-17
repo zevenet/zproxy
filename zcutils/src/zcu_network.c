@@ -22,7 +22,8 @@
 
 #define ZCU_MAX_IDENT	100
 
-int zcu_soc_equal_sockaddr(struct sockaddr *addr1, struct sockaddr *addr2, int compare_port)
+int zcu_soc_equal_sockaddr(const struct sockaddr *addr1,
+			   const struct sockaddr *addr2, int compare_port)
 {
 	if (addr1->sa_family != addr2->sa_family)
 		return 0;

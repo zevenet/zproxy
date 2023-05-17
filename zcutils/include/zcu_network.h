@@ -26,8 +26,8 @@
 extern "C" {
 #endif
 
-int zcu_soc_equal_sockaddr(struct sockaddr *addr1, struct sockaddr *addr2,
-			int compare_port);
+int zcu_soc_equal_sockaddr(const struct sockaddr *addr1,
+			   const struct sockaddr *addr2, int compare_port);
 
 int zcu_net_get_host(const char *name, struct addrinfo *res, int ai_family,
 		int port);

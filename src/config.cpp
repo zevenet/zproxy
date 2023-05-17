@@ -18,8 +18,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/syslog.h>
+#include <net/if.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <ifaddrs.h>
 #include <iostream>
 #include <fstream>
 #include <fnmatch.h>
@@ -195,6 +197,31 @@ static const char *xhttp[6] = {
 #define DEFAULT_BACKEND_WEIGHT		1
 #define DEFAULT_BACKEND_CONN_LIMIT	0
 #define DEFAULT_BACKEND_NFMARK		0
+
+static bool zproxy_is_brd_addr(const struct sockaddr_in *bck_addr)
+{
+	struct ifaddrs *if_start, *if_node;
+
+	getifaddrs(&if_start);
+	for (if_node = if_start; if_node; if_node = if_node->ifa_next) {
+		if ((if_node->ifa_flags & IFF_BROADCAST) == 0)
+			continue;
+
+		const struct sockaddr_in *brd_addr =
+			(struct sockaddr_in*)if_node->ifa_broadaddr;
+		if (!brd_addr)
+			continue;
+
+		if (brd_addr->sin_family == bck_addr->sin_family &&
+		    brd_addr->sin_addr.s_addr == bck_addr->sin_addr.s_addr) {
+			freeifaddrs(if_start);
+			return true;
+		}
+	}
+	freeifaddrs(if_start);
+
+	return false;
+}
 
 void zproxy_cfg_init(struct zproxy_cfg *cfg)
 {
@@ -829,6 +856,8 @@ static int zproxy_backend_cfg_file(zproxy_cfg *cfg, zproxy_service_cfg *service,
 			snprintf(backend->address, CONFIG_MAX_FIN, "%s", lin + matches[1].rm_so);
 			backend->runtime.addr.sin_addr.s_addr = inet_addr(backend->address);
 			backend->runtime.addr.sin_family = AF_INET;
+			if (zproxy_is_brd_addr(&backend->runtime.addr))
+				parse_error("Broadcast addresses not allowed for backends.");
 			has_addr = 1;
 		} else if (zproxy_regex_exec(CONFIG_REGEX_Port, lin, matches)) {
 			lin[matches[1].rm_eo] = '\0';
