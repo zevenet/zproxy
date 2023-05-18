@@ -123,7 +123,6 @@ int zproxy_cfg_reload(struct zproxy_cfg *cfg)
 
 	if (zproxy_start(cfg) < 0) {
 		syslog(LOG_ERR, "Failed to restart after config reload");
-		free(cfg);
 		return -1;
 	}
 
