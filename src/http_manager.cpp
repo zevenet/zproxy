@@ -16,6 +16,7 @@
  */
 
 #include <regex>
+#include <iterator>
 
 #include "zcu_network.h"
 #include "zcu_common.h"
