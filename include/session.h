@@ -19,7 +19,6 @@
 #define _ZPROXY_SESSION_H_
 
 #include <pthread.h>
-#include <jansson.h>
 #include "list.h"
 #include "config.h"
 #include "http_request.h"
