@@ -22,8 +22,6 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <ifaddrs.h>
-#include <iostream>
-#include <fstream>
 #include <fnmatch.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -306,12 +304,13 @@ static void zproxy_proxy_ssl_cfg_free(struct zproxy_proxy_cfg *proxy)
 	}
 }
 
-static struct zproxy_service_cfg *zproxy_service_cfg_check(struct zproxy_proxy_cfg *proxy, std::string svc_name)
+static struct zproxy_service_cfg *
+zproxy_service_cfg_check(struct zproxy_proxy_cfg *proxy, const char *svc_name)
 {
 	struct zproxy_service_cfg *cfg, *next;
 
 	list_for_each_entry_safe(cfg, next, &proxy->service_list, list)
-		if (strncmp(cfg->name, svc_name.c_str(), CONFIG_IDENT_MAX) == 0)
+		if (strncmp(cfg->name, svc_name, CONFIG_IDENT_MAX) == 0)
 			return cfg;
 
 	return NULL;
@@ -491,22 +490,6 @@ static const char *zproxy_cfg_file_gets(struct zproxy_cfg *cfg,
 	}
 }
 
-static std::string file2str(const char *fname, int *err)
-{
-	struct stat st { };
-	*err = 0;
-
-	if (stat(fname, &st)) {
-		*err = 1;
-		return "";
-	}
-
-	std::ifstream t(fname, std::ios_base::in);
-	std::string res((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
-
-	return res;
-}
-
 static int parseReplaceHeader(struct zproxy_cfg *cfg,
 				char *lin, regmatch_t *matches,
 				struct list_head *replace_header_req,
@@ -514,16 +497,16 @@ static int parseReplaceHeader(struct zproxy_cfg *cfg,
 {
 	for (int i = 1; i < CONFIG_MAX_PARAMS; i++)
 		lin[matches[i].rm_eo] = '\0';
-	auto type_ = std::string(lin + matches[1].rm_so);
-	auto name_ = std::string(lin + matches[2].rm_so);
-	auto match_ = std::string(lin + matches[3].rm_so);
-	auto replace_ = std::string(lin + matches[4].rm_so);
+	const char *type_ = lin + matches[1].rm_so;
+	const char *name_ = lin + matches[2].rm_so;
+	const char *match_ = lin + matches[3].rm_so;
+	const char *replace_ = lin + matches[4].rm_so;
 	struct replace_header *current;
 	struct list_head *lcurrent;
 
-	if (!strcasecmp(type_.data(), "Request")) {
+	if (!strcasecmp(type_, "Request")) {
 		lcurrent = replace_header_req;
-	} else if (!strcasecmp(type_.data(), "Response")) {
+	} else if (!strcasecmp(type_, "Response")) {
 		lcurrent = replace_header_res;
 	} else {
 		parse_error("ReplaceHeader type not specified");
@@ -533,9 +516,9 @@ static int parseReplaceHeader(struct zproxy_cfg *cfg,
 	if (!current)
 		parse_error("ReplaceHeader config: out of memory");
 
-	snprintf(current->name_str, CONFIG_IDENT_MAX, "%s", name_.data());
-	snprintf(current->match_str, CONFIG_IDENT_MAX, "%s", match_.data());
-	snprintf(current->replace, CONFIG_IDENT_MAX, "%s", replace_.data());
+	snprintf(current->name_str, CONFIG_IDENT_MAX, "%s", name_);
+	snprintf(current->match_str, CONFIG_IDENT_MAX, "%s", match_);
+	snprintf(current->replace, CONFIG_IDENT_MAX, "%s", replace_);
 
 	list_add_tail(&current->list, lcurrent);
 	return 0;
@@ -634,7 +617,7 @@ static int parseRedirect(struct zproxy_backend_redirect * be, char *lin,
 		be->url[0] = '\0';
 	}
 
-	if (strstr(be->url, MACRO::VHOST_STR))
+	if (strstr(be->url, VHOST_STR))
 		be->redir_macro = true;
 
 	return 0;
@@ -676,7 +659,7 @@ static int parseSession(struct zproxy_cfg *cfg,
 			else
 				parse_error("Unknown Session type");
 		} else if (zproxy_regex_exec(CONFIG_REGEX_TTL, lin, matches)) {
-			service->session.sess_ttl = std::atoi(lin + matches[1].rm_so);
+			service->session.sess_ttl = atoi(lin + matches[1].rm_so);
 
 		} else if (zproxy_regex_exec(CONFIG_REGEX_ID, lin, matches)) {
 			lin[matches[1].rm_eo] = '\0';
@@ -837,19 +820,14 @@ static int zproxy_backend_cfg_file(zproxy_cfg *cfg, zproxy_service_cfg *service,
 			addrinfo addr{};
 			if (zcu_net_get_host(lin + matches[1].rm_so, &addr, PF_UNSPEC, 0)) {
 				/* if we can't resolve it, maybe this is a UNIX domain socket */
-				if (std::string_view(lin + matches[1].rm_so,
-							 matches[1].rm_eo -
-								 matches[1].rm_so)
-						.find('/') != std::string::npos) {
+				if (!strchr(lin + matches[1].rm_so, '/')) {
 					if ((strlen(lin + matches[1].rm_so) + 1) > CONFIG_UNIX_PATH_MAX)
 						parse_error("UNIX path name too long");
 				} else {
 					// maybe the backend still not available, we set it as down;
-					zcu_log_print(
-						LOG_WARNING,
-						"line %d: Could not resolve backend host \"%s\".",
-						n_lin,
-						lin + matches[1].rm_so);
+					zcu_log_print(LOG_WARNING,
+						      "line %d: Could not resolve backend host \"%s\".",
+						      n_lin, lin + matches[1].rm_so);
 				}
 			}
 			free(addr.ai_addr);
@@ -861,27 +839,27 @@ static int zproxy_backend_cfg_file(zproxy_cfg *cfg, zproxy_service_cfg *service,
 			has_addr = 1;
 		} else if (zproxy_regex_exec(CONFIG_REGEX_Port, lin, matches)) {
 			lin[matches[1].rm_eo] = '\0';
-			backend->port = std::atoi(lin + matches[1].rm_so);
+			backend->port = atoi(lin + matches[1].rm_so);
 			backend->runtime.addr.sin_port = htons(backend->port);
 			has_port = 1;
 		} else if (zproxy_regex_exec(CONFIG_REGEX_BackendKey, lin, matches)) { // NOT USED
 		} else if (zproxy_regex_exec(CONFIG_REGEX_SSLConfigFile, lin, matches)) { // NOT USED
 		} else if (zproxy_regex_exec(CONFIG_REGEX_SSLConfigSection, lin, matches)) { // NOT USED
 		} else if (zproxy_regex_exec(CONFIG_REGEX_Priority, lin, matches)) {
-			backend->priority = std::atoi(lin + matches[1].rm_so);
+			backend->priority = atoi(lin + matches[1].rm_so);
 		} else if (zproxy_regex_exec(CONFIG_REGEX_Weight, lin, matches)) {
-			backend->weight = std::atoi(lin + matches[1].rm_so);
+			backend->weight = atoi(lin + matches[1].rm_so);
 		} else if (zproxy_regex_exec(CONFIG_REGEX_TimeOut, lin, matches)) {
-			backend->timer.backend = std::atoi(lin + matches[1].rm_so);
+			backend->timer.backend = atoi(lin + matches[1].rm_so);
 		} else if (zproxy_regex_exec(CONFIG_REGEX_NfMark, lin, matches)) {
-			backend->nf_mark = std::atoi(lin + matches[1].rm_so);
+			backend->nf_mark = atoi(lin + matches[1].rm_so);
 		} else if (zproxy_regex_exec(CONFIG_REGEX_NfMark_Hex, lin, matches)) {
 			backend->nf_mark = strtoul(lin + matches[1].rm_so, NULL, 0);
 		} else if (zproxy_regex_exec(CONFIG_REGEX_ConnLimit, lin, matches)) {
 			backend->connection_limit =
-				std::atoi(lin + matches[1].rm_so);
+				atoi(lin + matches[1].rm_so);
 		} else if (zproxy_regex_exec(CONFIG_REGEX_ConnTO, lin, matches)) {
-			backend->timer.connect = std::atoi(lin + matches[1].rm_so);
+			backend->timer.connect = atoi(lin + matches[1].rm_so);
 			if (backend->timer.connect >= service->proxy->cfg->timer.maintenance)
 				parse_error("Alive must be greater than ConnTo");
 		} else if (zproxy_regex_exec(CONFIG_REGEX_HTTPS, lin, matches)) {
@@ -1031,7 +1009,7 @@ static int zproxy_service_cfg_prepare(struct zproxy_service_cfg *service)
 
 static int zproxy_service_cfg_file(struct zproxy_cfg *cfg,
 				   struct zproxy_proxy_cfg *proxy,
-				   std::string svc_name, FILE *fd)
+				   const char *svc_name, FILE *fd)
 {
 	regmatch_t matches[CONFIG_MAX_PARAMS] = {};
 	char lin[ZCU_DEF_BUFFER_SIZE] = {0};
@@ -1039,7 +1017,7 @@ static int zproxy_service_cfg_file(struct zproxy_cfg *cfg,
 
 	service = zproxy_service_cfg_check(proxy, svc_name);
 	if (service) {
-		fprintf(stderr, "Service name already exists: %s\n", svc_name.c_str());
+		fprintf(stderr, "Service name already exists: %s\n", svc_name);
 		return -1;
 	}
 
@@ -1048,8 +1026,8 @@ static int zproxy_service_cfg_file(struct zproxy_cfg *cfg,
 		return -1;
 
 	zproxy_service_cfg_init(proxy, service);
-	if (!svc_name.empty())
-		snprintf(service->name, CONFIG_IDENT_MAX, "%s", svc_name.c_str());
+	if (svc_name[0])
+		snprintf(service->name, CONFIG_IDENT_MAX, "%s", svc_name);
 
 	while (conf_fgets(cfg, lin, ZCU_DEF_BUFFER_SIZE, fd)) {
 		if (strlen(lin) > 0 && lin[strlen(lin) - 1] == '\n')
@@ -1086,13 +1064,13 @@ static int zproxy_service_cfg_file(struct zproxy_cfg *cfg,
 			lin[matches[2].rm_eo] = '\0';
 			if (matches[3].rm_eo > 0)
 				lin[matches[3].rm_eo] = '\0';
-			auto match_ = std::string(lin + matches[1].rm_so);
-			auto replace_ = std::string(lin + matches[2].rm_so);
+			const char *match_ = lin + matches[1].rm_so;
+			const char *replace_ = lin + matches[2].rm_so;
 			struct replace_header *current = (struct replace_header *) calloc(1, sizeof(struct replace_header));
 			if (!current)
 				parse_error("RewriteUrl out of memory error");
-			snprintf(current->match_str, CONFIG_IDENT_MAX, "%s", match_.data());
-			snprintf(current->replace, CONFIG_IDENT_MAX, "%s", replace_.data());
+			snprintf(current->match_str, CONFIG_IDENT_MAX, "%s", match_);
+			snprintf(current->replace, CONFIG_IDENT_MAX, "%s", replace_);
 			list_add_tail(&current->list, &service->runtime.req_rw_url);
 		} else if (zproxy_regex_exec(CONFIG_REGEX_RewriteLocation, lin, matches)) {
 			if (matches[1].rm_so == -1)
@@ -1126,14 +1104,14 @@ static int zproxy_service_cfg_file(struct zproxy_cfg *cfg,
 		} else if (zproxy_regex_exec(CONFIG_REGEX_DynScale, lin, matches)) {	// NOT USED
 		} else if (zproxy_regex_exec(CONFIG_REGEX_RoutingPolicy, lin, matches)) {
 			lin[matches[1].rm_eo] = '\0';
-			std::string cp = lin + matches[1].rm_so;
-			if (cp == "ROUND_ROBIN")
+			const char *cp = lin + matches[1].rm_so;
+			if (strcmp(cp, "ROUND_ROBIN") == 0)
 				service->routing_policy = ROUTING_POLICY::ROUND_ROBIN;
-			else if (cp == "LEAST_CONNECTIONS")
+			else if (strcmp(cp, "LEAST_CONNECTIONS") == 0)
 				service->routing_policy = ROUTING_POLICY::W_LEAST_CONNECTIONS;
-			else if (cp == "RESPONSE_TIME")
+			else if (strcmp(cp, "RESPONSE_TIME") == 0)
 				service->routing_policy = ROUTING_POLICY::RESPONSE_TIME;
-			else if (cp == "PENDING_CONNECTIONS")
+			else if (strcmp(cp, "PENDING_CONNECTIONS") == 0)
 				service->routing_policy = ROUTING_POLICY::W_LEAST_CONNECTIONS;
 			else
 				parse_error("Unknown routing policy");
@@ -1590,7 +1568,7 @@ static int zproxy_proxy_cfg_file(struct zproxy_cfg *cfg, struct zproxy_proxy_cfg
 			}
 		} else if (zproxy_regex_exec(CONFIG_REGEX_SSLHonorCipherOrder, lin, matches)) {
 			require_ssl(proxy->runtime.ssl_enabled);
-			if (std::atoi(lin + matches[1].rm_so)) {
+			if (atoi(lin + matches[1].rm_so)) {
 				proxy->ssl.ssl_op_enable |=	SSL_OP_CIPHER_SERVER_PREFERENCE;
 				proxy->ssl.ssl_op_disable &= ~SSL_OP_CIPHER_SERVER_PREFERENCE;
 			} else {

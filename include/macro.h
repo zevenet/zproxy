@@ -18,10 +18,7 @@
 #ifndef __MACRO_H__
 #define __MACRO_H__
 
-namespace MACRO
-{
-    static const char *VHOST_STR = "${VHOST}";
-    static const int VHOST_LEN = 8;
-};
+#define VHOST_STR  "${VHOST}"
+#define VHOST_LEN  8
 
 #endif

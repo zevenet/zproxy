@@ -19,12 +19,9 @@
 #define _ZPROXY_CONFIG_H
 
 #include "list.h"
-#include "http_protocol.h"
 #include "zcu_http.h"
 #include <stdbool.h>
 #include <pcreposix.h>
-#include <string>
-#include <memory>
 #include <openssl/ssl.h>
 #include <arpa/inet.h>
 

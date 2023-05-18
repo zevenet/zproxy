@@ -820,11 +820,10 @@ char *http_manager::replyRedirectBackend(HttpStream &stream,
 	struct matcher *current, *next;
 
 	if (redirect.redir_macro) {
-		str_replace_str(
-			buf, redirect.url, strlen(redirect.url),
-			MACRO::VHOST_STR, MACRO::VHOST_LEN,
-			const_cast<char *>(stream.request.virtual_host.data()),
-			stream.request.virtual_host.length());
+		str_replace_str(buf, redirect.url, strlen(redirect.url),
+				VHOST_STR, VHOST_LEN,
+				const_cast<char *>(stream.request.virtual_host.data()),
+				stream.request.virtual_host.length());
 		new_url = buf;
 	}
 
