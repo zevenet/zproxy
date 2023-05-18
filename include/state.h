@@ -18,10 +18,10 @@
 #ifndef _ZPROXY_STATE_H_
 #define _ZPROXY_STATE_H_
 
-#include "ev.h"
 #include "list.h"
 #include "session.h"
 #include <sys/time.h>
+#include <ev.h>
 #include <atomic>
 
 #define TIMEOUT_SESSIONS 1
