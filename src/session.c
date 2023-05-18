@@ -19,7 +19,6 @@
 #include "djb_hash.h"
 #include <time.h>
 
-
 static void zproxy_sessions_dump(struct zproxy_sessions *sessions)
 {
 	struct zproxy_session_node *cur;
@@ -99,7 +98,6 @@ static struct zproxy_session_node *_zproxy_session_get(struct zproxy_sessions *s
 
 	list_for_each_entry(cur, &sessions->session_hashtable[hash], hlist) {
 		if (strncmp(cur->key, key, strlen(cur->key)+1) == 0) {
-			pthread_mutex_unlock(&sessions->sessions_mutex);
 			return cur;
 		}
 	}
