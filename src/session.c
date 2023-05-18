@@ -18,6 +18,7 @@
 #include "session.h"
 #include "djb_hash.h"
 #include <time.h>
+#include <sys/syslog.h>
 
 static void zproxy_sessions_dump(struct zproxy_sessions *sessions)
 {
@@ -46,10 +47,16 @@ static int zproxy_session_is_expired(struct zproxy_session_node *session, unsign
 	return time(NULL) - session->timestamp > ttl;
 }
 
-static void zproxy_session_free(struct zproxy_session_node *session)
+static int zproxy_session_free(struct zproxy_session_node *session)
 {
-	list_del(&session->hlist);
-	free(session);
+	if (session->refcnt == 0) {
+		list_del(&session->hlist);
+		free(session);
+		return 1;
+	} else {
+		session->defunct = true;
+		return -1;
+	}
 }
 
 struct zproxy_sessions *zproxy_sessions_alloc(const struct zproxy_service_cfg *service_cfg)
@@ -79,9 +86,10 @@ void zproxy_sessions_flush(struct zproxy_sessions *sessions)
 
 	pthread_mutex_lock(&sessions->sessions_mutex);
 	sessions->size = 0;
-	for (i = 0; i < HASH_SESSION_SLOTS; i++)
+	for (i = 0; i < HASH_SESSION_SLOTS; i++) {
 		list_for_each_entry_safe(session, next, &sessions->session_hashtable[i], hlist)
 			zproxy_session_free(session);
+	}
 	pthread_mutex_unlock(&sessions->sessions_mutex);
 }
 
@@ -97,9 +105,8 @@ static struct zproxy_session_node *_zproxy_session_get(struct zproxy_sessions *s
 	int hash = djb_hash(key) % HASH_SESSION_SLOTS;
 
 	list_for_each_entry(cur, &sessions->session_hashtable[hash], hlist) {
-		if (strncmp(cur->key, key, strlen(cur->key)+1) == 0) {
+		if (!cur->defunct && strncmp(cur->key, key, strlen(cur->key)+1) == 0)
 			return cur;
-		}
 	}
 
 	return NULL;
@@ -111,6 +118,8 @@ struct zproxy_session_node *zproxy_session_get(struct zproxy_sessions *sessions,
 
 	pthread_mutex_lock(&sessions->sessions_mutex);
 	session = _zproxy_session_get(sessions, key);
+	if (session)
+		session->refcnt++;
 	pthread_mutex_unlock(&sessions->sessions_mutex);
 
 	return session;
@@ -121,32 +130,40 @@ struct zproxy_session_node *zproxy_session_add(struct zproxy_sessions *sessions,
 	struct zproxy_session_node *session;
 	uint32_t hash;
 
-	pthread_mutex_lock(&sessions->sessions_mutex);
-	session = _zproxy_session_get(sessions, key);
+	session = zproxy_session_get(sessions, key);
 	if (session) {
 		if (!zproxy_session_is_static(session))
 			zproxy_session_update_timestamp(session);
-		pthread_mutex_unlock(&sessions->sessions_mutex);
 		return session;
 	}
 
 	session = (struct zproxy_session_node *)calloc(1, sizeof(*session));
-	if (!session) {
-		pthread_mutex_unlock(&sessions->sessions_mutex);
+	if (!session)
 		return NULL;
-	}
 
 	snprintf(session->key, sizeof(session->key), "%s", key);
 	memcpy(&session->bck_addr, bck, sizeof(struct sockaddr_in));
 	session->timestamp = time(NULL);
+	session->defunct = false;
 
 	sessions->size++;
 
 	hash = djb_hash(session->key) % HASH_SESSION_SLOTS;
+	pthread_mutex_lock(&sessions->sessions_mutex);
 	list_add_tail(&session->hlist, &sessions->session_hashtable[hash]);
 	pthread_mutex_unlock(&sessions->sessions_mutex);
 
+	session->refcnt++;
+
 	return session;
+}
+
+void zproxy_session_release(struct zproxy_session_node **session)
+{
+	if (!*session)
+		return;
+
+	(*session)->refcnt--;
 }
 
 void zproxy_sessions_remove_expired(struct zproxy_sessions *sessions)
@@ -158,8 +175,8 @@ void zproxy_sessions_remove_expired(struct zproxy_sessions *sessions)
 	for (i = 0; i < HASH_SESSION_SLOTS; i++) {
 		list_for_each_entry_safe(session, next, &sessions->session_hashtable[i], hlist) {
 			if (zproxy_session_is_expired(session, sessions->ttl)) {
-				sessions->size--;
-				zproxy_session_free(session);
+				if (zproxy_session_free(session) < 0)
+					sessions->size--;
 			}
 		}
 	}
@@ -174,8 +191,8 @@ static int _zproxy_session_delete(struct zproxy_sessions *sessions, const char *
 	if (!session)
 		return -1;
 
-	sessions->size--;
-	zproxy_session_free(session);
+	if (zproxy_session_free(session) < 0)
+		sessions->size--;
 
 	return 0;
 }
@@ -218,8 +235,8 @@ void zproxy_session_delete_backend(struct zproxy_sessions *sessions, const struc
 	for (i = 0; i < HASH_SESSION_SLOTS; i++) {
 		list_for_each_entry_safe(session, next, &sessions->session_hashtable[i], hlist) {
 			if (memcmp(&session->bck_addr, bck, sizeof(struct sockaddr_in)) == 0) {
-				sessions->size--;
-				zproxy_session_free(session);
+				if (zproxy_session_free(session) < 0)
+					sessions->size--;
 			}
 		}
 	}
@@ -235,8 +252,8 @@ void zproxy_session_delete_old_backends(const struct zproxy_service_cfg *service
 	for (i = 0; i < HASH_SESSION_SLOTS; i++) {
 		list_for_each_entry_safe(session, next, &sessions->session_hashtable[i], hlist) {
 			if (!zproxy_backend_cfg_lookup(service, &session->bck_addr)) {
-				sessions->size--;
-				zproxy_session_free(session);
+				if (zproxy_session_free(session) < 0)
+					sessions->size--;
 			}
 		}
 	}

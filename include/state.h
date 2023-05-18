@@ -20,7 +20,11 @@
 
 #include "list.h"
 #include "session.h"
+#include "zcu_log.h"
 #include <sys/time.h>
+#include <string>
+#include <unordered_map>
+#include <memory>
 #include <ev.h>
 #include <atomic>
 

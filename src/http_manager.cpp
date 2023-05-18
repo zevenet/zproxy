@@ -575,6 +575,7 @@ validation::REQUEST_RESULT http_manager::validateRequest(HttpStream *stream)
 
 static void zproxy_http_manage_set_cookie(HttpStream *stream, std::string session_key)
 {
+	struct zproxy_session_node *session;
 	if (!stream->backend_config)
 		return;
 
@@ -588,9 +589,9 @@ static void zproxy_http_manage_set_cookie(HttpStream *stream, std::string sessio
 								stream->session->id);
 	}
 
-	zproxy_session_add(stream->session,
-						session_key.data(),
-						&stream->backend_config->runtime.addr);
+	session = zproxy_session_add(stream->session, session_key.data(),
+				     &stream->backend_config->runtime.addr);
+	zproxy_session_release(&session);
 }
 
 validation::REQUEST_RESULT http_manager::validateResponse(HttpStream *stream)

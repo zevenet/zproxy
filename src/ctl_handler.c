@@ -20,6 +20,7 @@
 #include "session.h"
 #include "state.h"
 #include "zcu_network.h"
+#include "zcu_log.h"
 #include "zproxy.h"
 #include "ctl.h"
 #include "zcu_http.h"
@@ -333,6 +334,7 @@ static enum ws_responses handle_patch(const std::string &req_path,
 				return WS_HTTP_500;
 			}
 			sess->timestamp = i.last_seen;
+			zproxy_session_release(&sess);
 		}
 
 		zproxy_state_release(&state);
@@ -459,6 +461,7 @@ static enum ws_responses handle_patch(const std::string &req_path,
 						return WS_HTTP_500;
 					}
 					sess->timestamp = k.last_seen;
+					zproxy_session_release(&sess);
 				}
 			}
 			zproxy_state_release(&state);
@@ -611,7 +614,8 @@ static enum ws_responses handle_put(const std::string &req_path,
 			return WS_HTTP_404;
 		}
 
-		zproxy_session_node *session = zproxy_session_add(sessions, sess_id, &backend->runtime.addr);
+		zproxy_session_node *session =
+			zproxy_session_add(sessions, sess_id, &backend->runtime.addr);
 		if (!session) {
 			zproxy_state_release(&state);
 			*resp_buf = zproxy_json_return_err("Unable to create session. Perhaps it already exists.");
@@ -619,6 +623,7 @@ static enum ws_responses handle_put(const std::string &req_path,
 		}
 		if (last_seen >= 0)
 			session->timestamp = last_seen;
+		zproxy_session_release(&session);
 		zproxy_state_release(&state);
 	} else if (zproxy_regex_exec(API_REGEX_SELECT_SERVICE_BACKENDS,
 				     req_path.c_str(), matches)) {

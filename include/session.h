@@ -19,9 +19,9 @@
 #define _ZPROXY_SESSION_H_
 
 #include <pthread.h>
+#include <stdbool.h>
 #include "list.h"
 #include "config.h"
-#include "http_request.h"
 
 #define MAX_SESSION_ID 255
 #define HASH_SESSION_SLOTS 512
@@ -42,14 +42,44 @@ struct zproxy_session_node {
 	// last_seen is used to calculate if the session has expired.
 	// If it has the value 0 means that the session does not expired, it is permanent
 	unsigned int timestamp;
+	bool defunct;
+	int refcnt;
 };
 
 
 struct zproxy_sessions *zproxy_sessions_alloc(const struct zproxy_service_cfg *service_cfg);
 void zproxy_sessions_flush(struct zproxy_sessions *sessions);
 void zproxy_sessions_free(struct zproxy_sessions *sessions);
-struct zproxy_session_node *zproxy_session_get(struct zproxy_sessions *sessions, const char *key);
-struct zproxy_session_node *zproxy_session_add(struct zproxy_sessions *sessions, const char *key, const struct sockaddr_in *bck);
+/**
+ * @brief Get a reference to session with provided key.
+ *
+ * @param sessions Service sessions structure to which the session belongs.
+ * @param key Unique key that identifies the session.
+ *
+ * @return A pointer to the session that must be released with
+ * zproxy_session_release(). If not found it will return NULL.
+ */
+struct zproxy_session_node *
+zproxy_session_get(struct zproxy_sessions *sessions, const char *key);
+/**
+ * @brief Create/Add a new session.
+ *
+ * @param sessions Service sessions structure to which the session will belong.
+ * @param key Unique key that identifies the session.
+ * @param bck Backend associated with the new session.
+ *
+ * @return A pointer to the session that must be released with
+ * zproxy_session_release(). If fails to add it will return NULL.
+ */
+struct zproxy_session_node *
+zproxy_session_add(struct zproxy_sessions *sessions, const char *key,
+		   const struct sockaddr_in *bck);
+/**
+ * @brief Release reference to the session.
+ *
+ * @param session Session to release.
+ */
+void zproxy_session_release(struct zproxy_session_node **session);
 void zproxy_sessions_remove_expired(struct zproxy_sessions *sessions);
 void zproxy_session_delete_backend(struct zproxy_sessions *sessions, const struct sockaddr_in *bck);
 int zproxy_session_delete(struct zproxy_sessions *sessions, const char *key);

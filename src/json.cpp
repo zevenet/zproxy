@@ -137,6 +137,8 @@ static json_t *serialize_service_sessions(const struct zproxy_service_cfg *servi
 	pthread_mutex_lock(&sessions->sessions_mutex);
 	for (int i = 0; i < HASH_SESSION_SLOTS; i++) {
 		list_for_each_entry(session, &sessions->session_hashtable[i], hlist) {
+			if (session->defunct)
+				continue;
 			json_array_append_new(jsessions,
 					      serialize_session(session, service_cfg));
 		}

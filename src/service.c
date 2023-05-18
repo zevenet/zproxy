@@ -498,6 +498,7 @@ zproxy_service_select_backend(struct zproxy_service_cfg *service_config,
 		session = zproxy_session_get(sessions, session_key.data());
 		if (session) {
 			selected_backend = zproxy_service_backend_session(service_config, &session->bck_addr, http_state);
+			zproxy_session_release(&session);
 			if (selected_backend)
 				return selected_backend;
 		}
@@ -506,8 +507,10 @@ zproxy_service_select_backend(struct zproxy_service_cfg *service_config,
 	selected_backend = (struct zproxy_backend_cfg *)zproxy_service_schedule(service_config, http_state);
 
 	if (selected_backend && !session_key.empty() &&
-		service_config->session.sess_type != SESS_TYPE::SESS_NONE)
-		zproxy_session_add(sessions, session_key.data(), &selected_backend->runtime.addr);
+		service_config->session.sess_type != SESS_TYPE::SESS_NONE) {
+		session = zproxy_session_add(sessions, session_key.data(), &selected_backend->runtime.addr);
+		zproxy_session_release(&session);
+	}
 
 	return selected_backend;
 }
