@@ -78,7 +78,7 @@ lookfor_segfault () {
 		SYSLOG_ZPROXY_START=`tac $SYSLOG | grep -m1 "zproxy start..."`
 	fi
 
-	LOGS_SEGFAULT=`grep -A10000 -F "$SYSLOG_ZPROXY_START" $SYSLOG | grep -E "$PROXY_BIN\(\+0x[0-9a-f]+\) \[0x[0-9a-f]+\]"`
+	LOGS_SEGFAULT=`grep -A10000 --text -F "$SYSLOG_ZPROXY_START" $SYSLOG | grep -E "$PROXY_BIN\(\+0x[0-9a-f]+\) \[0x[0-9a-f]+\]"`
 	if [[ "$LOGS_SEGFAULT" != "" ]]; then
 		echo "$LOGS_SEGFAULT"
 		error "There was an zproxy SEGFAULT"
