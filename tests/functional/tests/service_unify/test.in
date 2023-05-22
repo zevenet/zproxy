@@ -1,0 +1,6 @@
+CMD=ctl
+METHOD=GET
+URL="/listener/0"
+#########################
+CMD=reload
+FILE=zproxy_unified.cfg
