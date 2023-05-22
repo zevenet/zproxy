@@ -300,6 +300,7 @@ static void zproxy_state_cfg_proxy_update(const struct zproxy_proxy_cfg *proxy,
 		if (!found) {
 			auto iter = service_state;
 			service_state++;
+			zproxy_sessions_free(iter->second->sessions);
 			http_state->services.erase(iter);
 			continue;
 		}
