@@ -50,8 +50,6 @@ struct zproxy_service_state {
 	std::unordered_map<std::string, std::shared_ptr<zproxy_backend_state>> backends;
 	struct zproxy_sessions *sessions;
 	uint32_t	refcnt{1};
-
-	zproxy_service_state() {};
 };
 
 struct zproxy_http_state {
