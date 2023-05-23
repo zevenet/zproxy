@@ -19,5 +19,10 @@ DESCRIPTION="Wait for some requests to be sent"
 CMD=wait
 TIMEOUT=2
 #########################
+DESCRIPTION="Check stats for sessions"
+CMD=ctl
+METHOD="GET"
+URL=/listener/0
+#########################
 DESCRIPTION="Kill the wrk process"
 CMD=killwrk
