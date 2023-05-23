@@ -13,7 +13,7 @@ TIMEOUT=2
 #########################
 DESCRIPTION="Reload the configuration file"
 CMD=reload
-FILE=zproxy_new.cfg
+FILE=zproxy.cfg
 #########################
 DESCRIPTION="Wait for some requests to be sent"
 CMD=wait
