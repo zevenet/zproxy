@@ -176,7 +176,9 @@ static std::string getUrlParameter(const std::string &url)
 	}
 }
 
-std::string zproxy_service_get_session_key(struct zproxy_sessions *sessions, char *client_addr, HttpRequest &request)
+std::string zproxy_service_get_session_key(struct zproxy_sessions *sessions,
+					   const char *client_addr,
+					   HttpRequest &request)
 {
 	std::string key;
 

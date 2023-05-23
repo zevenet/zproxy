@@ -481,7 +481,7 @@ bool zproxy_service_select(const HttpRequest *request,
 
 struct zproxy_backend_cfg *
 zproxy_service_select_backend(struct zproxy_service_cfg *service_config,
-			      HttpRequest &request, std::string &client_addr,
+			      HttpRequest &request, const char *client_addr,
 			      struct zproxy_sessions *sessions,
 			      struct zproxy_http_state *http_state)
 {
@@ -494,7 +494,9 @@ zproxy_service_select_backend(struct zproxy_service_cfg *service_config,
 
 	// check sessions table
 	if (service_config->session.sess_type != SESS_TYPE::SESS_NONE) {
-		session_key = zproxy_service_get_session_key(sessions, client_addr.data(), request);
+		session_key = zproxy_service_get_session_key(sessions,
+							     client_addr,
+							     request);
 		session = zproxy_session_get(sessions, session_key.data());
 		if (session) {
 			selected_backend = zproxy_service_backend_session(service_config, &session->bck_addr, http_state);

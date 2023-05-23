@@ -44,7 +44,7 @@ bool zproxy_service_select(const HttpRequest *request,
 
 struct zproxy_backend_cfg *
 zproxy_service_select_backend(struct zproxy_service_cfg *service_config,
-			      HttpRequest &request, std::string &client_addr,
+			      HttpRequest &request, const char *client_addr,
 			      struct zproxy_sessions *sessions,
 			      struct zproxy_http_state *http_state);
 

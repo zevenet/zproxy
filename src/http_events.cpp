@@ -58,7 +58,8 @@ int zproxy_http_request_reconnect(struct zproxy_http_ctx *ctx)
 
 	// getting a new backend
 	backend = zproxy_service_select_backend(stream->service_config,
-			stream->request, stream->client_addr, stream->session,
+			stream->request, stream->client_addr.c_str(),
+			stream->session,
 			static_cast<struct zproxy_http_state*>(ctx->state));
 	if (backend == nullptr) {
 		const char *html_msg =
@@ -226,8 +227,8 @@ static int zproxy_http_request_head_rcv(struct zproxy_http_ctx *ctx)
 
 	if (new_bck_flag || reconnect_bck_flag) {
 		backend = zproxy_service_select_backend(stream->service_config,
-				stream->request, stream->client_addr, stream->session,
-				state);
+				stream->request, stream->client_addr.c_str(),
+				stream->session, state);
 		if (backend == nullptr) {
 			const char *html_msg =
 				zproxy_cfg_get_errmsg(&stream->listener_config->error.err_msgs, 503);
