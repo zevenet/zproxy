@@ -17,17 +17,26 @@
 
 #include "session.h"
 #include "djb_hash.h"
+#include <arpa/inet.h>
+#include <netinet/in.h>
 #include <time.h>
 #include <sys/syslog.h>
 
-static void zproxy_sessions_dump(struct zproxy_sessions *sessions)
+void zproxy_sessions_dump(struct zproxy_sessions *sessions)
 {
 	struct zproxy_session_node *cur;
-	int i;
 
-	for (i = 0; i < HASH_SESSION_SLOTS; i++)
-		list_for_each_entry(cur, &sessions->session_hashtable[i], hlist)
-			syslog(LOG_ERR, "** sessions[%d]: %s\n", i, cur->key);
+	pthread_mutex_lock(&sessions->sessions_mutex);
+	for (int i = 0; i < HASH_SESSION_SLOTS; i++) {
+		list_for_each_entry(cur, &sessions->session_hashtable[i], hlist) {
+			syslog(LOG_DEBUG,
+			       "** sessions[%d]: %s (bck=%s:%d;l-s=%d;d=%s)",
+			       i, cur->key, inet_ntoa(cur->bck_addr.sin_addr),
+			       ntohs(cur->bck_addr.sin_port), cur->timestamp,
+			       cur->defunct ? "true" : "false");
+		}
+	}
+	pthread_mutex_unlock(&sessions->sessions_mutex);
 }
 
 static int zproxy_session_is_static(struct zproxy_session_node *session)

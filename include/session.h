@@ -46,7 +46,7 @@ struct zproxy_session_node {
 	int refcnt;
 };
 
-
+void zproxy_sessions_dump(struct zproxy_sessions *sessions);
 struct zproxy_sessions *zproxy_sessions_alloc(const struct zproxy_service_cfg *service_cfg);
 void zproxy_sessions_flush(struct zproxy_sessions *sessions);
 void zproxy_sessions_free(struct zproxy_sessions *sessions);
