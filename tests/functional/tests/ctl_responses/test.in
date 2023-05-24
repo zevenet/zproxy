@@ -52,3 +52,23 @@ DESCRIPTION="Get service sessions"
 CMD=ctl
 URL="/listener/0/service/default/sessions"
 METHOD="GET"
+#########################
+DESCRIPTION="Get sessions of an invalid service"
+CMD=ctl
+URL="/listener/0/service/bad-service/sessions"
+METHOD="GET"
+#########################
+DESCRIPTION="Get sessions of an invalid listener"
+CMD=ctl
+URL="/listener/99/service/default/sessions"
+METHOD="GET"
+#########################
+DESCRIPTION="Get all listeners"
+CMD=ctl
+URL="/listeners"
+METHOD="GET"
+#########################
+DESCRIPTION="Get all sessions"
+CMD=ctl
+URL="/sessions"
+METHOD="GET"

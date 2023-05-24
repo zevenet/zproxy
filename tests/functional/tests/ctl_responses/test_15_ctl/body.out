@@ -1,0 +1,11 @@
+[
+    {
+        "id": 0,
+        "services": [
+            {
+                "name": "default",
+                "sessions": []
+            }
+        ]
+    }
+]
