@@ -130,16 +130,21 @@ struct zproxy_session_node *zproxy_session_add(struct zproxy_sessions *sessions,
 	struct zproxy_session_node *session;
 	uint32_t hash;
 
-	session = zproxy_session_get(sessions, key);
+	pthread_mutex_lock(&sessions->sessions_mutex);
+	session = _zproxy_session_get(sessions, key);
 	if (session) {
 		if (!zproxy_session_is_static(session))
 			zproxy_session_update_timestamp(session);
+		session->refcnt++;
+		pthread_mutex_unlock(&sessions->sessions_mutex);
 		return session;
 	}
 
 	session = (struct zproxy_session_node *)calloc(1, sizeof(*session));
-	if (!session)
+	if (!session) {
+		pthread_mutex_unlock(&sessions->sessions_mutex);
 		return NULL;
+	}
 
 	snprintf(session->key, sizeof(session->key), "%s", key);
 	memcpy(&session->bck_addr, bck, sizeof(struct sockaddr_in));
@@ -149,11 +154,10 @@ struct zproxy_session_node *zproxy_session_add(struct zproxy_sessions *sessions,
 	sessions->size++;
 
 	hash = djb_hash(session->key) % HASH_SESSION_SLOTS;
-	pthread_mutex_lock(&sessions->sessions_mutex);
 	list_add_tail(&session->hlist, &sessions->session_hashtable[hash]);
-	pthread_mutex_unlock(&sessions->sessions_mutex);
 
 	session->refcnt++;
+	pthread_mutex_unlock(&sessions->sessions_mutex);
 
 	return session;
 }
