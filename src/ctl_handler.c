@@ -241,10 +241,26 @@ static enum ws_responses handle_get(const std::string &req_path,
 		const int listener_id = atoi(param1.c_str());
 		const struct zproxy_service_cfg *service =
 			find_service(cfg, listener_id, service_id.c_str());
+		if (!service) {
+			*resp_buf = zproxy_json_return_err("Service %s in listener %d not found.",
+							   service_id.c_str(),
+							   listener_id);
+			return WS_HTTP_404;
+		}
 		struct zproxy_http_state *state =
 			zproxy_state_lookup(listener_id);
+		if (!state) {
+			*resp_buf = zproxy_json_return_err("Couldn't find state for listener %d.",
+							   listener_id);
+			return WS_HTTP_404;
+		}
 		zproxy_sessions *sessions =
 			zproxy_state_get_session(service_id, &state->services);
+		if (!sessions) {
+			*resp_buf = zproxy_json_return_err("Couldn't find sessions for service %s in listener %d",
+							   service_id.c_str(),
+							   listener_id);
+		}
 		if (!(*resp_buf = zproxy_json_encode_sessions(service, sessions))) {
 			*resp_buf = zproxy_json_return_err("Failed to serialize sesssions of service %s.",
 							   service_id.c_str());
