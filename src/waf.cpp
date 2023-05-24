@@ -106,7 +106,8 @@ int zproxy_waf_parse_conf(const char *file, void **rules)
 	return 0;
 }
 
-static enum WAF_ACTION waf_resolution(struct zproxy_waf_stream *waf_stream)
+static enum WAF_ACTION waf_resolution(struct zproxy_waf_stream *waf_stream,
+				      const HttpStream *stream)
 {
 	modsecurity::Transaction *t = waf_stream->modsec_transaction;
 	modsecurity::ModSecurityIntervention *it = &waf_stream->last_it;
@@ -119,9 +120,7 @@ static enum WAF_ACTION waf_resolution(struct zproxy_waf_stream *waf_stream)
 	if (msc_intervention(t, it)) {
 		// log if any error was found
 		if (!msc_process_logging(t)) {
-			zcu_log_print_th(LOG_WARNING,
-					 "(%lx) WAF, error processing the log",
-					 pthread_self());
+			streamLogWaf(stream, "WAF, error processing the log");
 		}
 		if (it->url) {
 			waf_action = WAF_REDIRECTION;
@@ -135,8 +134,7 @@ static enum WAF_ACTION waf_resolution(struct zproxy_waf_stream *waf_stream)
 	}
 
 	if (it->log)
-		zcu_log_print_th(LOG_WARNING, "[WAF] (%lx) %s", pthread_self(),
-				 it->log);
+		streamLogWaf(stream, "%s", it->log);
 
 	return waf_action;
 }
@@ -246,7 +244,7 @@ bool zproxy_waf_stream_checkrequestheaders(struct zproxy_waf_stream *waf_stream,
 	}
 	msc_process_request_headers(waf_stream->modsec_transaction);
 
-	waf_action = waf_resolution(waf_stream);
+	waf_action = waf_resolution(waf_stream, stream);
 
 	return waf_action != WAF_PASS;
 }
@@ -268,7 +266,7 @@ bool zproxy_waf_stream_checkrequestbody(struct zproxy_waf_stream *waf_stream,
 	if (!stream->response.expectBody())
 		msc_process_request_body(waf_stream->modsec_transaction);
 
-	waf_action = waf_resolution(waf_stream);
+	waf_action = waf_resolution(waf_stream, stream);
 
 	return waf_action != WAF_PASS;
 }
@@ -296,7 +294,7 @@ bool zproxy_waf_stream_checkresponseheaders(struct zproxy_waf_stream *waf_stream
 				     stream->response.http_status_code,
 				     stream->response.getHttpVersion().data());
 
-	waf_action = waf_resolution(waf_stream);
+	waf_action = waf_resolution(waf_stream, stream);
 
 	return waf_action != WAF_PASS;
 }
@@ -318,7 +316,7 @@ bool zproxy_waf_stream_checkresponsebody(struct zproxy_waf_stream *waf_stream,
 	if (!stream->response.expectBody())
 		msc_process_response_body(waf_stream->modsec_transaction);
 
-	waf_action = waf_resolution(waf_stream);
+	waf_action = waf_resolution(waf_stream, stream);
 
 	return waf_action != WAF_PASS;
 }
