@@ -1,0 +1,13 @@
+DESCRIPTION="Do request to create session for backend 1"
+CMD=curl
+CL=1
+METHOD="GET"
+URL="/"
+#########################
+CMD=ctl
+METHOD=GET
+URL="/listener/0/service/default/sessions"
+#########################
+DESCRIPTION="New config doesn't have backend 1, and should remove session"
+CMD=reload
+FILE=zproxy_new.cfg
