@@ -111,7 +111,7 @@ void zproxy_state_release(struct zproxy_http_state **http_state)
 static void zproxy_state_maintenance_cb(struct ev_loop *loop, ev_timer *timer,
 					int events)
 {
-	unsigned long counter = COUNTER_SESSIONS; // avoid CPU abuse of garbage recollector
+	long counter = COUNTER_SESSIONS; // avoid CPU abuse of garbage recollector
 	struct zproxy_http_state *state;
 	struct zproxy_service_state *service_state;
 
