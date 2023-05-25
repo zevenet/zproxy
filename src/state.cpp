@@ -97,7 +97,6 @@ struct zproxy_http_state *zproxy_state_lookup(uint32_t proxy_id)
 	pthread_mutex_lock(&list_mutex);
 	state = _zproxy_state_lookup(proxy_id);
 	state->refcnt++;
-	pthread_mutex_unlock(&list_mutex);
 
 	return state;
 }
