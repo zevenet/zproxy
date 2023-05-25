@@ -33,6 +33,7 @@
 #include "socket.h"
 #include "ctl.h"
 #include "zcu_network.h"
+#include "zcu_log.h"
 
 #define ZPROXY_LISTENER 250
 
@@ -43,27 +44,27 @@ int zproxy_socket_server_setup(const struct sockaddr_in *addr)
 
 	sd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (sd < 0) {
-		syslog(LOG_ERR, "cannot create main socket\n");
+		zcu_log_print(LOG_ERR, "cannot create main socket\n");
 		return -1;
 	}
 
 	ret = setsockopt(sd, SOL_SOCKET, SO_REUSEPORT, &on, sizeof(on));
 	if (ret < 0) {
-		syslog(LOG_ERR, "cannot set on SO_REUSEPORT\n");
+		zcu_log_print(LOG_ERR, "cannot set on SO_REUSEPORT\n");
 		return -1;
 	}
 
 	on = 1;
 	ret = setsockopt(sd, IPPROTO_TCP, TCP_NODELAY, &on, sizeof(on));
 	if (ret < 0) {
-		syslog(LOG_ERR, "cannot set on TCP_NODELAY\n");
+		zcu_log_print(LOG_ERR, "cannot set on TCP_NODELAY\n");
 		return -1;
 	}
 
 	on = 1;
 	ret = setsockopt(sd, SOL_SOCKET, SO_KEEPALIVE, &on, sizeof(on));
 	if (ret < 0) {
-		syslog(LOG_ERR, "cannot set on SO_KEEPALIVE\n");
+		zcu_log_print(LOG_ERR, "cannot set on SO_KEEPALIVE\n");
 		return -1;
 	}
 
@@ -71,7 +72,7 @@ int zproxy_socket_server_setup(const struct sockaddr_in *addr)
 
 	if (bind(sd, (struct sockaddr *) &local, sizeof(local)) < 0) {
 		close(sd);
-		syslog(LOG_ERR, "cannot bind socket\n");
+		zcu_log_print(LOG_ERR, "cannot bind socket\n");
 		return -1;
 	}
 

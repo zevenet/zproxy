@@ -122,7 +122,7 @@ int zproxy_cfg_reload(struct zproxy_cfg *cfg)
 	zproxy_state_cfg_update(cfg);
 
 	if (zproxy_start(cfg) < 0) {
-		syslog(LOG_ERR, "Failed to restart after config reload");
+		zcu_log_print(LOG_ERR, "Failed to restart after config reload");
 		return -1;
 	}
 
@@ -137,7 +137,7 @@ int zproxy_cfg_file_reload(void)
 
 	cfg = (struct zproxy_cfg *)calloc(1, sizeof(*cfg));
 	if (!cfg) {
-		syslog(LOG_ERR, "OOM when allocating configuration");
+		zcu_log_print(LOG_ERR, "OOM when allocating configuration");
 		return -1;
 	}
 	zproxy_cfg_init(cfg);
@@ -145,7 +145,7 @@ int zproxy_cfg_file_reload(void)
 	cfg->args = zproxy_args;
 
 	if (zproxy_cfg_file(cfg) < 0) {
-		syslog(LOG_ERR, "Error parsing the config file");
+		zcu_log_print(LOG_ERR, "Error parsing the config file");
 		free(cfg);
 		return -1;
 	}
@@ -250,19 +250,19 @@ static void zproxy_main_notify_shutdown(void)
 
 static void zproxy_sigusr1(int signum)
 {
-	syslog(LOG_INFO, "SIGUSR1 has been received");
+	zcu_log_print(LOG_INFO, "SIGUSR1 has been received");
 	zproxy_main_notify_update();
 }
 
 static void zproxy_sigterm(int signum)
 {
-	syslog(LOG_INFO, "SIGTERM has been received, shutting down");
+	zcu_log_print(LOG_INFO, "SIGTERM has been received, shutting down");
 	zproxy_main_notify_shutdown();
 }
 
 static void zproxy_sig_bt(int signum)
 {
-	syslog(LOG_INFO, "%s has been received", strsignal(signum));
+	zcu_log_print(LOG_INFO, "%s has been received", strsignal(signum));
 	zcu_bt_print_symbols();
 	exit(EXIT_FAILURE);
 }
@@ -380,7 +380,7 @@ int main(int argc, char *argv[])
 
 	cfg = (struct zproxy_cfg *)calloc(1, sizeof(*cfg));
 	if (!cfg) {
-		syslog(LOG_ERR, "OOM when allocating configuration");
+		zcu_log_print(LOG_ERR, "OOM when allocating configuration");
 		exit(EXIT_FAILURE);
 	}
 	zproxy_cfg_init(cfg);
@@ -388,7 +388,7 @@ int main(int argc, char *argv[])
 	cfg->args = zproxy_args;
 
 	if (zproxy_cfg_file(cfg) < 0) {
-		syslog(LOG_ERR, "Error parsing the config file");
+		zcu_log_print(LOG_ERR, "Error parsing the config file");
 		free(cfg);
 		exit(EXIT_FAILURE);
 	}
@@ -425,7 +425,7 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 
 	if (zproxy_ctl_create(cfg) < 0) {
-		syslog(LOG_ERR, "ERROR: cannot create control socket `%s': %s\n",
+		zcu_log_print(LOG_ERR, "ERROR: cannot create control socket `%s': %s\n",
 		       cfg->args.ctrl_socket, strerror(errno));
 		exit(EXIT_FAILURE);
 	}

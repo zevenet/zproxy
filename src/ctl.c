@@ -60,7 +60,7 @@ static void zproxy_ctl_timer_cb(struct ev_loop *loop, ev_timer *timer, int event
 
 	ctl = container_of(timer, struct zproxy_ctl_conn, timer);
 
-	syslog(LOG_ERR, "timeout request to control socket, this should not ever happen!\n");
+	zcu_log_print(LOG_ERR, "timeout request to control socket, this should not ever happen!\n");
 
 	zproxy_ctl_conn_free(loop, ctl);
 }

@@ -73,7 +73,7 @@ static int __zproxy_conn_client_recv(struct ev_loop *loop,
 	ret = recv(conn->client.io.fd, conn->client.buf + conn->client.buf_len,
 		   conn->client.buf_siz - conn->client.buf_len, 0);
 	if (ret < 0) {
-		syslog(LOG_ERR, "error reading from client %s:%hu (%s)\n",
+		zcu_log_print(LOG_ERR, "error reading from client %s:%hu (%s)\n",
 		       inet_ntoa(conn->client.addr.sin_addr),
 		       ntohs(conn->client.addr.sin_port), strerror(errno));
 		return -1;
@@ -125,7 +125,7 @@ static int __zproxy_conn_backend_recv(struct ev_loop *loop,
 	ret = recv(conn->backend.io.fd, &conn->backend.buf[conn->backend.buf_len],
 		   conn->backend.buf_siz - conn->backend.buf_len, 0);
 	if (ret < 0) {
-		syslog(LOG_ERR, "[bk:%s:%hu] Error reading from backend: %s",
+		zcu_log_print(LOG_ERR, "[bk:%s:%hu] Error reading from backend: %s",
 		       inet_ntoa(conn->backend.addr.sin_addr),
 		       ntohs(conn->backend.addr.sin_port), strerror(errno));
 		return -1;
@@ -186,7 +186,7 @@ void zproxy_conn_release(struct ev_loop *loop, struct zproxy_conn *conn, int err
 	else
 		level = LOG_DEBUG;
 
-	syslog(level, "[%lx] connection release for client %s:%hu (result=%s)\n",
+	zcu_log_print(level, "[%lx] connection release for client %s:%hu (result=%s)\n",
 	       conn->proxy->worker->thread_id, inet_ntoa(conn->client.addr.sin_addr),
 	       ntohs(conn->client.addr.sin_port), err < 0 ? strerror(error) : "ok");
 
@@ -388,7 +388,7 @@ static void zproxy_conn_backend_timer_cb(struct ev_loop *loop, ev_timer *timer, 
 
 	conn = container_of(timer, struct zproxy_conn, backend.timer);
 
-	syslog(LOG_ERR, "timeout request to backend %s:%hu\n",
+	zcu_log_print(LOG_ERR, "timeout request to backend %s:%hu\n",
 	       inet_ntoa(conn->backend.addr.sin_addr),
 	       ntohs(conn->backend.addr.sin_port));
 
@@ -450,7 +450,7 @@ static void zproxy_conn_connect_timer_cb(struct ev_loop *loop, ev_timer *timer, 
 
 	conn = container_of(timer, struct zproxy_conn, backend.timer);
 
-	syslog(LOG_ERR, "timeout connect to backend %s:%hu\n",
+	zcu_log_print(LOG_ERR, "timeout connect to backend %s:%hu\n",
 	       inet_ntoa(conn->backend.addr.sin_addr),
 	       ntohs(conn->backend.addr.sin_port));
 
@@ -515,7 +515,7 @@ static void zproxy_conn_timer_cb(struct ev_loop *loop, ev_timer *timer, int even
 
 	conn = container_of(timer, struct zproxy_conn, timer);
 
-	syslog(LOG_ERR, "timeout request for client %s:%hu\n",
+	zcu_log_print(LOG_ERR, "timeout request for client %s:%hu\n",
 	       inet_ntoa(conn->client.addr.sin_addr),
 	       ntohs(conn->client.addr.sin_port));
 
@@ -602,12 +602,12 @@ void zproxy_proxy_accept_cb(struct ev_loop *loop, struct ev_io *io, int events)
 
 	sd = accept(io->fd, (struct sockaddr *)&client_addr, &addrlen);
 	if (sd < 0) {
-		syslog(LOG_ERR, "[%lx] cannot accept client connection: %s\n",
+		zcu_log_print(LOG_ERR, "[%lx] cannot accept client connection: %s\n",
 		       proxy->worker->thread_id, strerror(errno));
 		return;
 	}
 
-	syslog(LOG_DEBUG, "[%lx] accepting client connection from %s:%hu",
+	zcu_log_print(LOG_DEBUG, "[%lx] accepting client connection from %s:%hu",
 	       proxy->worker->thread_id, inet_ntoa(client_addr.sin_addr),
 	       htons(client_addr.sin_port));
 

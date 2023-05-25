@@ -477,7 +477,7 @@ int rewriteHeaderLocation(HttpStream *stream, http::HTTP_HEADER_NAME header_name
 		if (path.find(stream->request.path_repl.data()) == 0) {
 			path.replace(0, stream->request.path_repl.length(),
 					 stream->request.path_ori);
-			syslog(LOG_DEBUG,"location-rewritten: %s", path.data());
+			zcu_log_print(LOG_DEBUG,"location-rewritten: %s", path.data());
 		}
 	}
 	new_header_value += path;

@@ -69,7 +69,7 @@ static int zproxy_sni_servername_cb(SSL *ssl, int dummy, struct list_head *certs
 
 	list_for_each_entry(c, certs, list) {
 		if (!regexec(&c->server_name, server_name, 0, &matches, 0)) {
-			syslog(LOG_DEBUG, "Found cert for %s", server_name);
+			zcu_log_print(LOG_DEBUG, "Found cert for %s", server_name);
 			SSL_set_SSL_CTX(ssl, c->ctx);
 			return SSL_TLSEXT_ERR_OK;
 		} else if (c->subjectAltNameCount > 0 &&
@@ -85,7 +85,7 @@ static int zproxy_sni_servername_cb(SSL *ssl, int dummy, struct list_head *certs
 		}
 	}
 
-	syslog(LOG_DEBUG, "No match for %s, default used", server_name);
+	zcu_log_print(LOG_DEBUG, "No match for %s, default used", server_name);
 	c = list_first_entry(certs, struct sni_cert_ctx, list);
 	SSL_set_SSL_CTX(ssl, c->ctx);
 	return SSL_TLSEXT_ERR_OK;
@@ -255,7 +255,7 @@ int zproxy_ssl_ctx_alloc(struct zproxy_proxy_cfg *cfg, const char *cert_path, in
 
 	ctx = SSL_CTX_new(SSLv23_server_method());
 	if (!ctx) {
-		syslog(LOG_ERR, "cannot initialize ssl");
+		zcu_log_print(LOG_ERR, "cannot initialize ssl");
 		*err = SSL_INIT_ERR;
 		return -1;
 	}
@@ -357,14 +357,14 @@ int zproxy_ssl_ctx_configure(const struct zproxy_proxy_cfg *cfg)
 
 		store = SSL_CTX_get_cert_store(c->ctx);
 		if ((lookup = X509_STORE_add_lookup(store, X509_LOOKUP_file())) == nullptr)
-			syslog(LOG_ERR, "X509_STORE_add_lookup failed");
+			zcu_log_print(LOG_ERR, "X509_STORE_add_lookup failed");
 		X509_STORE_set_flags(store, X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL);
 
 		/* This generates a EC_KEY structure with no key, but a group defined */
 		if (cfg->cfg->runtime.ssl_ecdh_curve_nid != 0) {
 			EC_KEY *ecdh;
 			if ((ecdh = EC_KEY_new_by_curve_name(cfg->cfg->runtime.ssl_ecdh_curve_nid)) == nullptr)
-				syslog(LOG_ERR, "Unable to generate Listener temp ECDH key");
+				zcu_log_print(LOG_ERR, "Unable to generate Listener temp ECDH key");
 			SSL_CTX_set_tmp_ecdh(c->ctx, ecdh);
 			SSL_CTX_set_options(c->ctx, SSL_OP_SINGLE_ECDH_USE);
 			EC_KEY_free(ecdh);
@@ -415,7 +415,7 @@ static int zproxy_conn_client_ssl_handshake(struct ev_loop *loop,
 			events = EV_WRITE;
 			break;
 		default:
-			syslog(LOG_ERR, "unexpected state in %s: %u", __func__, conn->state);
+			zcu_log_print(LOG_ERR, "unexpected state in %s: %u", __func__, conn->state);
 			*err = EINVAL;
 			return -1;
 		}
@@ -505,7 +505,7 @@ int __zproxy_conn_ssl_client_recv(struct ev_loop *loop,
 				return -1;
 		}
 
-		syslog(LOG_ERR, "error reading from SSL client %s:%hu (%d)\n",
+		zcu_log_print(LOG_ERR, "error reading from SSL client %s:%hu (%d)\n",
 		       inet_ntoa(conn->client.addr.sin_addr),
 		       ntohs(conn->client.addr.sin_port), err);
 		return -1;
@@ -533,7 +533,7 @@ int zproxy_conn_ssl_client_send(struct ev_loop *loop,
 			return 0;
 		}
 
-		syslog(LOG_ERR, "error sending to SSL client %s:%hu (%d)\n",
+		zcu_log_print(LOG_ERR, "error sending to SSL client %s:%hu (%d)\n",
 		       inet_ntoa(conn->client.addr.sin_addr),
 		       ntohs(conn->client.addr.sin_port), err);
 		return -1;
@@ -549,7 +549,7 @@ int zproxy_ssl_backend_ctx_alloc(struct zproxy_backend_cfg *cfg)
 
 	ctx = SSL_CTX_new(SSLv23_client_method());
 	if (!ctx) {
-		syslog(LOG_ERR, "cannot initialize backend ssl");
+		zcu_log_print(LOG_ERR, "cannot initialize backend ssl");
 		return -1;
 	}
 
@@ -595,7 +595,7 @@ static int zproxy_conn_backend_ssl_handshake(struct ev_loop *loop, struct zproxy
 			events = EV_READ;
 			break;
 		default:
-			syslog(LOG_ERR, "unexpected state in %s: %u", __func__, conn->state);
+			zcu_log_print(LOG_ERR, "unexpected state in %s: %u", __func__, conn->state);
 			return -1;
 		}
 
@@ -664,7 +664,7 @@ int __zproxy_conn_ssl_backend_recv(struct ev_loop *loop, struct zproxy_conn *con
 				return -1;
 		}
 
-		syslog(LOG_ERR, "error reading from SSL backend %s:%hu (%d)\n",
+		zcu_log_print(LOG_ERR, "error reading from SSL backend %s:%hu (%d)\n",
 		       inet_ntoa(conn->backend.addr.sin_addr),
 		       ntohs(conn->backend.addr.sin_port), err);
 		return -1;
@@ -692,7 +692,7 @@ int __zproxy_conn_ssl_backend_send(struct ev_loop *loop, struct zproxy_conn *con
 			return 0;
 		}
 
-		syslog(LOG_ERR, "error sending to SSL backend %s:%hu (%d)\n",
+		zcu_log_print(LOG_ERR, "error sending to SSL backend %s:%hu (%d)\n",
 		       inet_ntoa(conn->backend.addr.sin_addr),
 		       ntohs(conn->backend.addr.sin_port), err);
 		return -1;

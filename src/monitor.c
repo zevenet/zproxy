@@ -30,6 +30,7 @@
 #include "jhash.h"
 #include "config.h"
 #include "djb_hash.h"
+#include "zcu_log.h"
 
 struct zproxy_monitor_service {
 	struct list_head	hlist;
@@ -102,7 +103,7 @@ static void monitor_backend_update_latency(struct zproxy_monitor_backend *backen
 static void zproxy_monitor_backend_down(struct zproxy_monitor_backend *backend)
 {
 	if (backend->status == ZPROXY_MONITOR_UP) {
-		syslog(LOG_WARNING, "[svc:%s][bk:%s:%hu] The backend dead (killed)\n",
+		zcu_log_print(LOG_WARNING, "[svc:%s][bk:%s:%hu] The backend dead (killed)\n",
 		       backend->service->name,
 		       inet_ntoa(backend->addr.sin_addr),
 		       htons(backend->addr.sin_port));
@@ -115,7 +116,7 @@ static void zproxy_monitor_backend_up(struct zproxy_monitor_backend *backend)
 {
 	monitor_backend_update_latency(backend);
 	if (backend->status == ZPROXY_MONITOR_DOWN) {
-		syslog(LOG_WARNING, "[bk:%s:%hu] The backend resurrected",
+		zcu_log_print(LOG_WARNING, "[bk:%s:%hu] The backend resurrected",
 		       inet_ntoa(backend->addr.sin_addr),
 		       htons(backend->addr.sin_port));
 		backend->status = ZPROXY_MONITOR_UP;
@@ -153,7 +154,7 @@ static void zproxy_monitor_backend_timer_cb(struct ev_loop *loop, ev_timer *time
 
 	backend = container_of(timer, struct zproxy_monitor_backend, timer);
 
-	syslog(LOG_ERR, "timeout connect to backend %s:%hu\n",
+	zcu_log_print(LOG_ERR, "timeout connect to backend %s:%hu\n",
 	       inet_ntoa(backend->addr.sin_addr),
 	       ntohs(backend->addr.sin_port));
 
@@ -269,7 +270,7 @@ static void zproxy_monitor_timer_cb(struct ev_loop *loop, ev_timer *timer, int e
 	for (i = 0; i < HASH_MONITOR_SLOTS; i++) {
 		list_for_each_entry_safe(backend, next, &zproxy_monitor.backend_hash[i], hlist) {
 			if (backend->stale) {
-				syslog(LOG_INFO, "backend %s:%d not used anymore after reload",
+				zcu_log_print(LOG_INFO, "backend %s:%d not used anymore after reload",
 				       inet_ntoa(backend->addr.sin_addr),
 				       htons(backend->addr.sin_port));
 				zproxy_monitor_backend_destroy(backend);

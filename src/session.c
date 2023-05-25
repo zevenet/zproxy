@@ -17,6 +17,7 @@
 
 #include "session.h"
 #include "djb_hash.h"
+#include "zcu_log.h"
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <time.h>
@@ -29,7 +30,7 @@ void zproxy_sessions_dump(struct zproxy_sessions *sessions)
 	pthread_mutex_lock(&sessions->sessions_mutex);
 	for (int i = 0; i < HASH_SESSION_SLOTS; i++) {
 		list_for_each_entry(cur, &sessions->session_hashtable[i], hlist) {
-			syslog(LOG_DEBUG,
+			zcu_log_print(LOG_DEBUG,
 			       "** sessions[%d]: %s (bck=%s:%d;l-s=%d;d=%s)",
 			       i, cur->key, inet_ntoa(cur->bck_addr.sin_addr),
 			       ntohs(cur->bck_addr.sin_port), cur->timestamp,

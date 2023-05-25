@@ -227,7 +227,7 @@ static int zproxy_backend_read(struct ev_loop *loop, struct zproxy_conn *conn, i
 		}
 		break;
 	default:
-		syslog(LOG_ERR, "unexpected state in %s: %u", __func__, conn->state);
+		zcu_log_print(LOG_ERR, "unexpected state in %s: %u", __func__, conn->state);
 		break;
 	}
 
@@ -307,7 +307,7 @@ static int zproxy_backend_write(struct ev_loop *loop, struct zproxy_conn *conn, 
 		}
 		break;
 	default:
-		syslog(LOG_ERR, "unexpected state in %s: %u", __func__, conn->state);
+		zcu_log_print(LOG_ERR, "unexpected state in %s: %u", __func__, conn->state);
 		break;
 	}
 
@@ -472,7 +472,7 @@ static void zproxy_client_read(struct ev_loop *loop, struct zproxy_conn *conn, i
 		}
 		break;
 	default:
-		syslog(LOG_ERR, "unexpected state in %s: %u", __func__, conn->state);
+		zcu_log_print(LOG_ERR, "unexpected state in %s: %u", __func__, conn->state);
 		break;
 	}
 
@@ -613,7 +613,7 @@ static void zproxy_client_write(struct ev_loop *loop, struct zproxy_conn *conn, 
 			 * to be spliced to the client.
 			 */
 			if (errno == EAGAIN) {
-				syslog(LOG_ERR, "pipe is unexpectedly empty!");
+				zcu_log_print(LOG_ERR, "pipe is unexpectedly empty!");
 				return;
 			}
 			goto err_close;
@@ -650,7 +650,7 @@ static void zproxy_client_write(struct ev_loop *loop, struct zproxy_conn *conn, 
 		}
 		break;
 	default:
-		syslog(LOG_ERR, "unexpected state in %s: %u", __func__, conn->state);
+		zcu_log_print(LOG_ERR, "unexpected state in %s: %u", __func__, conn->state);
 		break;
 	}
 	return;

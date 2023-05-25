@@ -142,7 +142,7 @@ static int listener_counter = 0;
 
 #define file_load_err(lvl, fmt, ...)                                           \
 	fprintf(stderr, fmt, __VA_ARGS__);                                     \
-	syslog(lvl, fmt, __VA_ARGS__)
+	zcu_log_print(lvl, fmt, __VA_ARGS__)
 
 #define parse_error(...){ \
 	fprintf(stderr, "config_error(line %d): ", n_lin); \
@@ -1824,7 +1824,7 @@ int zproxy_cfg_prepare(struct zproxy_cfg *cfg)
 	if (cfg->ssl.dh_file[0]) {
 		dh = load_dh_params(cfg->ssl.dh_file);
 		if (!dh) {
-			syslog(LOG_ERR, "DHParams config: could not load file %s",
+			zcu_log_print(LOG_ERR, "DHParams config: could not load file %s",
 			       cfg->ssl.dh_file);
 			return -1;
 		}
@@ -1833,7 +1833,7 @@ int zproxy_cfg_prepare(struct zproxy_cfg *cfg)
 
 	if (cfg->ssl.ecdh_curve[0]) {
 		if ((cfg->runtime.ssl_ecdh_curve_nid = OBJ_sn2nid(cfg->ssl.ecdh_curve)) == 0) {
-			syslog(LOG_ERR, "ECDHCurve config: invalid curve name %s",
+			zcu_log_print(LOG_ERR, "ECDHCurve config: invalid curve name %s",
 			       cfg->ssl.ecdh_curve);
 			return -1;
 		}

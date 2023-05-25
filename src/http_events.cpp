@@ -297,7 +297,7 @@ static int zproxy_http_request_100_cont(struct zproxy_http_ctx *ctx)
 	char  *buf = nullptr;
 
 	if (ctx->buf_len < ctx->stream->request.last_length+4) {
-		syslog(LOG_DEBUG, "100 continue does not receive body data yet");
+		zcu_log_print(LOG_DEBUG, "100 continue does not receive body data yet");
 		return 0;
 	}
 	ctx->stream->request.message_length = ctx->buf_tail_len;
