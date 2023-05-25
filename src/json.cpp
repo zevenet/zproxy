@@ -151,11 +151,12 @@ static json_t *serialize_service_sessions(const struct zproxy_service_cfg *servi
 static json_t *serialize_service(const struct zproxy_service_cfg *service_cfg,
 				 const struct zproxy_http_state *state)
 {
-	struct zproxy_monitor_service_state *service_state;
+	const struct zproxy_monitor_service_state *service_monitor;
+	struct zproxy_sessions *service_sessions;
 	json_t *service;
 
-	service_state = zproxy_monitor_service_state_lookup(service_cfg->name);
-	if (!service_state)
+	service_monitor = zproxy_monitor_service_state_lookup(service_cfg->name);
+	if (!service_monitor)
 		return NULL;
 
 	service = json_object();
@@ -163,9 +164,15 @@ static json_t *serialize_service(const struct zproxy_service_cfg *service_cfg,
 			serialize_service_backends(service_cfg, state));
 
 	json_object_set_new(service, "name", json_string(service_cfg->name));
-	json_object_set_new(service, "priority", json_integer(service_state->priority));
+	json_object_set_new(service, "priority", json_integer(service_monitor->priority));
+	service_sessions =
+		zproxy_state_get_service_sessions(service_cfg->name,
+						  &state->services);
+	if (!service_sessions)
+		return NULL;
 	json_object_set_new(service, "sessions",
-			    serialize_service_sessions(service_cfg, state->services.at(service_cfg->name)->sessions));
+			    serialize_service_sessions(service_cfg,
+						       service_sessions));
 
 	return service;
 }
@@ -313,6 +320,7 @@ char *zproxy_json_encode_glob_sessions(const struct zproxy_cfg *cfg)
 	char *buf;
 	const struct zproxy_proxy_cfg *proxy = NULL;
 	const struct zproxy_service_cfg *service = NULL;
+	struct zproxy_sessions *service_sessions;
 	struct zproxy_http_state *state = NULL;
 	json_t *json_obj = json_array();
 
@@ -334,9 +342,15 @@ char *zproxy_json_encode_glob_sessions(const struct zproxy_cfg *cfg)
 			json_object_set_new(serv_obj, "name",
 					    json_string(service->name));
 
+			service_sessions =
+				zproxy_state_get_service_sessions(service->name,
+								  &state->services);
+			if (!service_sessions)
+				return NULL;
+
 			json_t *sess_arr =
 				serialize_service_sessions(service,
-							   state->services.at(service->name)->sessions);
+							   service_sessions);
 			json_object_set_new(serv_obj, "sessions", sess_arr);
 			json_array_append_new(serv_arr, serv_obj);
 		}

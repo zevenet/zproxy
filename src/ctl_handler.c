@@ -255,7 +255,8 @@ static enum ws_responses handle_get(const std::string &req_path,
 			return WS_HTTP_404;
 		}
 		zproxy_sessions *sessions =
-			zproxy_state_get_session(service_id, &state->services);
+			zproxy_state_get_service_sessions(service_id.c_str(),
+						 &state->services);
 		if (!sessions) {
 			*resp_buf = zproxy_json_return_err("Couldn't find sessions for service %s in listener %d",
 							   service_id.c_str(),
@@ -325,7 +326,8 @@ static enum ws_responses handle_patch(const std::string &req_path,
 			return WS_HTTP_404;
 		}
 		zproxy_sessions *sessions =
-			zproxy_state_get_session(service_id, &state->services);
+			zproxy_state_get_service_sessions(service_id.c_str(),
+						 &state->services);
 		if (!sessions) {
 			zproxy_state_release(&state);
 			*resp_buf = zproxy_json_return_err("Service %s not found.",
@@ -413,7 +415,8 @@ static enum ws_responses handle_patch(const std::string &req_path,
 			return WS_HTTP_404;
 		}
 		zproxy_sessions *sessions =
-			zproxy_state_get_session(service_id, &state->services);
+			zproxy_state_get_service_sessions(service_id.c_str(),
+						 &state->services);
 		if (!sessions) {
 			zproxy_state_release(&state);
 			*resp_buf = zproxy_json_return_err("Service %s not found.",
@@ -452,7 +455,7 @@ static enum ws_responses handle_patch(const std::string &req_path,
 			}
 			for (auto &j : i.services) {
 				struct zproxy_sessions *sessions;
-				sessions = zproxy_state_get_session(j.name, &state->services);
+				sessions = zproxy_state_get_service_sessions(j.name, &state->services);
 				if (!sessions) {
 					*resp_buf = zproxy_json_return_err("Service %s doesn't exist.",
 									   j.name);
@@ -511,7 +514,8 @@ static enum ws_responses handle_delete(const std::string &req_path,
 			return WS_HTTP_404;
 		}
 		zproxy_sessions *sessions =
-			zproxy_state_get_session(service_id, &state->services);
+			zproxy_state_get_service_sessions(service_id.c_str(),
+						 &state->services);
 		if (!sessions) {
 			zproxy_state_release(&state);
 			*resp_buf = zproxy_json_return_err("Service %s not found.",
@@ -622,7 +626,8 @@ static enum ws_responses handle_put(const std::string &req_path,
 			return WS_HTTP_404;
 		}
 		zproxy_sessions *sessions =
-			zproxy_state_get_session(service_id, &state->services);
+			zproxy_state_get_service_sessions(service_id.c_str(),
+						 &state->services);
 		if (!sessions) {
 			zproxy_state_release(&state);
 			*resp_buf = zproxy_json_return_err("Service %s not found.",

@@ -2,7 +2,7 @@
     {
         "backends": [
             {
-                "2xx-code-hits": 0,
+                "2xx-code-hits": 2,
                 "3xx-code-hits": 0,
                 "4xx-code-hits": 0,
                 "5xx-code-hits": 0,

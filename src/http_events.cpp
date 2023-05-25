@@ -175,7 +175,9 @@ static int zproxy_http_request_head_rcv(struct zproxy_http_ctx *ctx)
 	list_for_each_entry(service, &cfg->service_list, list) {
 		if (zproxy_service_select(&stream->request, service)) {
 			stream->service_config = service;
-			stream->session = zproxy_state_get_session(service->name, &state->services);
+			stream->session =
+				zproxy_state_get_service_sessions(service->name,
+								  &state->services);
 			break;
 		}
 	}
