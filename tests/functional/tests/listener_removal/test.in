@@ -1,0 +1,13 @@
+DESCRIPTION="List listeners"
+CMD=ctl
+URL="/listeners"
+METHOD="GET"
+#########################
+DESCRIPTION="Remove one of the listeners"
+CMD=reload
+FILE=zproxy_new.cfg
+#########################
+DESCRIPTION="List listeners"
+CMD=ctl
+URL="/listeners"
+METHOD="GET"
