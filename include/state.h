@@ -24,7 +24,9 @@
 #include "zcu_log.h"
 #include <sys/time.h>
 #include <ev.h>
+// when switching to C use the second include
 #include <atomic>
+//#include <stdatomic.h>
 
 #define TIMEOUT_SESSIONS 1
 #define COUNTER_SESSIONS 10000
@@ -33,13 +35,20 @@ struct zproxy_backend_state;
 struct zproxy_service_state;
 
 struct zproxy_stats {
-	std::atomic<int32_t> http_2xx_hits {0}; ///< Total number of 2xx responses since initialization.
-	std::atomic<int32_t> http_3xx_hits {0}; ///< Total number of 3xx responses since initialization.
-	std::atomic<int32_t> http_4xx_hits {0}; ///< Total number of 4xx responses since initialization.
-	std::atomic<int32_t> http_5xx_hits {0}; ///< Total number of 5xx responses since initialization.
-	std::atomic<int32_t> http_waf_hits {0}; ///< Total number of waf responses since initialization.
-	std::atomic<int32_t> conn_established {0}; ///< Number of connections established at the moment.
-	std::atomic<int32_t> conn_pending {0}; ///< Number of connections pending at the moment.
+	/// Total number of 2xx responses since initialization.
+	std::atomic_int http_2xx_hits;
+	/// Total number of 3xx responses since initialization.
+	std::atomic_int http_3xx_hits;
+	/// Total number of 4xx responses since initialization.
+	std::atomic_int http_4xx_hits;
+	/// Total number of 5xx responses since initialization.
+	std::atomic_int http_5xx_hits;
+	/// Total number of waf responses since initialization.
+	std::atomic_int http_waf_hits;
+	/// Number of connections established at the moment.
+	std::atomic_int conn_established;
+	/// Number of connections pending at the moment.
+	std::atomic_int conn_pending;
 };
 
 struct zproxy_http_state {
