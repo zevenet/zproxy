@@ -274,7 +274,7 @@ static void zproxy_monitor_timer_cb(struct ev_loop *loop, ev_timer *timer, int e
 				       inet_ntoa(backend->addr.sin_addr),
 				       htons(backend->addr.sin_port));
 				zproxy_monitor_backend_destroy(backend);
-				continue;
+				return;
 			}
 			if (backend->status == ZPROXY_MONITOR_DISABLED)
 				continue;
