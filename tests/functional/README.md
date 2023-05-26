@@ -113,7 +113,7 @@ It executes an API request and dumps the configuration if the request don't have
 | CMD      | It is the command to execute. *ctl* should be defined to send a request to the zproxy API | True
 | METHOD   | It is the HTTP method used in the request to the zproxy API | True
 | URL      | It is the HTTP URL used in the request to the zproxy API | True
-| BODY     | It is the HTTP body sent in the request. It has to be saved in a file | True
+| BODY     | It is the HTTP body sent in the request. It has to be saved in a file |
 
 ```
 CMD=ctl
