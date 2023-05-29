@@ -16,6 +16,7 @@
  */
 
 #include "config.h"
+#include "list.h"
 #include "monitor.h"
 #include "session.h"
 #include "state.h"
@@ -312,8 +313,9 @@ static enum ws_responses handle_patch(const std::string &req_path,
 			      req_path.c_str(), matches)) {
 		GET_MATCH_2PARAM(req_path, param1, service_id);
 		const int listener_id = atoi(param1.c_str());
-		std::vector<struct json_session> new_sessions;
-		if (zproxy_json_decode_sessions(req_msg, new_sessions) < 0) {
+		struct list_head new_sessions;
+		struct json_session *session;
+		if (zproxy_json_decode_sessions(req_msg, &new_sessions) < 0) {
 			*resp_buf = zproxy_json_return_err("Failed to decode JSON.");
 			return WS_HTTP_400;
 		}
@@ -336,24 +338,25 @@ static enum ws_responses handle_patch(const std::string &req_path,
 		}
 
 		zproxy_sessions_flush(sessions);
-		for (struct json_session &i : new_sessions) {
+		list_for_each_entry(session, &new_sessions, list) {
 			struct zproxy_backend_cfg *backend =
 				find_backend(cfg, listener_id, service_id.c_str(),
-					     i.backend_id.c_str());
+					     session->backend_id);
 			if (!backend) {
 				*resp_buf = zproxy_json_return_err("Backend %s doesn't exist.",
-								   i.backend_id.c_str());
+								   session->backend_id);
 				return WS_HTTP_500;
 			}
 			zproxy_session_node *sess =
-				zproxy_session_add(sessions, i.id.data(), &backend->runtime.addr);
+				zproxy_session_add(sessions, session->id, &backend->runtime.addr);
 			if (!sess) {
 				*resp_buf = zproxy_json_return_err("Failed to create session");
 				return WS_HTTP_500;
 			}
-			sess->timestamp = i.last_seen;
+			sess->timestamp = session->last_seen;
 			zproxy_session_free(&sess);
 		}
+		zproxy_json_sess_sessions_free(&new_sessions);
 
 		zproxy_state_release(&state);
 	} else if (zproxy_regex_exec(API_REGEX_SELECT_BACKEND_STATUS,
@@ -440,51 +443,57 @@ static enum ws_responses handle_patch(const std::string &req_path,
 	} else if (zproxy_regex_exec(API_REGEX_SELECT_SESSIONS,
 				     req_path.c_str(), matches)) {
 		struct zproxy_http_state *state;
-		std::vector<struct json_sess_listener> sess_listeners;
-		if (zproxy_json_decode_glob_sessions(req_msg, sess_listeners) < 0) {
+		struct list_head sess_listeners;
+		const struct json_sess_listener *sess_listener;
+		const struct json_sess_service *sess_service;
+		const struct json_session *session;
+
+		if (zproxy_json_decode_glob_sessions(req_msg, &sess_listeners) < 0) {
 			*resp_buf = zproxy_json_return_err("Failed to decode JSON.");
 			return WS_HTTP_500;
 		}
 
-		for (auto &i : sess_listeners) {
-			state = zproxy_state_lookup(i.id);
+		list_for_each_entry(sess_listener, &sess_listeners, list) {
+			state = zproxy_state_lookup(sess_listener->id);
 			if (!state) {
 				*resp_buf = zproxy_json_return_err("Listener %d doesn't exist.",
-								   i.id);
+								   sess_listener->id);
 				return WS_HTTP_500;
 			}
-			for (auto &j : i.services) {
+			list_for_each_entry(sess_service, &sess_listener->services, list) {
 				struct zproxy_sessions *sessions;
-				sessions = zproxy_state_get_service_sessions(j.name, &state->services);
+				sessions = zproxy_state_get_service_sessions(sess_service->name, &state->services);
 				if (!sessions) {
 					*resp_buf = zproxy_json_return_err("Service %s doesn't exist.",
-									   j.name);
+									   sess_service->name);
 					return WS_HTTP_500;
 				}
 				zproxy_sessions_flush(sessions);
-				for (auto &k : j.sessions) {
+				list_for_each_entry(session, &sess_service->sessions, list) {
 					struct zproxy_backend_cfg *backend =
-						find_backend(cfg, i.id, j.name,
-							     k.backend_id.c_str());
+						find_backend(cfg, sess_listener->id,
+							     sess_service->name,
+							     session->backend_id);
 					if (!backend) {
 						*resp_buf = zproxy_json_return_err("Backend %s doesn't exist.",
-										   k.backend_id.c_str());
+										   session->backend_id);
 						return WS_HTTP_500;
 					}
 					zproxy_session_node *sess =
 						zproxy_session_add(sessions,
-								   k.id.data(),
+								   session->id,
 								   &backend->runtime.addr);
 					if (!sess) {
 						*resp_buf = zproxy_json_return_err("Failed to create session");
 						return WS_HTTP_500;
 					}
-					sess->timestamp = k.last_seen;
+					sess->timestamp = session->last_seen;
 					zproxy_session_free(&sess);
 				}
 			}
 			zproxy_state_release(&state);
 		}
+		zproxy_json_sess_listener_free(&sess_listeners);
 	} else {
 		return WS_HTTP_400;
 	}

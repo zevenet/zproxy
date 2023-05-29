@@ -15,8 +15,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <cstdio>
-#include <cstring>
 #include <jansson.h>
 #include <netdb.h>
 #include <pthread.h>
@@ -514,7 +512,7 @@ int zproxy_json_decode_session(const char *buf, char *sess_id, size_t sess_id_le
 }
 
 int zproxy_json_decode_glob_sessions(const char *buf,
-				     std::vector<struct json_sess_listener> &listeners)
+				     struct list_head *listeners)
 {
 	json_error_t json_err;
 	json_t *listener_arr, *listener_obj, *service_arr, *service_obj,
@@ -529,39 +527,50 @@ int zproxy_json_decode_glob_sessions(const char *buf,
 		return -1;
 	}
 
+	INIT_LIST_HEAD(listeners);
 	json_array_foreach(listener_arr, i, listener_obj) {
-		struct json_sess_listener listener;
+		struct json_sess_listener *listener =
+			(struct json_sess_listener*)calloc(1, sizeof(struct json_sess_listener));
 		req_var = json_object_get(listener_obj, "id");
-		listener.id = json_integer_value(req_var);
+		listener->id = json_integer_value(req_var);
+		INIT_LIST_HEAD(&listener->services);
 
 		service_arr = json_object_get(listener_obj, "services");
 		json_array_foreach(service_arr, j, service_obj) {
-			struct json_sess_service service;
+			struct json_sess_service *service =
+				(struct json_sess_service*)calloc(1, sizeof(struct json_sess_service));
 			req_var = json_object_get(service_obj, "name");
-			snprintf(service.name, CONFIG_IDENT_MAX,
+			snprintf(service->name, CONFIG_IDENT_MAX,
 				 json_string_value(req_var), "%s");
+			INIT_LIST_HEAD(&service->sessions);
 
 			session_arr = json_object_get(service_obj, "sessions");
 			json_array_foreach(session_arr, k, session_obj) {
-				struct json_session session;
-				if ((req_var = json_object_get(session_obj, "id")))
-					session.id = json_string_value(req_var);
+				struct json_session *session =
+					(struct json_session*)calloc(1, sizeof(struct json_session));
+				if ((req_var = json_object_get(session_obj, "id"))) {
+					snprintf(session->id, MAX_SESSION_ID,
+						 "%s", json_string_value(req_var));
+				}
 
-				if ((req_var = json_object_get(session_obj, "backend-id")))
-					session.backend_id = json_string_value(req_var);
+				if ((req_var = json_object_get(session_obj, "backend-id"))) {
+					snprintf(session->backend_id,
+						 CONFIG_IDENT_MAX, "%s",
+						 json_string_value(req_var));
+				}
 
 				if ((req_var = json_object_get(session_obj, "last-seen")))
-					session.last_seen = (time_t)json_integer_value(req_var);
+					session->last_seen = (time_t)json_integer_value(req_var);
 				else
-					session.last_seen = -1;
+					session->last_seen = -1;
 
-				service.sessions.push_back(session);
+				list_add_tail(&session->list, &service->sessions);
 			}
 
-			listener.services.push_back(service);
+			list_add_tail(&service->list, &listener->services);
 		}
 
-		listeners.push_back(listener);
+		list_add_tail(&listener->list, listeners);
 	}
 
 	json_decref(listener_arr);
@@ -570,7 +579,7 @@ int zproxy_json_decode_glob_sessions(const char *buf,
 }
 
 int zproxy_json_decode_sessions(const char *buf,
-				std::vector<struct json_session> &sessions)
+				struct list_head *sessions)
 {
 	json_error_t json_err;
 	json_t *sess_array, *sess;
@@ -589,16 +598,46 @@ int zproxy_json_decode_sessions(const char *buf,
 		return -1;
 	}
 
+	INIT_LIST_HEAD(sessions);
 	json_array_foreach(sess_array, sess_i, sess) {
-		sessions.push_back({
-				   json_string_value(json_object_get(sess, "id")),
-				   json_string_value(json_object_get(sess, "backend-id")),
-				   json_integer_value(json_object_get(sess, "last-seen")),
-				   });
+		struct json_session *session =
+			(struct json_session*)calloc(1, sizeof(struct json_session));
+		snprintf(session->id, MAX_SESSION_ID, "%s",
+			 json_string_value(json_object_get(sess, "id")));
+		snprintf(session->backend_id, MAX_SESSION_ID, "%s",
+			 json_string_value(json_object_get(sess, "backend-id")));
+		session->last_seen = json_integer_value(json_object_get(sess, "last-seen"));
+		list_add_tail(&session->list, sessions);
 	}
 
 	json_decref(sess_array);
 	return 1;
+}
+
+void zproxy_json_sess_sessions_free(struct list_head *sessions)
+{
+	struct json_session *session, *sess_next;
+
+	list_for_each_entry_safe(session, sess_next, sessions, list) {
+		list_del(&session->list);
+		free(session);
+	}
+}
+
+void zproxy_json_sess_listener_free(struct list_head *listeners)
+{
+	struct json_sess_listener *listener, *list_next;
+	struct json_sess_service *service, *serv_next;
+
+	list_for_each_entry_safe(listener, list_next, listeners, list) {
+		list_for_each_entry_safe(service, serv_next, &listener->services, list) {
+			zproxy_json_sess_sessions_free(&service->sessions);
+			list_del(&service->list);
+			free(service);
+		}
+		list_del(&listener->list);
+		free(listener);
+	}
 }
 
 int zproxy_json_decode_backend(const char *buf, char *id, size_t id_len,

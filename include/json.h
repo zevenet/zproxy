@@ -18,11 +18,10 @@
 #ifndef _ZPROXY_JSON_H_
 #define _ZPROXY_JSON_H_
 
-#include <cstdio>
 #include <jansson.h>
 #include <stdarg.h>
-#include <vector>
 #include "config.h"
+#include "list.h"
 #include "session.h"
 #include "state.h"
 #include "monitor.h"
@@ -77,23 +76,28 @@ int zproxy_json_decode_session(const char *buf, char *sess_id, size_t sess_id_le
 			       time_t *last_seen);
 
 struct json_session {
-	std::string id;
-	std::string backend_id;
+	struct list_head list;
+	char id[MAX_SESSION_ID];
+	char backend_id[CONFIG_IDENT_MAX];
 	time_t last_seen;
 };
 struct json_sess_service {
+	struct list_head list;
 	char name[CONFIG_IDENT_MAX];
-	std::vector<struct json_session> sessions;
+	struct list_head sessions;
 };
 struct json_sess_listener {
+	struct list_head list;
 	uint32_t id;
-	std::vector<struct json_sess_service> services;
+	struct list_head services;
 };
 
 int zproxy_json_decode_glob_sessions(const char *buf,
-				     std::vector<struct json_sess_listener> &listeners);
+				     struct list_head *listeners);
 int zproxy_json_decode_sessions(const char *buf,
-				std::vector<struct json_session> &sessions);
+				struct list_head *sessions);
+void zproxy_json_sess_sessions_free(struct list_head *sessions);
+void zproxy_json_sess_listener_free(struct list_head *listeners);
 int zproxy_json_decode_backend(const char *buf, char *id, size_t id_len,
 			       char *address, size_t address_len, int *port,
 			       int *https, int *weight, int *priority,
