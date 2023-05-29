@@ -42,7 +42,7 @@ struct zproxy_session_node {
 	// last_seen is used to calculate if the session has expired.
 	// If it has the value 0 means that the session does not expired, it is permanent
 	unsigned int timestamp;
-	bool defunct;
+	struct zproxy_sessions *sessions_group;
 	int refcnt;
 };
 
@@ -57,7 +57,7 @@ void zproxy_sessions_free(struct zproxy_sessions *sessions);
  * @param key Unique key that identifies the session.
  *
  * @return A pointer to the session that must be released with
- * zproxy_session_release(). If not found it will return NULL.
+ * zproxy_session_free(). If not found it will return NULL.
  */
 struct zproxy_session_node *
 zproxy_session_get(struct zproxy_sessions *sessions, const char *key);
@@ -69,7 +69,7 @@ zproxy_session_get(struct zproxy_sessions *sessions, const char *key);
  * @param bck Backend associated with the new session.
  *
  * @return A pointer to the session that must be released with
- * zproxy_session_release(). If fails to add it will return NULL.
+ * zproxy_session_free(). If fails to add it will return NULL.
  */
 struct zproxy_session_node *
 zproxy_session_add(struct zproxy_sessions *sessions, const char *key,
@@ -79,7 +79,7 @@ zproxy_session_add(struct zproxy_sessions *sessions, const char *key,
  *
  * @param session Session to release.
  */
-void zproxy_session_release(struct zproxy_session_node **session);
+void zproxy_session_free(struct zproxy_session_node **session);
 void zproxy_sessions_remove_expired(struct zproxy_sessions *sessions);
 void zproxy_session_delete_backend(struct zproxy_sessions *sessions, const struct sockaddr_in *bck);
 int zproxy_session_delete(struct zproxy_sessions *sessions, const char *key);

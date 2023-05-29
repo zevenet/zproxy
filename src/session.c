@@ -20,6 +20,7 @@
 #include "zcu_log.h"
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <pthread.h>
 #include <time.h>
 #include <sys/syslog.h>
 
@@ -31,10 +32,9 @@ void zproxy_sessions_dump(struct zproxy_sessions *sessions)
 	for (int i = 0; i < HASH_SESSION_SLOTS; i++) {
 		list_for_each_entry(cur, &sessions->session_hashtable[i], hlist) {
 			zcu_log_print(LOG_DEBUG,
-			       "** sessions[%d]: %s (bck=%s:%d;l-s=%d;d=%s)",
+			       "** sessions[%d]: %s (bck=%s:%d;l-s=%d)",
 			       i, cur->key, inet_ntoa(cur->bck_addr.sin_addr),
-			       ntohs(cur->bck_addr.sin_port), cur->timestamp,
-			       cur->defunct ? "true" : "false");
+			       ntohs(cur->bck_addr.sin_port), cur->timestamp);
 		}
 	}
 	pthread_mutex_unlock(&sessions->sessions_mutex);
@@ -57,15 +57,12 @@ static int zproxy_session_is_expired(struct zproxy_session_node *session, unsign
 	return time(NULL) - session->timestamp > ttl;
 }
 
-static int zproxy_session_free(struct zproxy_session_node *session)
+static void _zproxy_session_free(struct zproxy_session_node *session)
 {
-	if (session->refcnt == 0) {
+	if (--session->refcnt == 0) {
 		list_del(&session->hlist);
+		session->sessions_group->size--;
 		free(session);
-		return 1;
-	} else {
-		session->defunct = true;
-		return -1;
 	}
 }
 
@@ -95,17 +92,18 @@ void zproxy_sessions_flush(struct zproxy_sessions *sessions)
 	int i;
 
 	pthread_mutex_lock(&sessions->sessions_mutex);
-	sessions->size = 0;
 	for (i = 0; i < HASH_SESSION_SLOTS; i++) {
 		list_for_each_entry_safe(session, next, &sessions->session_hashtable[i], hlist)
-			zproxy_session_free(session);
+			_zproxy_session_free(session);
 	}
+	sessions->size = 0;
 	pthread_mutex_unlock(&sessions->sessions_mutex);
 }
 
 void zproxy_sessions_free(struct zproxy_sessions *sessions)
 {
 	zproxy_sessions_flush(sessions);
+	pthread_mutex_destroy(&sessions->sessions_mutex);
 	free(sessions);
 }
 
@@ -115,7 +113,7 @@ static struct zproxy_session_node *_zproxy_session_get(struct zproxy_sessions *s
 	int hash = djb_hash(key) % HASH_SESSION_SLOTS;
 
 	list_for_each_entry(cur, &sessions->session_hashtable[hash], hlist) {
-		if (!cur->defunct && strncmp(cur->key, key, strlen(cur->key)+1) == 0)
+		if (strncmp(cur->key, key, strlen(cur->key)+1) == 0)
 			return cur;
 	}
 
@@ -159,7 +157,8 @@ struct zproxy_session_node *zproxy_session_add(struct zproxy_sessions *sessions,
 	snprintf(session->key, sizeof(session->key), "%s", key);
 	memcpy(&session->bck_addr, bck, sizeof(struct sockaddr_in));
 	session->timestamp = time(NULL);
-	session->defunct = false;
+	session->sessions_group = sessions;
+	session->refcnt = 1;
 
 	sessions->size++;
 
@@ -172,12 +171,18 @@ struct zproxy_session_node *zproxy_session_add(struct zproxy_sessions *sessions,
 	return session;
 }
 
-void zproxy_session_release(struct zproxy_session_node **session)
+void zproxy_session_free(struct zproxy_session_node **session)
 {
 	if (!*session)
 		return;
 
-	(*session)->refcnt--;
+	struct zproxy_sessions *sessions =
+		(*session)->sessions_group;
+	pthread_mutex_lock(&sessions->sessions_mutex);
+	_zproxy_session_free(*session);
+	pthread_mutex_unlock(&sessions->sessions_mutex);
+
+	*session = NULL;
 }
 
 void zproxy_sessions_remove_expired(struct zproxy_sessions *sessions)
@@ -188,38 +193,28 @@ void zproxy_sessions_remove_expired(struct zproxy_sessions *sessions)
 	pthread_mutex_lock(&sessions->sessions_mutex);
 	for (i = 0; i < HASH_SESSION_SLOTS; i++) {
 		list_for_each_entry_safe(session, next, &sessions->session_hashtable[i], hlist) {
-			if (zproxy_session_is_expired(session, sessions->ttl)) {
-				if (zproxy_session_free(session) < 0)
-					sessions->size--;
-			}
+			if (zproxy_session_is_expired(session, sessions->ttl))
+				_zproxy_session_free(session);
 		}
 	}
 	pthread_mutex_unlock(&sessions->sessions_mutex);
 }
 
-static int _zproxy_session_delete(struct zproxy_sessions *sessions, const char *key)
+int zproxy_session_delete(struct zproxy_sessions *sessions, const char *key)
 {
 	struct zproxy_session_node *session;
 
-	session = _zproxy_session_get(sessions, key);
-	if (!session)
-		return -1;
-
-	if (zproxy_session_free(session) < 0)
-		sessions->size--;
-
-	return 0;
-}
-
-int zproxy_session_delete(struct zproxy_sessions *sessions, const char *key)
-{
-	int ret;
-
 	pthread_mutex_lock(&sessions->sessions_mutex);
-	ret = _zproxy_session_delete(sessions, key);
+	session = _zproxy_session_get(sessions, key);
+	if (!session) {
+		pthread_mutex_unlock(&sessions->sessions_mutex);
+		return -1;
+	}
+
+	_zproxy_session_free(session);
 	pthread_mutex_unlock(&sessions->sessions_mutex);
 
-	return ret;
+	return 1;
 }
 
 int zproxy_session_update(struct zproxy_sessions *sessions, const char *key, const struct sockaddr_in *bck, unsigned int timestamp)
@@ -248,10 +243,8 @@ void zproxy_session_delete_backend(struct zproxy_sessions *sessions, const struc
 	pthread_mutex_lock(&sessions->sessions_mutex);
 	for (i = 0; i < HASH_SESSION_SLOTS; i++) {
 		list_for_each_entry_safe(session, next, &sessions->session_hashtable[i], hlist) {
-			if (memcmp(&session->bck_addr, bck, sizeof(struct sockaddr_in)) == 0) {
-				if (zproxy_session_free(session) < 0)
-					sessions->size--;
-			}
+			if (memcmp(&session->bck_addr, bck, sizeof(struct sockaddr_in)) == 0)
+				_zproxy_session_free(session);
 		}
 	}
 	pthread_mutex_unlock(&sessions->sessions_mutex);
@@ -265,10 +258,8 @@ void zproxy_session_delete_old_backends(const struct zproxy_service_cfg *service
 	pthread_mutex_lock(&sessions->sessions_mutex);
 	for (i = 0; i < HASH_SESSION_SLOTS; i++) {
 		list_for_each_entry_safe(session, next, &sessions->session_hashtable[i], hlist) {
-			if (!zproxy_backend_cfg_lookup(service, &session->bck_addr)) {
-				if (zproxy_session_free(session) < 0)
-					sessions->size--;
-			}
+			if (!zproxy_backend_cfg_lookup(service, &session->bck_addr))
+				_zproxy_session_free(session);
 		}
 	}
 	pthread_mutex_unlock(&sessions->sessions_mutex);

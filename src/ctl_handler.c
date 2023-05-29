@@ -352,7 +352,7 @@ static enum ws_responses handle_patch(const std::string &req_path,
 				return WS_HTTP_500;
 			}
 			sess->timestamp = i.last_seen;
-			zproxy_session_release(&sess);
+			zproxy_session_free(&sess);
 		}
 
 		zproxy_state_release(&state);
@@ -480,7 +480,7 @@ static enum ws_responses handle_patch(const std::string &req_path,
 						return WS_HTTP_500;
 					}
 					sess->timestamp = k.last_seen;
-					zproxy_session_release(&sess);
+					zproxy_session_free(&sess);
 				}
 			}
 			zproxy_state_release(&state);
@@ -644,7 +644,7 @@ static enum ws_responses handle_put(const std::string &req_path,
 		}
 		if (last_seen >= 0)
 			session->timestamp = last_seen;
-		zproxy_session_release(&session);
+		zproxy_session_free(&session);
 		zproxy_state_release(&state);
 	} else if (zproxy_regex_exec(API_REGEX_SELECT_SERVICE_BACKENDS,
 				     req_path.c_str(), matches)) {

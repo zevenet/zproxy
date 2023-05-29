@@ -593,7 +593,7 @@ static void zproxy_http_manage_set_cookie(HttpStream *stream, std::string sessio
 
 	session = zproxy_session_add(stream->session, session_key.data(),
 				     &stream->backend_config->runtime.addr);
-	zproxy_session_release(&session);
+	zproxy_session_free(&session);
 }
 
 validation::REQUEST_RESULT http_manager::validateResponse(HttpStream *stream)
