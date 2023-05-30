@@ -38,19 +38,4 @@ public:
 
 template < typename T > std::atomic < int > Counter < T > ::count(0);
 
-namespace debug__
-{
-#define DEFINE_OBJECT_COUNTER(ObjectName)                                      \
-	struct ObjectName : Counter < ObjectName > {                              \
-		ObjectName() : Counter < ObjectName > (false)                      \
-		{                                                              \
-		}                                                              \
-	};
-#if DEBUG_ZCU_LOG
-#define DEBUG_COUNTER_HIT(x) x UNIQUE_NAME(counter_hit)
-#else
-#define DEBUG_COUNTER_HIT(x)
-#endif
-} // namespace debug__
-
 #endif /* _ZPROXY_COUNTER_H_ */
