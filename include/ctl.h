@@ -23,13 +23,6 @@
 #include "list.h"
 #include "config.h"
 
-/*
- * ERR_BUF_MAX_SIZE must fit a listener ID (uint32_t), a service name (of size
- * CONFIG_IDENT_MAX maximum) and a backend id (IP-port), plus the error message
- * itself.
- */
-#define ERR_BUF_MAX_SIZE CONFIG_IDENT_MAX + 512
-
 /* main control thread. */
 #define ZPROXY_CTL_MAIN_PATH		"/tmp/zproxy_ctl.sock"
 

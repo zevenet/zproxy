@@ -28,6 +28,13 @@
 #include "proxy.h"
 #include "ctl.h"
 
+/*
+ * ERR_BUF_MAX_SIZE must fit a listener ID (uint32_t), a service name (of size
+ * CONFIG_IDENT_MAX maximum) and a backend id (IP-port), plus the error message
+ * itself.
+ */
+#define ERR_BUF_MAX_SIZE CONFIG_IDENT_MAX + 512
+
 /* QUICK JSON RESPONSES */
 inline char *zproxy_json_return_ok(void)
 {
