@@ -31,7 +31,6 @@
 #include <netdb.h>
 #include <stdio.h>
 #include <sys/syslog.h>
-#include <vector>
 
 #define CTL_PATH_MAX_PARAMS  4
 
@@ -48,18 +47,18 @@
 #define API_REGEX_SELECT_SESSIONS           "^[/]+sessions[/]*$"
 
 #define GET_MATCH_1PARAM(str, p1)                                              \
-	const std::string p1 =                                                 \
-		str.substr(matches[1].rm_so, matches[1].rm_eo - matches[1].rm_so)
+	str[matches[1].rm_eo] = '\0';                                          \
+	const char *p1 = str + matches[1].rm_so
 
 #define GET_MATCH_2PARAM(str, p1, p2)                                          \
 	GET_MATCH_1PARAM(str, p1);                                             \
-	const std::string p2 =                                                 \
-		str.substr(matches[2].rm_so, matches[2].rm_eo - matches[2].rm_so)
+	str[matches[2].rm_eo] = '\0';                                          \
+	const char *p2 = str + matches[2].rm_so
 
 #define GET_MATCH_3PARAM(str, p1, p2, p3)                                      \
 	GET_MATCH_2PARAM(str, p1, p2);                                         \
-	const std::string p3 =                                                 \
-		str.substr(matches[3].rm_so, matches[3].rm_eo - matches[3].rm_so)
+	str[matches[3].rm_eo] = '\0';                                          \
+	const char *p3 = str + matches[3].rm_so
 
 static int send_msg(const struct zproxy_ctl_conn *ctl,
 		    const enum ws_responses resp_code,
@@ -157,23 +156,22 @@ find_backend(const struct zproxy_cfg *cfg, uint32_t listener_id,
 	return NULL;
 }
 
-static enum ws_responses handle_get(const std::string &req_path,
+static enum ws_responses handle_get(char *req_path,
 				    const struct zproxy_cfg *cfg,
 				    char **resp_buf)
 {
 	regmatch_t matches[CTL_PATH_MAX_PARAMS];
 	*resp_buf = NULL;
 
-	if (zproxy_regex_exec(API_REGEX_SELECT_LISTENERS, req_path.c_str(),
-			      matches)) {
+	if (zproxy_regex_exec(API_REGEX_SELECT_LISTENERS, req_path, matches)) {
 		if (!(*resp_buf = zproxy_json_encode_listeners(cfg))) {
 			*resp_buf = zproxy_json_return_err("Failed to serialize listeners.");
 			return WS_HTTP_500;
 		}
-	} else if (zproxy_regex_exec(API_REGEX_SELECT_LISTENER, req_path.c_str(),
+	} else if (zproxy_regex_exec(API_REGEX_SELECT_LISTENER, req_path,
 				     matches)) {
 		GET_MATCH_1PARAM(req_path, param);
-		const int listener_id = atoi(param.c_str());
+		const int listener_id = atoi(param);
 		const struct zproxy_proxy_cfg *proxy =
 			find_listener(cfg, listener_id);
 		if (!proxy) {
@@ -187,9 +185,9 @@ static enum ws_responses handle_get(const std::string &req_path,
 			return WS_HTTP_500;
 		}
 	} else if (zproxy_regex_exec(API_REGEX_SELECT_LISTENER_SERVICES,
-				     req_path.c_str(), matches)) {
+				     req_path, matches)) {
 		GET_MATCH_1PARAM(req_path, param);
-		const int listener_id = atoi(param.c_str());
+		const int listener_id = atoi(param);
 		const struct zproxy_proxy_cfg *proxy =
 			find_listener(cfg, listener_id);
 		if (!proxy) {
@@ -202,50 +200,47 @@ static enum ws_responses handle_get(const std::string &req_path,
 							   listener_id);
 			return WS_HTTP_500;
 		}
-	} else if (zproxy_regex_exec(API_REGEX_SELECT_SERVICE,
-				     req_path.c_str(), matches)) {
+	} else if (zproxy_regex_exec(API_REGEX_SELECT_SERVICE, req_path,
+				     matches)) {
 		GET_MATCH_2PARAM(req_path, param1, service_id);
-		const int listener_id = atoi(param1.c_str());
+		const int listener_id = atoi(param1);
 		const struct zproxy_service_cfg *service =
-			find_service(cfg, listener_id, service_id.c_str());
+			find_service(cfg, listener_id, service_id);
 		if (!service) {
 			*resp_buf = zproxy_json_return_err("Service %s in listener %d not found.",
-							   service_id.c_str(),
-							   listener_id);
+							   service_id, listener_id);
 			return WS_HTTP_404;
 		}
 		if (!(*resp_buf = zproxy_json_encode_service(service))) {
 			*resp_buf = zproxy_json_return_err("Failed to serialize service %s.",
-							   service_id.c_str());
+							   service_id);
 			return WS_HTTP_500;
 		}
 	} else if (zproxy_regex_exec(API_REGEX_SELECT_SERVICE_BACKENDS,
-				     req_path.c_str(), matches)) {
+				     req_path, matches)) {
 		GET_MATCH_2PARAM(req_path, param1, service_id);
-		const int listener_id = atoi(param1.c_str());
+		const int listener_id = atoi(param1);
 		const struct zproxy_service_cfg *service =
-			find_service(cfg, listener_id, service_id.c_str());
+			find_service(cfg, listener_id, service_id);
 		if (!service) {
 			*resp_buf = zproxy_json_return_err("Service %s in listener %d not found.",
-							   service_id.c_str(),
-							   listener_id);
+							   service_id, listener_id);
 			return WS_HTTP_404;
 		}
 		if (!(*resp_buf = zproxy_json_encode_backends(service))) {
 			*resp_buf = zproxy_json_return_err("Failed to serialize backends of service %s.",
-							   service_id.c_str());
+							   service_id);
 			return WS_HTTP_500;
 		}
 	} else if (zproxy_regex_exec(API_REGEX_SELECT_SERVICE_SESSIONS,
-				     req_path.c_str(), matches)) {
+				     req_path, matches)) {
 		GET_MATCH_2PARAM(req_path, param1, service_id);
-		const int listener_id = atoi(param1.c_str());
+		const int listener_id = atoi(param1);
 		const struct zproxy_service_cfg *service =
-			find_service(cfg, listener_id, service_id.c_str());
+			find_service(cfg, listener_id, service_id);
 		if (!service) {
 			*resp_buf = zproxy_json_return_err("Service %s in listener %d not found.",
-							   service_id.c_str(),
-							   listener_id);
+							   service_id, listener_id);
 			return WS_HTTP_404;
 		}
 		struct zproxy_http_state *state =
@@ -256,40 +251,36 @@ static enum ws_responses handle_get(const std::string &req_path,
 			return WS_HTTP_404;
 		}
 		zproxy_sessions *sessions =
-			zproxy_state_get_service_sessions(service_id.c_str(),
+			zproxy_state_get_service_sessions(service_id,
 						 &state->services);
 		if (!sessions) {
 			*resp_buf = zproxy_json_return_err("Couldn't find sessions for service %s in listener %d",
-							   service_id.c_str(),
-							   listener_id);
+							   service_id, listener_id);
 		}
 		if (!(*resp_buf = zproxy_json_encode_sessions(service, sessions))) {
 			*resp_buf = zproxy_json_return_err("Failed to serialize sesssions of service %s.",
-							   service_id.c_str());
+							   service_id);
 			return WS_HTTP_500;
 		}
 		zproxy_state_release(&state);
-	} else if (zproxy_regex_exec(API_REGEX_SELECT_BACKEND,
-				     req_path.c_str(), matches)) {
+	} else if (zproxy_regex_exec(API_REGEX_SELECT_BACKEND, req_path,
+				     matches)) {
 		GET_MATCH_3PARAM(req_path, param1, service_id, backend_id);
-		const int listener_id = atoi(param1.c_str());
+		const int listener_id = atoi(param1);
 		const struct zproxy_backend_cfg *backend =
-			find_backend(cfg, listener_id, service_id.c_str(),
-				     backend_id.c_str());
+			find_backend(cfg, listener_id, service_id, backend_id);
 		if (!backend) {
 			*resp_buf = zproxy_json_return_err("Backend %s in service %s in listener %d not found.",
-							   backend_id.c_str(),
-							   service_id.c_str(),
-							   listener_id);
+							   backend_id, service_id, listener_id);
 			return WS_HTTP_404;
 		}
 		if (!(*resp_buf = zproxy_json_encode_backend(backend))) {
 			*resp_buf = zproxy_json_return_err("Failed to serialize backend %s.",
-							   backend_id.c_str());
+							   backend_id);
 			return WS_HTTP_500;
 		}
-	} else if (zproxy_regex_exec(API_REGEX_SELECT_SESSIONS,
-				     req_path.c_str(), matches)) {
+	} else if (zproxy_regex_exec(API_REGEX_SELECT_SESSIONS, req_path,
+				     matches)) {
 		if (!(*resp_buf = zproxy_json_encode_glob_sessions(cfg))) {
 			*resp_buf = zproxy_json_return_err("Failed to encode sessions.");
 			return WS_HTTP_500;
@@ -301,7 +292,7 @@ static enum ws_responses handle_get(const std::string &req_path,
 	return WS_HTTP_200;
 }
 
-static enum ws_responses handle_patch(const std::string &req_path,
+static enum ws_responses handle_patch(char *req_path,
 				    const char *req_msg,
 				    const struct zproxy_cfg *cfg,
 				    char **resp_buf)
@@ -309,10 +300,10 @@ static enum ws_responses handle_patch(const std::string &req_path,
 	regmatch_t matches[CTL_PATH_MAX_PARAMS];
 	*resp_buf = NULL;
 
-	if (zproxy_regex_exec(API_REGEX_SELECT_SERVICE_SESSIONS,
-			      req_path.c_str(), matches)) {
+	if (zproxy_regex_exec(API_REGEX_SELECT_SERVICE_SESSIONS, req_path,
+			      matches)) {
 		GET_MATCH_2PARAM(req_path, param1, service_id);
-		const int listener_id = atoi(param1.c_str());
+		const int listener_id = atoi(param1);
 		struct list_head new_sessions;
 		struct json_session *session;
 		if (zproxy_json_decode_sessions(req_msg, &new_sessions) < 0) {
@@ -328,19 +319,19 @@ static enum ws_responses handle_patch(const std::string &req_path,
 			return WS_HTTP_404;
 		}
 		zproxy_sessions *sessions =
-			zproxy_state_get_service_sessions(service_id.c_str(),
+			zproxy_state_get_service_sessions(service_id,
 						 &state->services);
 		if (!sessions) {
 			zproxy_state_release(&state);
 			*resp_buf = zproxy_json_return_err("Service %s not found.",
-							   service_id.c_str());
+							   service_id);
 			return WS_HTTP_404;
 		}
 
 		zproxy_sessions_flush(sessions);
 		list_for_each_entry(session, &new_sessions, list) {
 			struct zproxy_backend_cfg *backend =
-				find_backend(cfg, listener_id, service_id.c_str(),
+				find_backend(cfg, listener_id, service_id,
 					     session->backend_id);
 			if (!backend) {
 				*resp_buf = zproxy_json_return_err("Backend %s doesn't exist.",
@@ -359,18 +350,15 @@ static enum ws_responses handle_patch(const std::string &req_path,
 		zproxy_json_sess_sessions_free(&new_sessions);
 
 		zproxy_state_release(&state);
-	} else if (zproxy_regex_exec(API_REGEX_SELECT_BACKEND_STATUS,
-			      req_path.c_str(), matches)) {
+	} else if (zproxy_regex_exec(API_REGEX_SELECT_BACKEND_STATUS, req_path,
+				     matches)) {
 		GET_MATCH_3PARAM(req_path, param1, service_id, backend_id);
-		const int listener_id = atoi(param1.c_str());
+		const int listener_id = atoi(param1);
 		struct zproxy_backend_cfg *backend =
-			find_backend(cfg, listener_id, service_id.c_str(),
-				     backend_id.c_str());
+			find_backend(cfg, listener_id, service_id, backend_id);
 		if (!backend) {
 			*resp_buf = zproxy_json_return_err("Backend %s in service %s in listener %d not found.",
-							   backend_id.c_str(),
-							   service_id.c_str(),
-							   listener_id);
+							   backend_id, service_id, listener_id);
 			return WS_HTTP_404;
 		}
 
@@ -380,33 +368,29 @@ static enum ws_responses handle_patch(const std::string &req_path,
 			return WS_HTTP_400;
 		}
 
-		if (zproxy_monitor_backend_set_enabled(&backend->runtime.addr,
-						       service_id.c_str(),
+		if (zproxy_monitor_backend_set_enabled(&backend->runtime.addr, service_id,
 						       new_status == ZPROXY_MONITOR_UP) < 0) {
 			*resp_buf = zproxy_json_return_err("Failed to set backend status");
 			return WS_HTTP_500;
 		}
-	} else if (zproxy_regex_exec(API_REGEX_SELECT_SESSION,
-				     req_path.c_str(), matches)) {
+	} else if (zproxy_regex_exec(API_REGEX_SELECT_SESSION, req_path,
+				     matches)) {
 		GET_MATCH_3PARAM(req_path, param1, service_id, session_id);
-		const int listener_id = atoi(param1.c_str());
+		const int listener_id = atoi(param1);
 
 		char backend_id[CONFIG_IDENT_MAX] = { 0 };
 		time_t last_seen;
-		if (zproxy_json_decode_session(req_msg, NULL, 0,
-					       backend_id, CONFIG_IDENT_MAX,
+		if (zproxy_json_decode_session(req_msg, NULL, 0, backend_id,
+					       CONFIG_IDENT_MAX,
 					       &last_seen) < 0) {
 			*resp_buf = zproxy_json_return_err("Invalid JSON format.");
 			return WS_HTTP_400;
 		}
 		struct zproxy_backend_cfg *backend =
-			find_backend(cfg, listener_id, service_id.c_str(),
-				     backend_id);
+			find_backend(cfg, listener_id, service_id, backend_id);
 		if (!backend) {
 			*resp_buf = zproxy_json_return_err("Backend %s in service %s in listener %d not found.",
-							   backend_id,
-							   service_id.c_str(),
-							   listener_id);
+							   backend_id, service_id, listener_id);
 			return WS_HTTP_404;
 		}
 
@@ -418,30 +402,31 @@ static enum ws_responses handle_patch(const std::string &req_path,
 			return WS_HTTP_404;
 		}
 		zproxy_sessions *sessions =
-			zproxy_state_get_service_sessions(service_id.c_str(),
+			zproxy_state_get_service_sessions(service_id,
 						 &state->services);
 		if (!sessions) {
 			zproxy_state_release(&state);
 			*resp_buf = zproxy_json_return_err("Service %s not found.",
-							   service_id.c_str());
+							   service_id);
 			return WS_HTTP_404;
 		}
-		if (zproxy_session_update(
-				sessions, session_id.data(), &backend->runtime.addr, last_seen) < 0) {
+		if (zproxy_session_update(sessions, session_id,
+					  &backend->runtime.addr,
+					  last_seen) < 0) {
 			zproxy_state_release(&state);
 			*resp_buf = zproxy_json_return_err("Could not find session with ID %s.",
-							   session_id.c_str());
+							   session_id);
 			return WS_HTTP_404;
 		}
 		zproxy_state_release(&state);
-	} else if (zproxy_regex_exec(API_REGEX_SELECT_CONFIG,
-				     req_path.c_str(), matches)) {
+	} else if (zproxy_regex_exec(API_REGEX_SELECT_CONFIG, req_path,
+				     matches)) {
 		if (zproxy_cfg_file_reload() < 0) {
 			*resp_buf = zproxy_json_return_err("Failed to reload configuration.");
 			return WS_HTTP_500;
 		}
-	} else if (zproxy_regex_exec(API_REGEX_SELECT_SESSIONS,
-				     req_path.c_str(), matches)) {
+	} else if (zproxy_regex_exec(API_REGEX_SELECT_SESSIONS, req_path,
+				     matches)) {
 		struct zproxy_http_state *state;
 		struct list_head sess_listeners;
 		const struct json_sess_listener *sess_listener;
@@ -503,7 +488,7 @@ static enum ws_responses handle_patch(const std::string &req_path,
 	return WS_HTTP_200;
 }
 
-static enum ws_responses handle_delete(const std::string &req_path,
+static enum ws_responses handle_delete(char *req_path,
 				       const char *req_msg,
 				       const struct zproxy_cfg *cfg,
 				       char **resp_buf)
@@ -511,10 +496,10 @@ static enum ws_responses handle_delete(const std::string &req_path,
 	regmatch_t matches[CTL_PATH_MAX_PARAMS];
 	*resp_buf = NULL;
 
-	if (zproxy_regex_exec(API_REGEX_SELECT_SERVICE_SESSIONS,
-			      req_path.c_str(), matches)) {
+	if (zproxy_regex_exec(API_REGEX_SELECT_SERVICE_SESSIONS, req_path,
+			      matches)) {
 		GET_MATCH_2PARAM(req_path, param1, service_id);
-		const int listener_id = atoi(param1.c_str());
+		const int listener_id = atoi(param1);
 		struct zproxy_http_state *state =
 			zproxy_state_lookup(listener_id);
 		if (!state) {
@@ -523,12 +508,12 @@ static enum ws_responses handle_delete(const std::string &req_path,
 			return WS_HTTP_404;
 		}
 		zproxy_sessions *sessions =
-			zproxy_state_get_service_sessions(service_id.c_str(),
-						 &state->services);
+			zproxy_state_get_service_sessions(service_id,
+							  &state->services);
 		if (!sessions) {
 			zproxy_state_release(&state);
 			*resp_buf = zproxy_json_return_err("Service %s not found.",
-							   service_id.c_str());
+							   service_id);
 			return WS_HTTP_404;
 		}
 
@@ -539,8 +524,10 @@ static enum ws_responses handle_delete(const std::string &req_path,
 			char backend_id[CONFIG_IDENT_MAX] = { 0 };
 			char sess_id[CONFIG_IDENT_MAX] = { 0 };
 
-			if (zproxy_json_decode_session(req_msg, sess_id, CONFIG_IDENT_MAX,
-						       backend_id, CONFIG_IDENT_MAX,
+			if (zproxy_json_decode_session(req_msg, sess_id,
+						       CONFIG_IDENT_MAX,
+						       backend_id,
+						       CONFIG_IDENT_MAX,
 						       NULL) < 0) {
 				zproxy_state_release(&state);
 				*resp_buf = zproxy_json_return_err("Invalid JSON format.");
@@ -551,12 +538,12 @@ static enum ws_responses handle_delete(const std::string &req_path,
 					      backend_id);
 				struct zproxy_backend_cfg *backend =
 					find_backend(cfg, listener_id,
-						     service_id.c_str(),
+						     service_id,
 						     backend_id);
 				if (!backend) {
 					zproxy_state_release(&state);
 					*resp_buf = zproxy_json_return_err("Backend %s in service %s in listener %d not found.",
-									   backend_id, service_id.c_str(), listener_id);
+									   backend_id, service_id, listener_id);
 					return WS_HTTP_404;
 				}
 				zproxy_session_delete_backend(sessions, &backend->runtime.addr);
@@ -586,7 +573,7 @@ static enum ws_responses handle_delete(const std::string &req_path,
 	return WS_HTTP_204;
 }
 
-static enum ws_responses handle_put(const std::string &req_path,
+static enum ws_responses handle_put(char *req_path,
 				    const char *req_msg,
 				    const struct zproxy_cfg *cfg,
 				    char **resp_buf)
@@ -594,16 +581,17 @@ static enum ws_responses handle_put(const std::string &req_path,
 	regmatch_t matches[CTL_PATH_MAX_PARAMS];
 	*resp_buf = NULL;
 
-	if (zproxy_regex_exec(API_REGEX_SELECT_SERVICE_SESSIONS,
-			      req_path.c_str(), matches)) {
+	if (zproxy_regex_exec(API_REGEX_SELECT_SERVICE_SESSIONS, req_path,
+			      matches)) {
 		GET_MATCH_2PARAM(req_path, param1, service_id);
-		const int listener_id = atoi(param1.c_str());
+		const int listener_id = atoi(param1);
 		char sess_id[CONFIG_IDENT_MAX] = { 0 };
 		char backend_id[CONFIG_IDENT_MAX] = { 0 };
 		time_t last_seen;
 
-		if (zproxy_json_decode_session(req_msg, sess_id, CONFIG_IDENT_MAX,
-					       backend_id, CONFIG_IDENT_MAX,
+		if (zproxy_json_decode_session(req_msg, sess_id,
+					       CONFIG_IDENT_MAX, backend_id,
+					       CONFIG_IDENT_MAX,
 					       &last_seen) < 0) {
 			*resp_buf = zproxy_json_return_err("Invalid JSON format.");
 			return WS_HTTP_400;
@@ -614,11 +602,10 @@ static enum ws_responses handle_put(const std::string &req_path,
 			return WS_HTTP_400;
 		}
 		struct zproxy_backend_cfg *backend =
-			find_backend(cfg, listener_id, service_id.c_str(),
-				     backend_id);
+			find_backend(cfg, listener_id, service_id, backend_id);
 		if (!backend) {
 			*resp_buf = zproxy_json_return_err("Backend %s in service %s in listener %d not found.",
-							   backend_id, service_id.c_str(), listener_id);
+							   backend_id, service_id, listener_id);
 			return WS_HTTP_404;
 		}
 
@@ -635,12 +622,12 @@ static enum ws_responses handle_put(const std::string &req_path,
 			return WS_HTTP_404;
 		}
 		zproxy_sessions *sessions =
-			zproxy_state_get_service_sessions(service_id.c_str(),
-						 &state->services);
+			zproxy_state_get_service_sessions(service_id,
+							  &state->services);
 		if (!sessions) {
 			zproxy_state_release(&state);
 			*resp_buf = zproxy_json_return_err("Service %s not found.",
-							   service_id.c_str());
+							   service_id);
 			return WS_HTTP_404;
 		}
 
@@ -655,10 +642,10 @@ static enum ws_responses handle_put(const std::string &req_path,
 			session->timestamp = last_seen;
 		zproxy_session_free(&session);
 		zproxy_state_release(&state);
-	} else if (zproxy_regex_exec(API_REGEX_SELECT_SERVICE_BACKENDS,
-				     req_path.c_str(), matches)) {
+	} else if (zproxy_regex_exec(API_REGEX_SELECT_SERVICE_BACKENDS, req_path,
+				     matches)) {
 		GET_MATCH_2PARAM(req_path, param1, service_id);
-		const int listener_id = atoi(param1.c_str());
+		const int listener_id = atoi(param1);
 		struct zproxy_backend_cfg *new_backend;
 		struct zproxy_cfg *new_cfg;
 		struct zproxy_service_cfg *service;
@@ -707,12 +694,12 @@ static enum ws_responses handle_put(const std::string &req_path,
 			return WS_HTTP_500;
 		}
 
-		service = find_service(new_cfg, listener_id, service_id.c_str());
+		service = find_service(new_cfg, listener_id, service_id);
 		if (!service) {
 			free(new_backend);
 			zproxy_cfg_free(new_cfg);
 			*resp_buf = zproxy_json_return_err("Service %s in listener %d not found.",
-							   service_id.c_str(), listener_id);
+							   service_id, listener_id);
 			return WS_HTTP_404;
 		}
 
@@ -806,7 +793,7 @@ int ctl_handler_cb(const struct zproxy_ctl_conn *ctl,
 	switch (request.getRequestMethod()) {
 	case http::REQUEST_METHOD::GET: {
 		zcu_log_print(LOG_DEBUG, "CTL GET %s", request.path.c_str());
-		resp_code = handle_get(request.path, cfg, &buf);
+		resp_code = handle_get(request.path.data(), cfg, &buf);
 		if (resp_code == WS_HTTP_200)
 			zcu_log_print(LOG_INFO, "JSON object encoding successful");
 		else
@@ -815,7 +802,8 @@ int ctl_handler_cb(const struct zproxy_ctl_conn *ctl,
 	}
 	case http_parser::REQUEST_METHOD::PATCH: {
 		zcu_log_print(LOG_DEBUG, "CTL PATCH %s", request.path.c_str());
-		resp_code = handle_patch(request.path, request.message, cfg, &buf);
+		resp_code = handle_patch(request.path.data(), request.message,
+					 cfg, &buf);
 		if (resp_code == WS_HTTP_200)
 			zcu_log_print(LOG_INFO, "Object patching successful");
 		else
@@ -824,7 +812,8 @@ int ctl_handler_cb(const struct zproxy_ctl_conn *ctl,
 	}
 	case http_parser::REQUEST_METHOD::DELETE: {
 		zcu_log_print(LOG_DEBUG, "CTL DELETE %s", request.path.c_str());
-		resp_code = handle_delete(request.path, request.message, cfg, &buf);
+		resp_code = handle_delete(request.path.data(), request.message,
+					  cfg, &buf);
 		if (resp_code == WS_HTTP_204)
 			zcu_log_print(LOG_INFO, "Object deletion successful");
 		else
@@ -833,7 +822,8 @@ int ctl_handler_cb(const struct zproxy_ctl_conn *ctl,
 	}
 	case http_parser::REQUEST_METHOD::PUT: {
 		zcu_log_print(LOG_DEBUG, "CTL PUT %s", request.path.c_str());
-		resp_code = handle_put(request.path, request.message, cfg, &buf);
+		resp_code = handle_put(request.path.data(), request.message,
+				       cfg, &buf);
 		if (resp_code == WS_HTTP_204)
 			zcu_log_print(LOG_INFO, "Object creation successful");
 		else
