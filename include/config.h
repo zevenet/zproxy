@@ -77,9 +77,9 @@ struct err_resp_item {
 	char                data[CONFIG_MAXBUF];
 };
 
-inline char *zproxy_cfg_get_errmsg(const struct list_head *list, int code)
+inline const char *zproxy_cfg_get_errmsg(const struct list_head *list, int code)
 {
-	char *ret = NULL;
+	const char *ret = NULL;
 	struct err_resp_item *err_item;
 
 	list_for_each_entry(err_item, list, list) {
@@ -90,6 +90,51 @@ inline char *zproxy_cfg_get_errmsg(const struct list_head *list, int code)
 			ret = err_item->data;
 		}
 	}
+
+	if (!ret) {
+		switch (code) {
+		case 414:
+			ret =
+				"<html>"
+				"<head>"
+				"<title>414 URI Too Long</title>"
+				"</head>"
+				"<body><p>Request URI is too long.</p></body>"
+				"</html>";
+			break;
+		case 500:
+			ret =
+				"<html>"
+				"<head>"
+				"<title>500 Internal Server Error</title>"
+				"</head>"
+				"<body><p>An internal server error occurred. Please try again later.</p></body>"
+				"</html>";
+			break;
+		case 501:
+			ret =
+				"<html>"
+				"<head>"
+				"<title>501 Not Implemented</title>"
+				"</head>"
+				"<body><p>This method may not be used.</p></body>"
+				"</html>";
+			break;
+		case 503:
+			ret =
+				"<html>"
+				"<head>"
+				"<title>503 Service Unavailable</title>"
+				"</head>"
+				"<body><p>The service is not available. Please try again later.</p></body>"
+				"</html>";
+			break;
+		default:
+			ret = NULL;
+			break;
+		}
+	}
+
 	return ret;
 }
 
