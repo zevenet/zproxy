@@ -29,7 +29,6 @@
 #include "zproxy.h"
 #include "state.h"
 #include "list.h"
-#include "zcu_time.h"
 #include "session.h"
 #include "proxy.h"
 
@@ -115,7 +114,6 @@ static void zproxy_state_maintenance_cb(struct ev_loop *loop, ev_timer *timer,
 	struct zproxy_http_state *state;
 	struct zproxy_service_state *service_state;
 
-	Time::updateTime();
 	ev_timer_stop(loop, timer);
 
 	pthread_mutex_lock(&list_mutex);
