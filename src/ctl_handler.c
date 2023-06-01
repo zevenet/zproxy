@@ -18,18 +18,21 @@
 #include "config.h"
 #include "list.h"
 #include "monitor.h"
+#include "pico_http_parser.h"
 #include "session.h"
 #include "state.h"
 #include "zcu_network.h"
 #include "zcu_log.h"
+#include "zcu_common.h"
 #include "zproxy.h"
 #include "ctl.h"
 #include "zcu_http.h"
-#include "zcu_log.h"
 #include "json.h"
 
+#include <linux/limits.h>
 #include <netdb.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/syslog.h>
 
 #define CTL_PATH_MAX_PARAMS  4
@@ -296,9 +299,9 @@ static enum ws_responses handle_get(char *req_path,
 }
 
 static enum ws_responses handle_patch(char *req_path,
-				    const char *req_msg,
-				    const struct zproxy_cfg *cfg,
-				    char **resp_buf)
+				      const char *req_msg,
+				      const struct zproxy_cfg *cfg,
+				      char **resp_buf)
 {
 	regmatch_t matches[CTL_PATH_MAX_PARAMS];
 	*resp_buf = NULL;
@@ -760,33 +763,29 @@ static enum ws_responses handle_put(char *req_path,
 }
 
 int ctl_handler_cb(const struct zproxy_ctl_conn *ctl,
-		const struct zproxy_cfg *cfg)
+		   const struct zproxy_cfg *cfg)
 {
 	int ret = 0;
-	/*size_t used_bytes;
-	HttpRequest request;
-	const http_parser::PARSE_RESULT parse_res =
-		request.parse(ctl->buf, ctl->buf_len, &used_bytes);
-	int ret;
+	const char *method, *path, *body = NULL;
+	char req_path[PATH_MAX];
+	struct phr_header headers[MAX_HEADERS];
+	int minor_version;
+	size_t method_len, path_len, num_headers = MAX_HEADERS;
+
 	enum ws_responses resp_code;
-	const char *content_type;
 	char *buf = NULL;
 	size_t buf_len;
+	const char *content_type;
 
-	if (parse_res != http_parser::PARSE_RESULT::SUCCESS) {
-		switch (parse_res) {
-		case http_parser::PARSE_RESULT::FAILED:
-			buf = zproxy_json_return_err("Failed to parse CTL request.");
-			break;
-		case http_parser::PARSE_RESULT::INCOMPLETE:
-			buf = zproxy_json_return_err("Failed to parse CTL request: incomplete.");
-			break;
-		case http_parser::PARSE_RESULT::TOOLONG:
-			buf = zproxy_json_return_err("CTL request too long.");
-			break;
-		default:
-			break;
-		}
+	ret = phr_parse_request(ctl->buf, ctl->buf_len, &method, &method_len,
+				&path, &path_len, &minor_version, headers,
+				&num_headers, 0);
+
+	if (ret < 0) {
+		if (ret == -1)
+			buf = zproxy_json_return_err("Failed to parse request.");
+		else if (ret == -2)
+			buf = zproxy_json_return_err("Request is incomplete.");
 
 		zcu_log_print(LOG_WARNING, "CTL request parsing error.");
 
@@ -794,57 +793,53 @@ int ctl_handler_cb(const struct zproxy_ctl_conn *ctl,
 		goto err_handler;
 	}
 
-	switch (request.getRequestMethod()) {
-	case http::REQUEST_METHOD::GET: {
-		zcu_log_print(LOG_DEBUG, "CTL GET %s", request.path.c_str());
-		resp_code = handle_get(request.path.data(), cfg, &buf);
+	snprintf(req_path, PATH_MAX, "%.*s", (int)path_len, path);
+
+	body = strstr(ctl->buf, HTTP_LINE_END HTTP_LINE_END);
+	if (body) {
+		body += sizeof(HTTP_LINE_END HTTP_LINE_END) - 1;
+		zcu_log_print(LOG_DEBUG, "CTL REQUEST BODY: %s", body);
+	}
+
+	if (strncmp(method, "GET", method_len) == 0) {
+		zcu_log_print(LOG_DEBUG, "CTL GET %.*s", path_len, path);
+		resp_code = handle_get(req_path, cfg, &buf);
 		if (resp_code == WS_HTTP_200)
 			zcu_log_print(LOG_INFO, "JSON object encoding successful");
 		else
 			zcu_log_print(LOG_INFO, "Failed to encode object");
-		break;
-	}
-	case http_parser::REQUEST_METHOD::PATCH: {
-		zcu_log_print(LOG_DEBUG, "CTL PATCH %s", request.path.c_str());
-		resp_code = handle_patch(request.path.data(), request.message,
-					 cfg, &buf);
+	} else if (strncmp(method, "PATCH", method_len) == 0) {
+		zcu_log_print(LOG_DEBUG, "CTL PATCH %.*s", path_len, path);
+		resp_code = handle_patch(req_path, body, cfg, &buf);
 		if (resp_code == WS_HTTP_200)
 			zcu_log_print(LOG_INFO, "Object patching successful");
 		else
 			zcu_log_print(LOG_INFO, "Failed to patch object");
-		break;
-	}
-	case http_parser::REQUEST_METHOD::DELETE: {
-		zcu_log_print(LOG_DEBUG, "CTL DELETE %s", request.path.c_str());
-		resp_code = handle_delete(request.path.data(), request.message,
-					  cfg, &buf);
+	} else if (strncmp(method, "DELETE", method_len) == 0) {
+		zcu_log_print(LOG_DEBUG, "CTL DELETE %.*s", path_len, path);
+		resp_code = handle_delete(req_path, body, cfg, &buf);
 		if (resp_code == WS_HTTP_204)
 			zcu_log_print(LOG_INFO, "Object deletion successful");
 		else
 			zcu_log_print(LOG_INFO, "Failed to delete object");
-		break;
-	}
-	case http_parser::REQUEST_METHOD::PUT: {
-		zcu_log_print(LOG_DEBUG, "CTL PUT %s", request.path.c_str());
-		resp_code = handle_put(request.path.data(), request.message,
-				       cfg, &buf);
+	} else if (strncmp(method, "PUT", method_len) == 0) {
+		zcu_log_print(LOG_DEBUG, "CTL PUT %.*s", path_len, path);
+		resp_code = handle_put(req_path, body, cfg, &buf);
 		if (resp_code == WS_HTTP_204)
 			zcu_log_print(LOG_INFO, "Object creation successful");
 		else
 			zcu_log_print(LOG_INFO, "Failed to create object");
-		break;
-	}
-	default: {
-		zcu_log_print(LOG_WARNING, "Received unknown or unsupported request method");
+	} else {
+		zcu_log_print(LOG_WARNING,
+			      "Received unknown or unsupported request method");
 		return send_msg(ctl, WS_HTTP_405, NULL, NULL, 0);
-	}
 	}
 
 err_handler:
 	content_type = buf != NULL ? HTTP_HEADER_CONTENT_JSON : NULL;
 	buf_len = buf != NULL ? strlen(buf) : 0;
 	ret = send_msg(ctl, resp_code, content_type, buf, buf_len);
-	free(buf);*/
+	free(buf);
 
 	return ret;
 }
