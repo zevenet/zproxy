@@ -181,14 +181,13 @@ static enum RETURN_HTTP zproxy_http_request_head_rcv_parse(struct zproxy_http_ct
 
 	parser->req.buf_cpy_len = sprintf((char *)parser->req.buf_cpy + parser->req.buf_cpy_len, ctx->buf);
 	ret = phr_parse_request(parser->req.buf_cpy, parser->req.buf_cpy_len,
-								 (const char **)&parser->req.method,
-								 &parser->req.method_len,
-								 (const char **)&parser->req.path,
-								 &parser->req.path_len,
-								 &parser->req.minor_version,
-								 parser->req.headers,
-								 &parser->req.num_headers,
-								 parser->req.last_length);
+				(const char **)&parser->req.method,
+				&parser->req.method_len,
+				(const char **)&parser->req.path,
+				&parser->req.path_len,
+				&parser->req.minor_version,
+				parser->req.headers, &parser->req.num_headers,
+				parser->req.last_length);
 
 	parser->req.last_length = parser->req.buf_cpy_len;
 	if (ret > 0) {
