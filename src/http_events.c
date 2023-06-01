@@ -237,7 +237,6 @@ static size_t zproxy_http_request_send_to_backend(struct zproxy_http_ctx *ctx)
 
 	if (parser->req.body)
 		len += sprintf((char*)ctx->buf + len, "%.*s", (int)parser->req.body_len, parser->req.body);
-	len += sprintf((char*)ctx->buf + len, "%s", HTTP_LINE_END);
 
 	ctx->buf_len = len;
 	return len;
@@ -261,25 +260,24 @@ static size_t zproxy_http_response_send_to_client(struct zproxy_http_ctx *ctx)
 		return -1;
 
 	len = sprintf(buf,
-			"HTTP/1.%d %d %.*s%s",
+			"HTTP/1.%d %d %.*s",
 			parser->res.minor_version,
 			parser->res.status_code,
 			(int)parser->res.message_len,
-			parser->res.message, HTTP_LINE_END);
+			parser->res.message);
 
 	for (i = 0; i != parser->res.num_headers; i++) {
 		if (parser->res.headers[i].header_off)
 			continue;
 
-		len += sprintf(buf + len, "%.*s%s",
+		len += sprintf(buf + len, "%.*s",
 				(int)parser->res.headers[i].line_size,
-				parser->res.headers[i].name, HTTP_LINE_END);
+				parser->res.headers[i].name);
 	}
 	len += sprintf(buf + len, "%s", HTTP_LINE_END);
 
 	if (parser->res.body)
 		len += sprintf(buf + len, "%.*s", (int)parser->res.body_len, parser->res.body);
-	len += sprintf(buf + len, "%s", HTTP_LINE_END);
 
 	if (zproxy_http_direct_proxy_reply(parser)) {
 		ctx->resp_len = len;
