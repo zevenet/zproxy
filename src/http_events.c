@@ -221,16 +221,16 @@ static size_t zproxy_http_request_send_to_backend(struct zproxy_http_ctx *ctx)
 
 	if (parser->virtual_host_hdr.value_len)
 		len += sprintf((char *)ctx->buf + len,
-				"%.*s%s", (int)parser->virtual_host_hdr.line_size,
-				parser->virtual_host_hdr.name, HTTP_LINE_END);
+				"%.*s", (int)parser->virtual_host_hdr.line_size,
+				parser->virtual_host_hdr.name);
 
 	for (i = 0; i != parser->req.num_headers; i++) {
 		if (parser->req.headers[i].header_off)
 			continue;
 
-		len += sprintf((char*)ctx->buf + len, "%.*s%s",
+		len += sprintf((char*)ctx->buf + len, "%.*s",
 				(int)parser->req.headers[i].line_size,
-				parser->req.headers[i].name, HTTP_LINE_END);
+				parser->req.headers[i].name);
 	}
 
 	len += sprintf((char*)ctx->buf + len, "%s", HTTP_LINE_END);
@@ -278,7 +278,7 @@ static size_t zproxy_http_response_send_to_client(struct zproxy_http_ctx *ctx)
 	len += sprintf(buf + len, "%s", HTTP_LINE_END);
 
 	if (parser->res.body)
-		len += sprintf(buf + len, "%.*s", parser->res.body_len, parser->res.body);
+		len += sprintf(buf + len, "%.*s", (int)parser->res.body_len, parser->res.body);
 	len += sprintf(buf + len, "%s", HTTP_LINE_END);
 
 	if (zproxy_http_direct_proxy_reply(parser)) {
@@ -307,10 +307,10 @@ static int zproxy_http_request_head_rcv(struct zproxy_http_ctx *ctx)
 			zproxy_http_event_reply_error(ctx, WS_HTTP_414);
 			return -1;
 		}
+		// keep reading from client
 		return 0;
 	}
 
-	/* Return 0 if you want core to keep reading data from client. */
 	if (parse_status == RETURN_HTTP::PROXY_RESPONSE) {
 		if (ctx->buf_len >= ctx->buf_siz)
 			zproxy_http_event_reply_error(ctx, WS_HTTP_414);

@@ -203,13 +203,13 @@ static int zproxy_http_set_header(struct phr_header *header,
 	header->value_len = value_len;
 	header->header_off = false;
 	if (name_len) {
-		header->line_size = snprintf(buf, MAX_HEADER_LEN, "%.*s: %.*s",
-					(int)name_len, name, (int)value_len, value);
+		header->line_size = snprintf(buf, MAX_HEADER_LEN, "%.*s: %.*s%s",
+					(int)name_len, name, (int)value_len, value, HTTP_LINE_END);
 		header->name = buf;
 		header->value = buf + name_len + 2;
 	} else {
-		header->line_size = snprintf(buf, MAX_HEADER_LEN, "%.*s",
-					(int)value_len, value);
+		header->line_size = snprintf(buf, MAX_HEADER_LEN, "%.*s%s",
+					(int)value_len, value, HTTP_LINE_END);
 		header->name = NULL;
 		header->value = buf;
 	}
