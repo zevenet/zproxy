@@ -376,7 +376,16 @@ void zproxy_http_manage_headers(struct zproxy_http_ctx *ctx,
 	} else if (!strncmp(header->name, http_headers_str[TRANSFER_ENCODING], header->name_len)) {
 		//TODO: setHeaderTransferEncoding(header_value);
 	} else if (!strncmp(header->name, http_headers_str[CONTENT_LENGTH], header->name_len)) {
-		// TODO: setHeaderContentLength(header_value);
+		const size_t content_len =
+			strtoul(header->value, NULL, 10);
+
+		if (ctx->parser->state == REQ_HEADER_RCV)
+			ctx->parser->req.content_len = content_len;
+		else if (ctx->parser->state == RESP_HEADER_RCV)
+			ctx->parser->res.content_len = content_len;
+		else
+			zcu_log_print_th(LOG_ERR, "Invalid stream state to parse headers.");
+
 	} else if (!strncmp(header->name, http_headers_str[HOST], header->name_len)) {
 		header->header_off = true;
 		zproxy_http_set_virtual_host_header(parser, header->value, header->value_len);
