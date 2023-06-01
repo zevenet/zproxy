@@ -171,17 +171,15 @@ static enum RETURN_HTTP zproxy_http_request_head_rcv_parse(struct zproxy_http_ct
 	struct zproxy_http_parser *parser = ctx->parser;
 	int ret;
 
-	parser->req.buf_cpy = (const char *) malloc(ctx->buf_siz);
-	if (!parser->req.buf_cpy) {
-		return PROXY_RESPONSE;
+	if (!parser->req.last_length) {
+		parser->req.buf_cpy = (const char *) malloc(ctx->buf_siz);
+		parser->req.buf_cpy_siz = ctx->buf_siz;
+		if (!parser->req.buf_cpy) {
+			return PROXY_RESPONSE;
+		}
 	}
 
-	parser->req.buf_cpy_len =
-		sprintf((char *)parser->req.buf_cpy, "%s", ctx->buf);
-	parser->req.buf_cpy_len = ctx->buf_len;
-	parser->req.buf_cpy_siz = ctx->buf_siz;
-	parser->req.last_length = ctx->buf_len;
-
+	parser->req.buf_cpy_len = sprintf((char *)parser->req.buf_cpy + parser->req.buf_cpy_len, ctx->buf);
 	ret = phr_parse_request(parser->req.buf_cpy, parser->req.buf_cpy_len,
 								 (const char **)&parser->req.method,
 								 &parser->req.method_len,
@@ -192,8 +190,12 @@ static enum RETURN_HTTP zproxy_http_request_head_rcv_parse(struct zproxy_http_ct
 								 &parser->req.num_headers,
 								 parser->req.last_length);
 
-	if (ret > 0)
+	parser->req.last_length = parser->req.buf_cpy_len;
+	if (ret > 0) {
+		parser->req.body = parser->req.buf_cpy + ret;
+		parser->req.body_len = parser->req.buf_cpy_len - ret;
 		return RETURN_HTTP::SUCCESS;
+	}
 
 	if (ret == -1)
 		return RETURN_HTTP::PROXY_RESPONSE;
@@ -232,6 +234,11 @@ static size_t zproxy_http_request_send_to_backend(struct zproxy_http_ctx *ctx)
 	}
 
 	len += sprintf((char*)ctx->buf + len, "%s", HTTP_LINE_END);
+
+	if (parser->req.body)
+		len += sprintf((char*)ctx->buf + len, "%.*s", (int)parser->req.body_len, parser->req.body);
+	len += sprintf((char*)ctx->buf + len, "%s", HTTP_LINE_END);
+
 	ctx->buf_len = len;
 	return len;
 }
@@ -271,7 +278,7 @@ static size_t zproxy_http_response_send_to_client(struct zproxy_http_ctx *ctx)
 	len += sprintf(buf + len, "%s", HTTP_LINE_END);
 
 	if (parser->res.body)
-		len += sprintf(buf + len, "%s", parser->res.body);
+		len += sprintf(buf + len, "%.*s", parser->res.body_len, parser->res.body);
 	len += sprintf(buf + len, "%s", HTTP_LINE_END);
 
 	if (zproxy_http_direct_proxy_reply(parser)) {
@@ -439,15 +446,14 @@ static enum RETURN_HTTP zproxy_http_response_head_rcv_parse(struct zproxy_http_c
 	struct zproxy_http_parser *parser = ctx->parser;
 	int ret;
 
-	parser->res.buf_cpy = (const char*) malloc(ctx->buf_len + 1);
-	if (!parser->res.buf_cpy)
-		return PROXY_RESPONSE;
+	if (!parser->res.last_length) {
+		parser->res.buf_cpy = (const char*) malloc(ctx->buf_len + 1);
+		parser->res.buf_cpy_siz = ctx->buf_siz;
+		if (!parser->res.buf_cpy)
+			return PROXY_RESPONSE;
+	}
 
-	parser->res.buf_cpy_len =
-		sprintf((char *)parser->res.buf_cpy, "%s", ctx->buf);
-	parser->res.buf_cpy_len = ctx->buf_len;
-	parser->res.buf_cpy_siz = ctx->buf_siz;
-	parser->res.last_length = ctx->buf_len;
+	parser->res.buf_cpy_len = sprintf((char *)parser->res.buf_cpy + parser->res.buf_cpy_len, ctx->buf);
 	free((char *)ctx->buf);
 	ctx->buf_len = 0;
 
@@ -460,8 +466,12 @@ static enum RETURN_HTTP zproxy_http_response_head_rcv_parse(struct zproxy_http_c
 								 &parser->res.num_headers,
 								 parser->res.last_length);
 
-	if (ret > 0)
+	parser->res.last_length = parser->res.buf_cpy_len;
+	if (ret > 0) {
+		parser->req.body = parser->req.buf_cpy + ret;
+		parser->req.body_len = parser->req.buf_cpy_len - ret;
 		return RETURN_HTTP::SUCCESS;
+	}
 
 	if (ret == -1)
 		return RETURN_HTTP::PROXY_RESPONSE;

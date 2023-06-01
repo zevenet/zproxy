@@ -249,6 +249,8 @@ struct zproxy_http_parser {
 		size_t buf_cpy_len;
 		size_t buf_cpy_siz;
 		const char *body;
+		size_t body_len;
+		size_t content_len;
 	} req;
 
 	struct {
@@ -263,6 +265,8 @@ struct zproxy_http_parser {
 		size_t buf_cpy_len;
 		size_t buf_cpy_siz;
 		const char *body;
+		size_t body_len;
+		size_t content_len;
 	} res;
 };
 
@@ -275,9 +279,9 @@ int zproxy_http_set_redirect_response(struct zproxy_http_ctx *ctx);
 void zproxy_http_set_virtual_host_header(struct zproxy_http_parser *parser,
 					 const char *str, size_t str_len);
 void zproxy_http_set_destination_header(void);
-struct phr_header *
-zproxy_http_add_header(struct phr_header *headers, size_t *num_headers,
-		       const char *name, size_t name_len, const char *value,
-		       size_t value_len);
+struct phr_header * zproxy_http_add_header(struct phr_header *headers,
+					   size_t *num_headers, const char *name,
+					   size_t name_len, const char *value,
+					   size_t value_len);
 
 #endif

@@ -134,7 +134,9 @@ struct zproxy_http_parser *zproxy_http_parser_alloc(void)
 	parser->x_forwarded_for_hdr = NULL;
 	parser->destination_hdr = NULL;
 	parser->req.num_headers = MAX_HEADERS;
+	parser->req.last_length = 0;
 	parser->res.num_headers = MAX_HEADERS;
+	parser->res.last_length = 0;
 	return parser;
 }
 
