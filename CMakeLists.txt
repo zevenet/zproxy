@@ -81,7 +81,6 @@ set(sources_h
 	"include/session.h"
 	"include/state.h"
 	"include/http.h"
-	"include/http_log.h"
 	"include/pico_http_parser.h"
 	"include/zproxy.h"
 	"include/http_handler.h"
