@@ -396,15 +396,14 @@ void zproxy_http_manage_headers(struct zproxy_http_ctx *ctx,
 		header->header_off = true;
 		zproxy_http_set_virtual_host_header(parser, header->value, header->value_len);
 	} else if (!strncmp(header->name, http_headers_str[EXPECT], header->name_len)) {
-		// TODO: 100 continue function
 		if (!strncmp(header->value, "100-continue", header->value_len)) {
 			parser->expect_100_cont_hdr = true;
 			zcu_log_print_th(
 				LOG_DEBUG,
 				"%s():%d: client Expects 100 continue",
 				__FUNCTION__, __LINE__);
-			}
-			header->header_off = true;
+		}
+		header->header_off = true;
 	} else if (!strncmp(header->name, http_headers_str[X_FORWARDED_FOR], header->name_len)) {
 		zproxy_http_set_x_forwarded_for_header(parser, header->value, header->value_len);
 		header->header_off = true;

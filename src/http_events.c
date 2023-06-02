@@ -18,6 +18,9 @@
 #include "http.h"
 #include "service.h"
 #include "http_tools.h"
+#include "zcu_http.h"
+
+#include <stdlib.h>
 
 static const char *request_method_str[] = {
 	NULL,
@@ -244,7 +247,8 @@ static size_t zproxy_http_request_send_to_backend(struct zproxy_http_ctx *ctx)
 static int zproxy_http_direct_proxy_reply(struct zproxy_http_parser *parser)
 {
 	return (parser->state == HTTP_PARSER_STATE::CLOSE ||
-			parser->state == HTTP_PARSER_STATE::ERROR);
+		parser->state == HTTP_PARSER_STATE::ERROR ||
+		parser->state == HTTP_PARSER_STATE::WAIT_100_CONT);
 }
 
 static size_t zproxy_http_response_send_to_client(struct zproxy_http_ctx *ctx)
@@ -290,6 +294,21 @@ static size_t zproxy_http_response_send_to_client(struct zproxy_http_ctx *ctx)
 	return len;
 }
 
+static int zproxy_http_request_100_cont(struct zproxy_http_ctx *ctx)
+{
+	struct zproxy_http_parser *parser = ctx->parser;
+
+	parser->res.num_headers = 0;
+	parser->res.minor_version = 0;
+	parser->res.status_code = ws_to_http(WS_HTTP_100);
+	parser->res.message = (char *)ws_str_responses[WS_HTTP_100] + 4;
+	parser->res.message_len = strlen(parser->res.message);
+
+	zproxy_http_handle_response_headers(ctx);
+	zproxy_http_response_send_to_client(ctx);
+
+	return 1;
+}
 
 static int zproxy_http_request_head_rcv(struct zproxy_http_ctx *ctx)
 {
@@ -350,7 +369,12 @@ static int zproxy_http_request_head_rcv(struct zproxy_http_ctx *ctx)
 	}
 	zproxy_set_backend(backend, ctx);
 
-	// TODO: Expect 100 Continue Header Found? Manage response
+	if (parser->expect_100_cont_hdr) {
+		parser->state = WAIT_100_CONT;
+		ctx->http_continue = true;
+		zproxy_http_request_100_cont(ctx);
+		return -1;
+	}
 
 	ctx->req_len = zproxy_http_request_send_to_backend(ctx);
 	if (ctx->req_len == 0) {
@@ -370,12 +394,6 @@ static int zproxy_http_request_head_rcv(struct zproxy_http_ctx *ctx)
 	//~ else
 		parser->state = HTTP_PARSER_STATE::RESP_HEADER_RCV;
 
-	return 1;
-}
-
-static int zproxy_http_request_100_cont(struct zproxy_http_ctx *ctx)
-{
-	// TODO
 	return 1;
 }
 
