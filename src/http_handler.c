@@ -524,6 +524,84 @@ int zproxy_http_set_redirect_response(struct zproxy_http_ctx *ctx)
 	return 0;
 }
 
+static int naive_search(const char *stack, int stack_size,
+                        const char *needle, int needle_len, int *partial)
+{
+	int i = 0, j = *partial;
+
+	while (i < stack_size) {
+		/* matching, keep looking ahead. */
+		if (stack[i] == needle[j]) {
+			j++;
+			i++;
+
+			/* full match! */
+			if (j == needle_len)
+				break;
+
+			continue;
+		}
+		/* backtrack */
+		if (j > 0) {
+			i -= j;
+			j = 0;
+		}
+
+		if (i < 0)
+			i = 0;
+		else
+			i++;
+	}
+
+	/* full match! */
+	if (j == needle_len)
+		return j;
+
+	*partial = j;
+
+	return -1;
+}
+
+static const char chunk_trailer[] = "\r\n0\r\n\r\n";
+#define CHUNK_TRAILER_SIZE	7
+
+static bool http_last_chunk(const char *data, size_t data_size, int *partial)
+{
+	int match;
+
+	match = naive_search(data, data_size, chunk_trailer, CHUNK_TRAILER_SIZE,
+			     partial);
+	if (match == CHUNK_TRAILER_SIZE) {
+		zcu_log_print_th(LOG_DEBUG, "%s():%d: last chunk",
+				 __FUNCTION__, __LINE__);
+		return true;
+	}
+	zcu_log_print_th(LOG_DEBUG, "last chunk not yet seen");
+
+	return false;
+}
+
+/*int zproxy_http_handle_body(struct zproxy_http_parser *parser)
+{
+	message_length = buf_len;
+	message = (char *)buf;
+
+	message_total_bytes += bytes;
+
+
+	if (parser->chunk_state == CHUNKED_ENABLED) {
+		if (!http_last_chunk(message, message_length,
+				     &partial_last_chunk))
+			return -1;
+
+		parser->chunk_state = CHUNKED_LAST_CHUNK;
+	} else {
+		if (content_length > 0)
+			message_bytes_left -= message_length;
+	}
+
+	return 1;
+}*/
 
 /* TODO:
 static void zproxy_http_clear_stats(struct zproxy_http_parser *parser)
