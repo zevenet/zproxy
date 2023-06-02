@@ -373,8 +373,14 @@ void zproxy_http_manage_headers(struct zproxy_http_ctx *ctx,
 		//TODO: setHeaderConnection(header_value);
 	} else if (!strncmp(header->name, http_headers_str[ACCEPT_ENCODING], header->name_len)) {
 		//TODO: accept_encoding_header = true;
-	} else if (!strncmp(header->name, http_headers_str[TRANSFER_ENCODING], header->name_len)) {
-		//TODO: setHeaderTransferEncoding(header_value);
+	} else if (!strncmp(header->name, http_headers_str[TRANSFER_ENCODING],
+			    header->name_len)) {
+		int start, end;
+		if (str_find_str(&start, &end, header->value, header->value_len,
+				 "chunked", sizeof("chunked"))) {
+			zcu_log_print_th(LOG_DEBUG, "Chunked enabled");
+			parser->chunk_state = CHUNKED_ENABLED;
+		}
 	} else if (!strncmp(header->name, http_headers_str[CONTENT_LENGTH], header->name_len)) {
 		const size_t content_len =
 			strtoul(header->value, NULL, 10);
