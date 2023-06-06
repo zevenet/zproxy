@@ -20,7 +20,6 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <sys/socket.h>
-#include <sys/syslog.h>
 #include <sys/types.h>
 #include "json.h"
 #include "zcu_log.h"

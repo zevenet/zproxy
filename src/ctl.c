@@ -24,7 +24,6 @@
 #include <pcreposix.h>
 #include <string>
 #include <pthread.h>
-#include <syslog.h>
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <sys/un.h>

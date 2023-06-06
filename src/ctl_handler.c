@@ -33,7 +33,6 @@
 #include <netdb.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/syslog.h>
 
 #define CTL_PATH_MAX_PARAMS  4
 

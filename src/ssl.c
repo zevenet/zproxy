@@ -15,7 +15,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <syslog.h>
 #include <assert.h>
 #include <arpa/inet.h>
 #include <openssl/ssl.h>

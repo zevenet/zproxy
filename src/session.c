@@ -22,7 +22,6 @@
 #include <netinet/in.h>
 #include <pthread.h>
 #include <time.h>
-#include <sys/syslog.h>
 
 void zproxy_sessions_dump(struct zproxy_sessions *sessions)
 {

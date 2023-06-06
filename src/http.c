@@ -28,7 +28,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
-#include <syslog.h>
 #include <ev.h>
 #include <errno.h>
 #include <assert.h>

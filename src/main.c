@@ -23,7 +23,6 @@
 #include <unistd.h>
 #include <sys/eventfd.h>
 #include <errno.h>
-#include <syslog.h>
 #include <sys/wait.h>
 #include <getopt.h>
 #include <libgen.h>

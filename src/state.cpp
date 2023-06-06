@@ -22,7 +22,6 @@
 #include <ev.h>
 #include <assert.h>
 #include <pthread.h>
-#include <sys/syslog.h>
 
 #include "config.h"
 #include "zcu_log.h"

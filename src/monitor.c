@@ -22,7 +22,6 @@
 #include <netinet/in.h>
 #include <errno.h>
 #include <sys/time.h>
-#include <sys/syslog.h>
 #include "zproxy.h"
 #include "monitor.h"
 #include "socket.h"

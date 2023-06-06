@@ -17,7 +17,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <sys/syslog.h>
 #include <net/if.h>
 #include <unistd.h>
 #include <dirent.h>
