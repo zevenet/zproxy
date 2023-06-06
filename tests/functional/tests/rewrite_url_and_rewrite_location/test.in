@@ -50,5 +50,5 @@ CMD=curl
 CL=1
 METHOD="GET"
 HEADERS="Host: example.com"
-URL="/vhost1/page%20?id%23=test\;example"
+URL="/vhost1/page%20?id%23=test;example"
 DESCRIPTION="Expect: /vhost1/page%20?id%23=test;example, only one replace is supported"

@@ -1,1 +1,1 @@
-ip netns exec cl-ns-1 /usr/bin/curl -X GET   --connect-timeout 2 -s -k --show-error -w 'HTTP_VERSION: %{http_version}\n'  -D test_8_curl/response_headers.out.tmp -o test_8_curl/body.out.tmp  https://10.1.2.1:443/sleep-response/2  >test_8_curl/extended.out.tmp 2>test_8_curl/error.out.tmp 
+ip netns exec cl-ns-1 /usr/bin/curl  -X GET   --connect-timeout 2 -s -k --show-error -w 'HTTP_VERSION: %{http_version}\n'  -D test_8_curl/response_headers.out.tmp -o test_8_curl/body.out.tmp  "https://10.1.2.1:443/sleep-response/2"  >test_8_curl/extended.out.tmp 2>test_8_curl/error.out.tmp 

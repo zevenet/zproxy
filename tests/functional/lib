@@ -510,14 +510,14 @@ exec_curl () {
 
 	echo "ip netns exec $CLNS $CURL_BIN $CMDPARAMS -X $METHOD $B $H --connect-timeout $CLIENT_CONN_TIMEOUT \
 ${TIMEOUT100CONT_}-s -k --show-error $EXTENDED_OUT $F \
--D $HEAD_F -o $OUT_F $SOCKET $HTTP://${VHOST_LOC}$URL $NEXT >$EXT_F 2>$ERR_F $FG" > $CMD_F
+-D $HEAD_F -o $OUT_F $SOCKET \"$HTTP://${VHOST_LOC}$URL\" $NEXT >$EXT_F 2>$ERR_F $FG" > $CMD_F
 
 	# mask tpl dir
 	sed -i "s,$TEST_TPL,\$TEST_TPL,g" $CMD_F
 
 	# cmd to debug
 	echo "ip netns exec $CLNS $CURL_BIN $CMDPARAMS -X $METHOD $B $H --connect-timeout $CLIENT_CONN_TIMEOUT \
-${TIMEOUT100CONT_}-s -k --show-error $SOCKET $HTTP://${VHOST_LOC}$URL $NEXT" > ${CMD_F}.dbg
+${TIMEOUT100CONT_}-s -k --show-error $SOCKET \"$HTTP://${VHOST_LOC}$URL\" $NEXT" > ${CMD_F}.dbg
 
 	bash $CMD_F
 
