@@ -1,0 +1,24 @@
+DESCRIPTION="do requests"
+CMD=average
+CL=1
+METHOD="GET"
+URL="/;sess-cookie0"
+REQUESTS=2
+#########################
+DESCRIPTION="do requests"
+CMD=average
+CL=1
+METHOD="GET"
+URL="/;sess-cookie1"
+REQUESTS=2
+#########################
+DESCRIPTION="wait for the expiration of the session"
+CMD=wait
+TIMEOUT=4
+#########################
+DESCRIPTION="do requests"
+CMD=average
+CL=1
+METHOD="GET"
+URL="/;sess-cookie1"
+REQUESTS=2

@@ -101,7 +101,7 @@ public:
 	bool getHeaderValue(const std::string &, std::string & out_key) const;
 	void setBuffer(char *ext_buffer, size_t ext_buffer_size);
 
-	size_t prepareToSend(char **buf);
+	size_t prepareToSend(char **buf, bool trim_parm = false);
 
 	void addHeader(http::HTTP_HEADER_NAME header_name,
 			   const std::string & header_value, bool permanent = false);

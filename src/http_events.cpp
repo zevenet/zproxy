@@ -259,7 +259,10 @@ static int zproxy_http_request_head_rcv(struct zproxy_http_ctx *ctx)
 		return -1;
 	}
 
-	ctx->buf_len = ctx->stream->request.prepareToSend(&buf);
+	const bool trim_parm =
+		ctx->stream->session &&
+		ctx->stream->session->type == SESS_TYPE::SESS_PARM;
+	ctx->buf_len = ctx->stream->request.prepareToSend(&buf, trim_parm);
 	if (ctx->buf_len == 0) {
 		const char *html_msg =
 			zproxy_cfg_get_errmsg(&stream->listener_config->error.err_msgs, 500);

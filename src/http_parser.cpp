@@ -90,12 +90,18 @@ size_t http_parser::HttpData::getBufferRewritedLength(void) const
 	return len;
 }
 
-size_t http_parser::HttpData::prepareToSend(char **buf)
+size_t http_parser::HttpData::prepareToSend(char **buf, bool trim_parm)
 {
 	size_t buf_size = ZPROXY_BUFSIZ;
 	size_t buf_len = 0;
 	std::string ret = "";
 	if (!getHeaderSent()) {
+		if (trim_parm) {
+			const size_t start = http_message_str.find(';');
+			const size_t end = http_message_str.find(' ', start);
+
+			http_message_str.replace(start, end - start, "");
+		}
 		ret.append(http_message_str);
 		ret.append(http::CRLF);
 
