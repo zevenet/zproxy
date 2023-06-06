@@ -231,9 +231,12 @@ char *zproxy_json_encode_listeners(const struct zproxy_cfg *cfg)
 		if (!state)
 			continue;
 
+		zproxy_states_lock();
+
 		json_array_append_new(json_obj, serialize_proxy(proxy, state));
 
-		zproxy_state_release(&state);
+		zproxy_state_free(&state);
+		zproxy_states_unlock();
 	}
 
 	buf = json_dumps(json_obj, JSON_REAL_PRECISION(3) | JSON_INDENT(8));
@@ -256,11 +259,13 @@ char *zproxy_json_encode_listener(const struct zproxy_proxy_cfg *proxy)
 		return NULL;
 	}
 
+	zproxy_states_lock();
 	json_obj = serialize_proxy(proxy, state);
 	buf = json_dumps(json_obj, JSON_REAL_PRECISION(3) | JSON_INDENT(8));
 	json_decref(json_obj);
 
-	zproxy_state_release(&state);
+	zproxy_state_free(&state);
+	zproxy_states_unlock();
 
 	return buf;
 }
@@ -279,11 +284,13 @@ char *zproxy_json_encode_services(const struct zproxy_proxy_cfg *proxy)
 		return NULL;
 	}
 
+	zproxy_states_lock();
 	json_obj = serialize_proxy_services(proxy, state);
 	buf = json_dumps(json_obj, JSON_REAL_PRECISION(3) | JSON_INDENT(8));
 	json_decref(json_obj);
 
-	zproxy_state_release(&state);
+	zproxy_state_free(&state);
+	zproxy_states_unlock();
 
 	return buf;
 }
@@ -302,11 +309,13 @@ char *zproxy_json_encode_service(const struct zproxy_service_cfg *service)
 		return NULL;
 	}
 
+	zproxy_states_lock();
 	json_obj = serialize_service(service, state);
 	buf = json_dumps(json_obj, JSON_REAL_PRECISION(3) | JSON_INDENT(8));
 	json_decref(json_obj);
 
-	zproxy_state_release(&state);
+	zproxy_state_free(&state);
+	zproxy_states_unlock();
 
 	return buf;
 }
@@ -327,6 +336,8 @@ char *zproxy_json_encode_glob_sessions(const struct zproxy_cfg *cfg)
 		state = zproxy_state_lookup(proxy->id);
 		if (!state)
 			continue;
+
+		zproxy_states_lock();
 
 		json_t *proxy_obj = json_object();
 		json_object_set_new(proxy_obj, "id", json_integer(proxy->id));
@@ -351,7 +362,8 @@ char *zproxy_json_encode_glob_sessions(const struct zproxy_cfg *cfg)
 			json_array_append_new(serv_arr, serv_obj);
 		}
 
-		zproxy_state_release(&state);
+		zproxy_state_free(&state);
+		zproxy_states_unlock();
 
 		json_object_set_new(proxy_obj, "services", serv_arr);
 		json_array_append_new(json_obj, proxy_obj);
@@ -393,11 +405,14 @@ char *zproxy_json_encode_backends(const struct zproxy_service_cfg *service)
 		return NULL;
 	}
 
+	zproxy_states_lock();
+
 	json_obj = serialize_service_backends(service, state);
 	buf = json_dumps(json_obj, JSON_REAL_PRECISION(3) | JSON_INDENT(8));
 	json_decref(json_obj);
 
-	zproxy_state_release(&state);
+	zproxy_state_free(&state);
+	zproxy_states_unlock();
 
 	return buf;
 }
@@ -416,11 +431,13 @@ char *zproxy_json_encode_backend(const struct zproxy_backend_cfg *backend)
 		return NULL;
 	}
 
+	zproxy_states_lock();
 	json_obj = serialize_backend(backend, state);
 	buf = json_dumps(json_obj, JSON_REAL_PRECISION(3) | JSON_INDENT(8));
 	json_decref(json_obj);
 
-	zproxy_state_release(&state);
+	zproxy_state_free(&state);
+	zproxy_states_unlock();
 
 	return buf;
 }

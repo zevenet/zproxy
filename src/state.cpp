@@ -96,14 +96,18 @@ struct zproxy_http_state *zproxy_state_lookup(uint32_t proxy_id)
 	pthread_mutex_lock(&list_mutex);
 	state = _zproxy_state_lookup(proxy_id);
 	state->refcnt++;
+	pthread_mutex_unlock(&list_mutex);
 
 	return state;
 }
 
-void zproxy_state_release(struct zproxy_http_state **http_state)
+void zproxy_states_lock(void)
 {
-	(*http_state)->refcnt--;
-	*http_state = NULL;
+	pthread_mutex_lock(&list_mutex);
+}
+
+void zproxy_states_unlock(void)
+{
 	pthread_mutex_unlock(&list_mutex);
 }
 
@@ -400,14 +404,22 @@ static void zproxy_proxy_state_purge(struct zproxy_http_state *state)
 	free(state);
 }
 
-void zproxy_state_purge(const struct zproxy_proxy_cfg *proxy)
+void zproxy_state_purge(uint32_t proxy_id)
 {
 	struct zproxy_http_state *state;
 
 	pthread_mutex_lock(&list_mutex);
-	state = _zproxy_state_lookup(proxy->id);
+	state = _zproxy_state_lookup(proxy_id);
 	if (state)
 		zproxy_proxy_state_purge(state);
+	pthread_mutex_unlock(&list_mutex);
+}
+
+void zproxy_state_free(struct zproxy_http_state **http_state)
+{
+	pthread_mutex_unlock(&list_mutex);
+	zproxy_proxy_state_purge(*http_state);
+	*http_state = NULL;
 	pthread_mutex_unlock(&list_mutex);
 }
 

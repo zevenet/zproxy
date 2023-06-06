@@ -809,7 +809,7 @@ static void *zproxy_http_init(struct zproxy_proxy *proxy)
 
 static void zproxy_http_fini(struct zproxy_proxy *proxy)
 {
-	zproxy_state_purge((struct zproxy_proxy_cfg*)proxy->cfg);
+	zproxy_state_purge(proxy->cfg->id);
 }
 
 struct zproxy_handler http_proxy = {

@@ -256,19 +256,22 @@ static enum ws_responses handle_get(char *req_path,
 							   listener_id);
 			return WS_HTTP_404;
 		}
+		zproxy_states_lock();
 		zproxy_sessions *sessions =
 			zproxy_state_get_service_sessions(service_id,
 						 &state->services);
+		zproxy_states_unlock();
+		zproxy_state_free(&state);
 		if (!sessions) {
 			*resp_buf = zproxy_json_return_err("Couldn't find sessions for service %s in listener %d",
 							   service_id, listener_id);
+			return WS_HTTP_500;
 		}
 		if (!(*resp_buf = zproxy_json_encode_sessions(service, sessions))) {
 			*resp_buf = zproxy_json_return_err("Failed to serialize sesssions of service %s.",
 							   service_id);
 			return WS_HTTP_500;
 		}
-		zproxy_state_release(&state);
 	} else if (zproxy_regex_exec(API_REGEX_SELECT_BACKEND, req_path,
 				     matches)) {
 		GET_MATCH_3PARAM(req_path, param1, service_id, backend_id);
@@ -324,11 +327,13 @@ static enum ws_responses handle_patch(char *req_path,
 							   listener_id);
 			return WS_HTTP_404;
 		}
+		zproxy_states_lock();
 		zproxy_sessions *sessions =
 			zproxy_state_get_service_sessions(service_id,
 						 &state->services);
+		zproxy_states_unlock();
+		zproxy_state_free(&state);
 		if (!sessions) {
-			zproxy_state_release(&state);
 			*resp_buf = zproxy_json_return_err("Service %s not found.",
 							   service_id);
 			return WS_HTTP_404;
@@ -351,11 +356,9 @@ static enum ws_responses handle_patch(char *req_path,
 				return WS_HTTP_500;
 			}
 			sess->timestamp = session->last_seen;
-			zproxy_session_free(&sess);
 		}
-		zproxy_json_sess_sessions_free(&new_sessions);
 
-		zproxy_state_release(&state);
+		zproxy_json_sess_sessions_free(&new_sessions);
 	} else if (zproxy_regex_exec(API_REGEX_SELECT_BACKEND_STATUS, req_path,
 				     matches)) {
 		GET_MATCH_3PARAM(req_path, param1, service_id, backend_id);
@@ -407,11 +410,13 @@ static enum ws_responses handle_patch(char *req_path,
 							   listener_id);
 			return WS_HTTP_404;
 		}
+		zproxy_states_lock();
 		zproxy_sessions *sessions =
 			zproxy_state_get_service_sessions(service_id,
 						 &state->services);
+		zproxy_states_unlock();
+		zproxy_state_free(&state);
 		if (!sessions) {
-			zproxy_state_release(&state);
 			*resp_buf = zproxy_json_return_err("Service %s not found.",
 							   service_id);
 			return WS_HTTP_404;
@@ -419,12 +424,10 @@ static enum ws_responses handle_patch(char *req_path,
 		if (zproxy_session_update(sessions, session_id,
 					  &backend->runtime.addr,
 					  last_seen) < 0) {
-			zproxy_state_release(&state);
 			*resp_buf = zproxy_json_return_err("Could not find session with ID %s.",
 							   session_id);
 			return WS_HTTP_404;
 		}
-		zproxy_state_release(&state);
 	} else if (zproxy_regex_exec(API_REGEX_SELECT_CONFIG, req_path,
 				     matches)) {
 		if (zproxy_cfg_file_reload() < 0) {
@@ -451,10 +454,13 @@ static enum ws_responses handle_patch(char *req_path,
 								   sess_listener->id);
 				return WS_HTTP_500;
 			}
+			zproxy_states_lock();
 			list_for_each_entry(sess_service, &sess_listener->services, list) {
 				struct zproxy_sessions *sessions;
 				sessions = zproxy_state_get_service_sessions(sess_service->name, &state->services);
 				if (!sessions) {
+					zproxy_states_unlock();
+					zproxy_state_free(&state);
 					*resp_buf = zproxy_json_return_err("Service %s doesn't exist.",
 									   sess_service->name);
 					return WS_HTTP_500;
@@ -466,6 +472,8 @@ static enum ws_responses handle_patch(char *req_path,
 							     sess_service->name,
 							     session->backend_id);
 					if (!backend) {
+						zproxy_states_unlock();
+						zproxy_state_free(&state);
 						*resp_buf = zproxy_json_return_err("Backend %s doesn't exist.",
 										   session->backend_id);
 						return WS_HTTP_500;
@@ -475,6 +483,8 @@ static enum ws_responses handle_patch(char *req_path,
 								   session->id,
 								   &backend->runtime.addr);
 					if (!sess) {
+						zproxy_states_unlock();
+						zproxy_state_free(&state);
 						*resp_buf = zproxy_json_return_err("Failed to create session");
 						return WS_HTTP_500;
 					}
@@ -482,7 +492,8 @@ static enum ws_responses handle_patch(char *req_path,
 					zproxy_session_free(&sess);
 				}
 			}
-			zproxy_state_release(&state);
+			zproxy_states_unlock();
+			zproxy_state_free(&state);
 		}
 		zproxy_json_sess_listener_free(&sess_listeners);
 	} else {
@@ -513,11 +524,13 @@ static enum ws_responses handle_delete(char *req_path,
 							   listener_id);
 			return WS_HTTP_404;
 		}
+		zproxy_states_lock();
 		zproxy_sessions *sessions =
 			zproxy_state_get_service_sessions(service_id,
 							  &state->services);
+		zproxy_states_unlock();
+		zproxy_state_free(&state);
 		if (!sessions) {
-			zproxy_state_release(&state);
 			*resp_buf = zproxy_json_return_err("Service %s not found.",
 							   service_id);
 			return WS_HTTP_404;
@@ -535,7 +548,6 @@ static enum ws_responses handle_delete(char *req_path,
 						       backend_id,
 						       CONFIG_IDENT_MAX,
 						       NULL) < 0) {
-				zproxy_state_release(&state);
 				*resp_buf = zproxy_json_return_err("Invalid JSON format.");
 				return WS_HTTP_400;
 			}
@@ -547,7 +559,6 @@ static enum ws_responses handle_delete(char *req_path,
 						     service_id,
 						     backend_id);
 				if (!backend) {
-					zproxy_state_release(&state);
 					*resp_buf = zproxy_json_return_err("Backend %s in service %s in listener %d not found.",
 									   backend_id, service_id, listener_id);
 					return WS_HTTP_404;
@@ -558,18 +569,15 @@ static enum ws_responses handle_delete(char *req_path,
 					      "Manually flushing sessions with ID %s",
 					      sess_id);
 				if (zproxy_session_delete(sessions, sess_id) < 0) {
-					zproxy_state_release(&state);
 					*resp_buf = zproxy_json_return_err("Could not find session with ID %s",
 									   sess_id);
 					return WS_HTTP_404;
 				}
 			} else {
-				zproxy_state_release(&state);
 				zproxy_json_return_err("Invalid flush command.");
 				return WS_HTTP_400;
 			}
 		}
-		zproxy_state_release(&state);
 	} else {
 		return WS_HTTP_400;
 	}
@@ -627,11 +635,13 @@ static enum ws_responses handle_put(char *req_path,
 							   listener_id);
 			return WS_HTTP_404;
 		}
+		zproxy_states_lock();
 		zproxy_sessions *sessions =
 			zproxy_state_get_service_sessions(service_id,
 							  &state->services);
+		zproxy_states_unlock();
+		zproxy_state_free(&state);
 		if (!sessions) {
-			zproxy_state_release(&state);
 			*resp_buf = zproxy_json_return_err("Service %s not found.",
 							   service_id);
 			return WS_HTTP_404;
@@ -640,14 +650,12 @@ static enum ws_responses handle_put(char *req_path,
 		zproxy_session_node *session =
 			zproxy_session_add(sessions, sess_id, &backend->runtime.addr);
 		if (!session) {
-			zproxy_state_release(&state);
 			*resp_buf = zproxy_json_return_err("Unable to create session. Perhaps it already exists.");
 			return WS_HTTP_409;
 		}
 		if (last_seen >= 0)
 			session->timestamp = last_seen;
 		zproxy_session_free(&session);
-		zproxy_state_release(&state);
 	} else if (zproxy_regex_exec(API_REGEX_SELECT_SERVICE_BACKENDS, req_path,
 				     matches)) {
 		GET_MATCH_2PARAM(req_path, param1, service_id);
@@ -751,8 +759,10 @@ static enum ws_responses handle_put(char *req_path,
 		}
 		struct zproxy_http_state *state =
 			zproxy_state_lookup(listener_id);
+		zproxy_states_lock();
 		zproxy_state_backend_add(state, new_backend);
-		zproxy_state_release(&state);
+		zproxy_states_unlock();
+		zproxy_state_free(&state);
 	} else {
 		return WS_HTTP_400;
 	}
