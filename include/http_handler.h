@@ -228,7 +228,6 @@ struct zproxy_http_parser {
 	enum HTTP_PARSER_STATE		state;
 	enum HTTP_CHUNKED_STATUS	chunk_state;
 	bool				websocket;
-	struct zproxy_sessions		*sessions;
 	struct zproxy_http_state	*http_state;
 
 	phr_header virtual_host_hdr;

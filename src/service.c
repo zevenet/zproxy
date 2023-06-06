@@ -485,9 +485,8 @@ int zproxy_service_select(struct zproxy_http_ctx *ctx)
 	list_for_each_entry(service, &ctx->cfg->service_list, list) {
 		if (_zproxy_service_select(ctx, service)) {
 			ctx->parser->service_cfg = service;
-			// TODO: assign sessions
-			//parser->sessions = zproxy_state_get_session(service->name, &state->services);
-			// TODO: assign http_state
+			ctx->parser->http_state =
+				zproxy_state_lookup(service->proxy->id);
 			return 0;
 		}
 	}
@@ -557,20 +556,22 @@ static int zproxy_service_get_session_key(struct zproxy_sessions *sessions,
 
 struct zproxy_backend_cfg *zproxy_service_select_backend(struct zproxy_http_ctx *ctx)
 {
-	struct zproxy_backend_cfg *selected_backend = nullptr;
-	struct zproxy_sessions *sessions = ctx->parser->sessions;
+	struct zproxy_backend_cfg *selected_backend = NULL;
 	struct zproxy_http_state *http_state = ctx->parser->http_state;
-	struct zproxy_session_node *session;
 	struct zproxy_service_cfg *service;
+	struct zproxy_sessions *sessions;
+	struct zproxy_session_node *session;
 	char session_key[MAX_HEADER_LEN];
 	size_t session_len = 0;
 
 	service = ctx->parser->service_cfg;
 	if (list_empty(&service->backend_list))
-		return nullptr;
+		return NULL;
 
 	// check sessions table
 	if (service->session.sess_type != SESS_TYPE::SESS_NONE) {
+		sessions = zproxy_state_get_service_sessions(service->name,
+							     &http_state->services);
 		zproxy_service_get_session_key(sessions, ctx, session_key, &session_len);
 		if (!session_len)
 			goto select_backend;

@@ -17,6 +17,7 @@
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#include "state.h"
 #endif
 
 #include "http_handler.h"
@@ -144,6 +145,8 @@ int zproxy_http_parser_free(struct zproxy_http_parser *parser)
 {
 	parser->destination_hdr = NULL;
 	parser->x_forwarded_for_hdr = NULL;
+	if (parser->http_state)
+		zproxy_state_free(&parser->http_state);
 
 	if (parser)
 		free(parser);
