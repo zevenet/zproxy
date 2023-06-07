@@ -644,7 +644,8 @@ int zproxy_http_event_reply_error(struct zproxy_http_ctx *ctx, enum ws_responses
 	parser->res.message = (char *)ws_str_responses[code] + 4;
 	parser->res.message_len = strlen(parser->res.message);
 
-	custom_msg = zproxy_cfg_get_errmsg(&proxy->error.err_msgs, code);
+	custom_msg = zproxy_cfg_get_errmsg(&proxy->error.err_msgs,
+					   ws_to_http(code));
 	if (!custom_msg || !custom_msg[0]) {
 		zproxy_http_add_header(parser->res.headers,
 			&parser->res.num_headers, http_headers_str[CONTENT_LENGTH],
