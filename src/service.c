@@ -15,9 +15,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <arpa/inet.h>
+#include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <netinet/in.h>
 #include <pthread.h>
+#include "http_handler.h"
+#include "pico_http_parser.h"
+#include "http_tools.h"
 #include "service.h"
 #include "djb_hash.h"
 #include "session.h"
@@ -25,6 +31,7 @@
 #include "monitor.h"
 #include "config.h"
 #include "list.h"
+#include "zcu_common.h"
 
 #define HASH_SERVICE_SLOTS	64
 static pthread_mutex_t service_state_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -496,62 +503,99 @@ int zproxy_service_select(struct zproxy_http_ctx *ctx)
 
 static int zproxy_service_get_session_key(struct zproxy_sessions *sessions,
 					  struct zproxy_http_ctx *ctx,
-					  const char *key,
-					  size_t *key_len)
+					  char *key, size_t key_len)
 {
-/*	TODO: return pointer and len of the key.
-	std::string key;
+	int res = 0;
 
 	switch (sessions->type) {
-	case SESS_TYPE::SESS_NONE:
+	case SESS_TYPE::SESS_IP: {
+		snprintf(key, key_len, "%s", inet_ntoa(ctx->addr->sin_addr));
+		res = 1;
 		break;
-	case SESS_TYPE::SESS_IP:
-		key = client_addr;
-		break;
+	}
 	case SESS_TYPE::SESS_COOKIE_INSERT:
-*/		/* fallthrough */
-/*	case SESS_TYPE::SESS_COOKIE:
-		if (!request.getHeaderValue(http::HTTP_HEADER_NAME::COOKIE, key))
-			key = "";
-		else
-			key = getCookieValue(key, sessions->id);
-		break;
-	case SESS_TYPE::SESS_URL: {
-		std::string url = request.getUrl();
-		key = getQueryParameter(url, sessions->id);
-		break;
-	} case SESS_TYPE::SESS_PARM: {
-		std::string url = request.getUrl();
-		key = getUrlParameter(url);
-		break;
-	} case SESS_TYPE::SESS_HEADER:
-		if (!request.getHeaderValue(sessions->id, key))
-			key = "";
-		break;
-	case SESS_TYPE::SESS_BASIC:
-		if (!request.getHeaderValue(
-				http::HTTP_HEADER_NAME::AUTHORIZATION,
-				key)) {
-			key = "";
-		} else {
-			std::stringstream string_to_iterate(key);
-			std::istream_iterator<std::string> begin(
-				string_to_iterate);
-			std::istream_iterator<std::string> end;
-			std::vector<std::string> header_value_parts(begin, end);
-			if (header_value_parts[0] != "Basic") {
-				key = "";
-			} else {
-				key = header_value_parts
-					[1]; // Currently it stores username:password
+	case SESS_TYPE::SESS_COOKIE: {
+		for (size_t i = 0; i < ctx->parser->req.num_headers; ++i) {
+			phr_header *header = &ctx->parser->req.headers[i];
+			if (strncmp(header->name, http_headers_str[COOKIE],
+				    header->name_len) == 0) {
+				snprintf(key, MIN(header->value_len, key_len),
+					 "%s", header->value);
+				res = 1;
+				break;
 			}
 		}
 		break;
+	}
+	case SESS_TYPE::SESS_URL: {
+		const char *path = ctx->parser->req.path;
+		const size_t path_len = ctx->parser->req.path_len;
+		int start, end;
+		if (str_find_str(&start, &end, path, path_len, sessions->id,
+				 strlen(sessions->id))) {
+			for (; path[start] != '=' && (size_t)start < path_len;
+			     ++start);
+			if ((size_t)start != path_len) {
+				for (end = start;
+				     (path[end] != ';' && path[end] != '&') ||
+				     (size_t)end < path_len;
+				     ++end);
+				snprintf(key, MIN(key_len, (size_t)end - start),
+					 "%s", path + start);
+				res = 1;
+			}
+		}
+		break;
+	}
+	case SESS_TYPE::SESS_PARM: {
+		const char *path = ctx->parser->req.path;
+		const size_t path_len = ctx->parser->req.path_len;
+		size_t start;
+		for (start = 0; start < path_len && path[start] != ';'; ++start);
+		snprintf(key, path_len - start, "%s", path + start);
+		res = 1;
+		break;
+	}
+	case SESS_TYPE::SESS_HEADER: {
+		for (size_t i = 0; i < ctx->parser->req.num_headers; ++i) {
+			phr_header *header = &ctx->parser->req.headers[i];
+			if (strncmp(header->name, sessions->id,
+				    header->name_len) == 0) {
+				snprintf(key, MIN(header->value_len, key_len),
+					 "%s", header->value);
+				res = 1;
+				break;
+			}
+		}
+		break;
+	}
+	case SESS_TYPE::SESS_BASIC: {
+		for (size_t i = 0; i < ctx->parser->req.num_headers; ++i) {
+			phr_header *header = &ctx->parser->req.headers[i];
+			if (strncmp(header->name,
+				    http_headers_str[AUTHORIZATION],
+				    header->name_len) == 0) {
+				int start, end;
+				if (str_find_str(&start, &end, header->value,
+						 header->value_len, "Basic",
+						 sizeof("Basic"))) {
+					end++; // skip space
+					snprintf(key,
+						 MIN(header->value_len - end, key_len),
+						 "%s", header->value + end);
+					res = 1;
+				}
+				break;
+			}
+		}
+		break;
+	}
+	case SESS_TYPE::SESS_NONE:
 	default:
 		break;
-	}*/
+	}
 
-	return 0;
+	return res;
 }
 
 struct zproxy_backend_cfg *zproxy_service_select_backend(struct zproxy_http_ctx *ctx)
@@ -561,7 +605,7 @@ struct zproxy_backend_cfg *zproxy_service_select_backend(struct zproxy_http_ctx 
 	struct zproxy_service_cfg *service;
 	struct zproxy_sessions *sessions;
 	struct zproxy_session_node *session;
-	char session_key[MAX_HEADER_LEN];
+	char session_key[MAX_SESSION_ID] = { 0 };
 	size_t session_len = 0;
 
 	service = ctx->parser->service_cfg;
@@ -572,9 +616,12 @@ struct zproxy_backend_cfg *zproxy_service_select_backend(struct zproxy_http_ctx 
 	if (service->session.sess_type != SESS_TYPE::SESS_NONE) {
 		sessions = zproxy_state_get_service_sessions(service->name,
 							     &http_state->services);
-		zproxy_service_get_session_key(sessions, ctx, session_key, &session_len);
+		zproxy_service_get_session_key(sessions, ctx, session_key,
+					       MAX_SESSION_ID);
+		session_len = strlen(session_key);
 		if (!session_len)
 			goto select_backend;
+
 		session = zproxy_session_get(sessions, session_key);
 		if (session) {
 			selected_backend = zproxy_service_backend_session(service, &session->bck_addr, http_state);
