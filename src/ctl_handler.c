@@ -63,6 +63,7 @@
 	const char *p3 = str + matches[3].rm_so
 
 static int send_msg(const struct zproxy_ctl_conn *ctl,
+		    const int minor_version,
 		    const enum ws_responses resp_code,
 		    const char *content_type,
 		    const char *buf, const size_t buf_len)
@@ -75,8 +76,8 @@ static int send_msg(const struct zproxy_ctl_conn *ctl,
 	}
 
 	if (buf_len > 0) {
-		sprintf(resp_hdr, "%s%s%s%s%s%zu%s%s%s%s%s%s",
-			HTTP_PROTO,
+		sprintf(resp_hdr, "HTTP/1.%d %s%s%s%s%zu%s%s%s%s%s%s",
+			minor_version,
 			ws_str_responses[resp_code],
 			HTTP_LINE_END,
 			content_type,
@@ -86,9 +87,9 @@ static int send_msg(const struct zproxy_ctl_conn *ctl,
 			HTTP_HEADER_SERVER,
 			HTTP_HEADER_CACHE_CONTROL, HTTP_LINE_END);
 	} else {
-		sprintf(resp_hdr, "%s%s%s%s%s%s%s",
-			HTTP_PROTO,
-			ws_str_responses[resp_code],
+		sprintf(resp_hdr, "HTTP/1.%d %s%s%s%s%s%s%s",
+			minor_version,
+			ws_str_responses[resp_code], HTTP_LINE_END,
 			HTTP_HEADER_EXPIRES,
 			HTTP_HEADER_PRAGMA_NO_CACHE,
 			HTTP_HEADER_SERVER,
@@ -841,13 +842,13 @@ int ctl_handler_cb(const struct zproxy_ctl_conn *ctl,
 	} else {
 		zcu_log_print(LOG_WARNING,
 			      "Received unknown or unsupported request method");
-		return send_msg(ctl, WS_HTTP_405, NULL, NULL, 0);
+		return send_msg(ctl, minor_version, WS_HTTP_405, NULL, NULL, 0);
 	}
 
 err_handler:
 	content_type = buf != NULL ? HTTP_HEADER_CONTENT_JSON : NULL;
 	buf_len = buf != NULL ? strlen(buf) : 0;
-	ret = send_msg(ctl, resp_code, content_type, buf, buf_len);
+	ret = send_msg(ctl, minor_version, resp_code, content_type, buf, buf_len);
 	free(buf);
 
 	return ret;
