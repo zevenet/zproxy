@@ -263,7 +263,7 @@ static size_t zproxy_http_response_send_to_client(struct zproxy_http_ctx *ctx)
 		return -1;
 
 	len = sprintf(buf,
-			"HTTP/1.%d %d %.*s",
+			"HTTP/1.%d %d %.*s" HTTP_LINE_END,
 			parser->res.minor_version,
 			parser->res.status_code,
 			(int)parser->res.message_len,
