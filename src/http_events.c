@@ -299,7 +299,7 @@ static int zproxy_http_request_100_cont(struct zproxy_http_ctx *ctx)
 	struct zproxy_http_parser *parser = ctx->parser;
 
 	parser->res.num_headers = 0;
-	parser->res.minor_version = 0;
+	parser->res.minor_version = parser->req.minor_version;
 	parser->res.status_code = ws_to_http(WS_HTTP_100);
 	parser->res.message = (char *)ws_str_responses[WS_HTTP_100] + 4;
 	parser->res.message_len = strlen(parser->res.message);
