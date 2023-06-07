@@ -639,7 +639,7 @@ int zproxy_http_event_reply_error(struct zproxy_http_ctx *ctx, enum ws_responses
 		return -1;
 
 	parser->res.num_headers = 0;
-	parser->res.minor_version = 0;
+	parser->res.minor_version = parser->req.minor_version;
 	parser->res.status_code = ws_to_http(code);
 	parser->res.message = (char *)ws_str_responses[code] + 4;
 	parser->res.message_len = strlen(parser->res.message);
