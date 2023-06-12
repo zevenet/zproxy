@@ -19,6 +19,7 @@
 #include "service.h"
 #include "http_tools.h"
 #include "zcu_http.h"
+#include "zcu_log.h"
 
 #include <stdlib.h>
 
@@ -269,7 +270,7 @@ static size_t zproxy_http_response_send_to_client(struct zproxy_http_ctx *ctx)
 			(int)parser->res.message_len,
 			parser->res.message);
 
-	for (i = 0; i != parser->res.num_headers; i++) {
+	for (i = 0; i <= parser->res.num_headers; i++) {
 		if (parser->res.headers[i].header_off)
 			continue;
 
@@ -281,6 +282,8 @@ static size_t zproxy_http_response_send_to_client(struct zproxy_http_ctx *ctx)
 
 	if (parser->res.body)
 		len += sprintf(buf + len, "%.*s", (int)parser->res.body_len, parser->res.body);
+
+	zcu_log_print_th(LOG_DEBUG, "%.*s", (int)len, buf);
 
 	if (zproxy_http_direct_proxy_reply(parser)) {
 		ctx->resp_len = len;

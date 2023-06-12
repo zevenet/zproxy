@@ -76,7 +76,8 @@ static const char *backend_buf(const struct zproxy_conn *conn)
  */
 static int zproxy_conn_recv_http_resp(struct ev_loop *loop,
 				      struct zproxy_conn *conn,
-				      uint32_t numbytes)
+				      uint32_t numbytes,
+				      struct zproxy_backend *backend)
 {
 	struct zproxy_http_ctx ctx = {
 		.cfg		= conn->proxy->cfg,
@@ -88,6 +89,7 @@ static int zproxy_conn_recv_http_resp(struct ev_loop *loop,
 		.buf_siz	= conn->backend.buf_siz,
 		.from		= ZPROXY_HTTP_BACKEND,
 		.addr		= &conn->client.addr,
+		.backend        = backend,
 	};
 	int ret;
 
@@ -126,6 +128,11 @@ static int zproxy_conn_recv_http_resp(struct ev_loop *loop,
 
 static int zproxy_backend_read(struct ev_loop *loop, struct zproxy_conn *conn, int events)
 {
+	struct zproxy_backend backend = {
+		.addr = conn->backend.addr,
+		.ssl_enabled = conn->backend.ssl_enabled,
+		.cfg = conn->backend.cfg,
+	};
 	uint32_t numbytes;
 	int ret = 0;
 
@@ -190,7 +197,8 @@ static int zproxy_backend_read(struct ev_loop *loop, struct zproxy_conn *conn, i
 
 		if (!conn->backend.resp_len ||
 		    conn->backend.resp_len == UINT64_MAX) {
-			ret = zproxy_conn_recv_http_resp(loop, conn, numbytes);
+			ret = zproxy_conn_recv_http_resp(loop, conn, numbytes,
+							 &backend);
 			if (ret <= 0)
 				return 1;
 		}
@@ -407,7 +415,11 @@ static bool zproxy_backend_is_set(const struct zproxy_backend *backend)
 
 static void zproxy_client_read(struct ev_loop *loop, struct zproxy_conn *conn, int events)
 {
-	struct zproxy_backend backend = {};
+	struct zproxy_backend backend = {
+		.addr = conn->backend.addr,
+		.ssl_enabled = conn->backend.ssl_enabled,
+		.cfg = conn->backend.cfg,
+	};
 	uint32_t numbytes;
 	int ret;
 
