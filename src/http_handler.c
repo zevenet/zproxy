@@ -298,7 +298,7 @@ static int zproxy_http_add_header_line(struct phr_header *headers,
 		header->value_len = header->line_size;
 	} else {
 		header->name = buf;
-		header->name_len = buf - header->value + 1;
+		header->name_len = header->value - buf + 1;
 		if (*++header->value == ' ')
 			header->value++;
 		header->value_len = header->line_size - (header->value - header->name) + 1;
