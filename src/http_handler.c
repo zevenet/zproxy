@@ -676,11 +676,6 @@ int zproxy_http_handle_response_headers(struct zproxy_http_ctx *ctx)
 			!list_empty(&service->runtime.replace_header_res)) ?
 		&service->runtime.replace_header_res :
 		&proxy->runtime.replace_header_res;
-	const char *add_headers = (
-		service != NULL &&
-			parser->service_cfg && !service->header.add_header_res[0]) ?
-		service->header.add_header_res :
-		proxy->header.add_header_res;
 	size_t i;
 
 	for (i = 0; i != parser->res.num_headers; i++) {
@@ -693,8 +688,14 @@ int zproxy_http_handle_response_headers(struct zproxy_http_ctx *ctx)
 		zproxy_http_manage_headers(ctx, &parser->res.headers[i]);
 	}
 
-	if (add_headers[0])
-		zproxy_http_add_header_line(parser->res.headers, &parser->res.num_headers, add_headers);
+	if (proxy && proxy->header.add_header_res[0])
+		zproxy_http_add_header_line(parser->res.headers,
+					    &parser->res.num_headers,
+					    proxy->header.add_header_res);
+	if (service && service->header.add_header_res[0])
+		zproxy_http_add_header_line(parser->res.headers,
+					    &parser->res.num_headers,
+					    service->header.add_header_res);
 
 	// TODO: add other standard headers, cookies, etc
 
