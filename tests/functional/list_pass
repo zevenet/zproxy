@@ -1,0 +1,17 @@
+tests/backend_collision_same_srv
+tests/benchmark_http
+tests/benchmark_https
+tests/benchmark_waf
+tests/benchmark_waf_ssl
+tests/ctl_manage_backends
+tests/ctl_reload
+tests/ctl_responses
+tests/ctl_sessions
+tests/header_x_forwarded_for
+tests/https_proto_no_tlsv123
+tests/listener_removal
+tests/no_rewrite_destination_and_host
+tests/priority_disarranged_jump
+tests/response_body_binary
+tests/same_prio_down
+tests/service_unify
