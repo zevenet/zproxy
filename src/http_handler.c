@@ -283,7 +283,7 @@ static int zproxy_http_add_header_line(struct phr_header *headers,
 	if (*num_headers >= MAX_HEADERS)
 		return -1;
 
-	len = strlen(header_line) + sizeof(HTTP_LINE_END);
+	len = strlen(header_line) + strlen(HTTP_LINE_END);
 	buf = (char *) calloc(len + 1, sizeof(char));
 	if (!buf)
 		return -1;
@@ -293,12 +293,12 @@ static int zproxy_http_add_header_line(struct phr_header *headers,
 	header->line_size = len;
 	snprintf(buf, len + 1, "%s" HTTP_LINE_END, header_line);
 
-	if (!(header->value = strstr(buf, ":"))) {
+	if (!(header->value = strchr(buf, ':'))) {
 		header->value = buf;
 		header->value_len = header->line_size;
 	} else {
 		header->name = buf;
-		header->name_len = header->value - buf + 1;
+		header->name_len = header->value - buf;
 		if (*++header->value == ' ')
 			header->value++;
 		header->value_len = header->line_size - (header->value - header->name) + 1;
@@ -488,7 +488,7 @@ static int rewrite_location(struct zproxy_http_ctx *ctx, phr_header *header)
 
 			if (new_proto && new_vhost) {
 				// "://:" contains the extra characters used in host string
-				nhv_len = new_proto_len + sizeof("://:") +
+				nhv_len = new_proto_len + strlen("://:") +
 					new_vhost_len + new_port_len +
 					path_len + 1;
 				new_header_value =
@@ -516,7 +516,7 @@ static int rewrite_location(struct zproxy_http_ctx *ctx, phr_header *header)
 		}
 
 		if (!new_header_value && proto && host) {
-			nhv_len = proto_len + sizeof("://") + host_len + path_len + 1;
+			nhv_len = proto_len + strlen("://") + host_len + path_len + 1;
 			new_header_value = (char*)calloc(nhv_len, sizeof(char));
 			snprintf(new_header_value, nhv_len, "%.*s://%.*s%.*s",
 				 (int)proto_len, proto, (int)host_len, host,
@@ -537,7 +537,7 @@ static int rewrite_location(struct zproxy_http_ctx *ctx, phr_header *header)
 
 	if (!new_header_value && proto_len && host_len) {
 		// "://:" contains the extra characters used in host string
-		nhv_len = proto_len + sizeof("://:") + host_len + port_len +
+		nhv_len = proto_len + strlen("://:") + host_len + port_len +
 			path_len + 1;
 		new_header_value = (char*)calloc(nhv_len, sizeof(char));
 		if (!port_len) {
@@ -551,7 +551,7 @@ static int rewrite_location(struct zproxy_http_ctx *ctx, phr_header *header)
 		}
 	}
 
-	size_t new_header_len = header->name_len + sizeof(": ") + nhv_len + 1;
+	size_t new_header_len = header->name_len + strlen(": ") + nhv_len + 1;
 	char new_header[new_header_len];
 	snprintf(new_header, new_header_len, "%.*s: %.*s",
 		 (int)header->name_len, header->name,
@@ -643,7 +643,9 @@ int zproxy_http_handle_request_headers(struct zproxy_http_ctx *ctx)
 		proxy->header.add_header_req;
 	size_t i;
 
-	for (i = 0; i != parser->req.num_headers; i++) {
+	// copy value of num_headers since headers may be added
+	size_t num_headers = parser->req.num_headers;
+	for (i = 0; i != num_headers; i++) {
 		regmatch_t eol{ 0, static_cast<regoff_t>(parser->req.headers[i].line_size) };
 		eol.rm_so = 0;
 		eol.rm_eo = parser->req.headers[i].line_size;
@@ -678,7 +680,9 @@ int zproxy_http_handle_response_headers(struct zproxy_http_ctx *ctx)
 		&proxy->runtime.replace_header_res;
 	size_t i;
 
-	for (i = 0; i != parser->res.num_headers; i++) {
+	// copy value of num_headers since headers may be added
+	const size_t num_headers = parser->res.num_headers;
+	for (i = 0; i != num_headers; i++) {
 		regmatch_t eol{ 0, static_cast<regoff_t>(parser->res.headers[i].line_size) };
 		eol.rm_so = 0;
 		eol.rm_eo = parser->res.headers[i].line_size;
