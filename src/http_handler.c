@@ -243,8 +243,7 @@ struct phr_header * zproxy_http_add_header(
 			value, value_len))
 		return NULL;
 
-	(*num_headers)++;
-	return &headers[*num_headers];
+	return &headers[(*num_headers)++];
 }
 
 static void zproxy_http_replace_header(struct zproxy_http_parser *parser,
@@ -325,7 +324,9 @@ static void zproxy_http_set_x_forwarded_for_header(
 				strlen(http_headers_str[X_FORWARDED_FOR]),
 				str, str_len);
 	} else {
-		snprintf(buf, MAX_HEADER_LEN, "%s, %s", parser->x_forwarded_for_hdr->value, str);
+		snprintf(buf, MAX_HEADER_LEN, "%.*s, %s",
+			 (int)parser->x_forwarded_for_hdr->value_len,
+			 parser->x_forwarded_for_hdr->value, str);
 		zproxy_http_set_header(parser->x_forwarded_for_hdr,
 			http_headers_str[X_FORWARDED_FOR], XFORWARDEDFOR_HEADER_SIZE,
 			buf, strlen(buf));
