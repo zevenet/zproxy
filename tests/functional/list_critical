@@ -1,6 +1,7 @@
 tests/backend_prio_high
 tests/connection_multi_request
 tests/custom_err
+tests/error_toolong_request
 tests/header_manipulation
 tests/headers
 tests/http
@@ -10,6 +11,7 @@ tests/https_proto_no_tlsv1
 tests/https_proto_no_tlsv11
 tests/https_proto_no_tlsv12
 tests/https_proto_no_tlsv13
+tests/multi_listener
 tests/nosslredirect
 tests/redirect
 tests/request_body_100_continue

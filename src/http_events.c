@@ -18,6 +18,7 @@
 #include "http.h"
 #include "http_handler.h"
 #include "http_tools.h"
+#include "pico_http_parser.h"
 #include "service.h"
 #include "session.h"
 #include "state.h"
@@ -200,12 +201,14 @@ static size_t zproxy_http_request_send_to_backend(struct zproxy_http_ctx *ctx)
 		parser->req.path;
 	size_t path_len = parser->req.path_mod ? parser->req.path_repl_len :
 		parser->req.path_len;
+	size_t body_len = 0;
+	char *buf;
 
-	ctx->buf = (char *) malloc(SRV_MAX_HEADER + CONFIG_MAXBUF);
-	if (!ctx->buf)
+	buf = (char *) calloc(ctx->buf_siz, sizeof(char));
+	if (!buf)
 		return -1;
 
-	len = sprintf((char *)ctx->buf, "%.*s %.*s HTTP/1.%d%s",
+	len = sprintf(buf, "%.*s %.*s HTTP/1.%d%s",
 		      (int)parser->req.method_len, parser->req.method,
 		      (int)path_len, path, parser->req.minor_version,
 		      HTTP_LINE_END);
@@ -214,26 +217,40 @@ static size_t zproxy_http_request_send_to_backend(struct zproxy_http_ctx *ctx)
 	if (parser->req.path_mod)
 		free(parser->req.path_repl);
 
-	if (parser->virtual_host_hdr.value_len)
-		len += sprintf((char *)ctx->buf + len,
-				"%.*s", (int)parser->virtual_host_hdr.line_size,
-				parser->virtual_host_hdr.name);
+	if (parser->virtual_host_hdr.value_len) {
+		len += sprintf(buf + len, "%.*s",
+			       (int)parser->virtual_host_hdr.line_size,
+			       parser->virtual_host_hdr.name);
+	}
 
 	for (i = 0; i < parser->req.num_headers; i++) {
 		if (parser->req.headers[i].header_off)
 			continue;
 
-		len += sprintf((char*)ctx->buf + len, "%.*s",
-				(int)parser->req.headers[i].line_size,
-				parser->req.headers[i].name);
+		len += sprintf(buf + len, "%.*s",
+			       (int)parser->req.headers[i].line_size,
+			       parser->req.headers[i].name);
 	}
 
-	len += sprintf((char*)ctx->buf + len, "%s", HTTP_LINE_END);
+	len += sprintf(buf + len, "%s", HTTP_LINE_END);
 
-	if (parser->req.body)
-		len += sprintf((char*)ctx->buf + len, "%.*s", (int)parser->req.body_len, parser->req.body);
+	parser->req.len = len + parser->req.content_len;
 
+	if (parser->req.body_len) {
+		body_len = parser->req.body_len;
+		if (len + body_len > ctx->buf_siz) {
+			body_len = ctx->buf_siz - len;
+			ctx->buf_tail_len = parser->req.body_len - body_len;
+			parser->req.body_len -= parser->req.body_len - body_len;
+		}
+
+		len += sprintf(buf + len, "%.*s", (int)body_len,
+			       parser->req.body);
+	}
+
+	ctx->buf = buf;
 	ctx->buf_len = len;
+	ctx->req_len = parser->req.len;
 
 	zcu_log_print_th(LOG_DEBUG, "%.*s", ctx->buf_len, ctx->buf);
 
@@ -275,8 +292,15 @@ static size_t zproxy_http_response_send_to_client(struct zproxy_http_ctx *ctx)
 	}
 	len += sprintf(buf + len, "%s", HTTP_LINE_END);
 
-	if (parser->res.body)
-		len += sprintf(buf + len, "%.*s", (int)parser->res.body_len, parser->res.body);
+	if (parser->chunk_state == CHUNKED_ENABLED) {
+		parser->res.len = len + parser->res.body_len;
+		memcpy(buf + len, parser->res.body, parser->res.body_len);
+		len += parser->res.body_len;
+	} else {
+		parser->res.len = len + parser->res.content_len;
+		memcpy(buf + len, parser->res.body, parser->res.content_len);
+		len += parser->res.content_len;
+	}
 
 	zcu_log_print_th(LOG_DEBUG, "%.*s", (int)len, buf);
 
@@ -285,10 +309,12 @@ static size_t zproxy_http_response_send_to_client(struct zproxy_http_ctx *ctx)
 		ctx->resp_buf = buf;
 		ctx->buf = NULL;
 	} else {
+		ctx->resp_len = parser->res.len;
+		//~ ctx->resp_buf = NULL;
 		ctx->buf_len = len;
 		ctx->buf = buf;
+		ctx->buf_tail_len = len;
 	}
-
 	return len;
 }
 
@@ -416,6 +442,7 @@ static int zproxy_http_request_head_rcv(struct zproxy_http_ctx *ctx)
 	struct zproxy_backend_cfg *backend;
 	struct zproxy_http_parser *parser = ctx->parser;
 	RETURN_HTTP parse_status;
+	size_t len;
 
 	parse_status = zproxy_http_request_head_rcv_parse(ctx);
 
@@ -478,8 +505,7 @@ static int zproxy_http_request_head_rcv(struct zproxy_http_ctx *ctx)
 		return -1;
 	}
 
-	ctx->req_len = zproxy_http_request_send_to_backend(ctx);
-	if (ctx->req_len == 0) {
+	if (zproxy_http_request_send_to_backend(ctx) == 0) {
 		zproxy_http_event_reply_error(ctx, WS_HTTP_500);
 		return -1;
 	}
@@ -491,9 +517,16 @@ static int zproxy_http_request_head_rcv(struct zproxy_http_ctx *ctx)
 
 	// TODO: update ctx->req_len, ctx->buf, ctx->buf_len
 	// TODO: set new state
-	//~ if (stream->request.expectBody())
-		//~ parser->state = HTTP_PARSER_STATE::REQ_BODY_RCV;
-	//~ else
+
+	len = parser->req.content_len - parser->req.body_len;
+	if (len < 0) {
+		zproxy_http_event_reply_error(ctx, WS_HTTP_500);
+		return -1;
+	}
+
+	if (parser->chunk_state == CHUNKED_ENABLED || (len > 0))
+		parser->state = HTTP_PARSER_STATE::REQ_BODY_RCV;
+	else
 		parser->state = HTTP_PARSER_STATE::RESP_HEADER_RCV;
 
 	return 1;
@@ -501,7 +534,13 @@ static int zproxy_http_request_head_rcv(struct zproxy_http_ctx *ctx)
 
 static int zproxy_http_request_body_rcv(struct zproxy_http_ctx *ctx)
 {
-	// TODO
+	struct zproxy_http_parser *parser = ctx->parser;
+	/*size_t len = 0;*/
+
+	ctx->req_len = parser->req.len;
+	ctx->buf_tail_len = 0;
+
+	// TODO WAF (CAREFUL WITH PARTIAL MATCHES)
 	return 1;
 }
 
@@ -531,32 +570,37 @@ int zproxy_http_request_parser(struct zproxy_http_ctx *ctx)
 	//~ TODO: streamLogDebug(ctx->stream, "->-> {bytes:%lu} %.*s", ctx->buf_len, ctx->buf_len, ctx->buf);
 	zproxy_http_update_stats(ctx->parser, ctx->backend->cfg, NEW_CONN);
 
-	if (ctx->parser->state == HTTP_PARSER_STATE::CLOSE)
+	switch (ctx->parser->state) {
+	case HTTP_PARSER_STATE::CLOSE:
 		return -1;
-
-	if (ctx->parser->state == HTTP_PARSER_STATE::TUNNEL)
+		break;
+	case HTTP_PARSER_STATE::TUNNEL:
 		return 1;
-
-	if (ctx->parser->state == HTTP_PARSER_STATE::RESP_BODY_RCV)
+		break;
+	case HTTP_PARSER_STATE::RESP_BODY_RCV:
 		ctx->parser->state = HTTP_PARSER_STATE::REQ_HEADER_RCV;
-
-	if (ctx->parser->state == HTTP_PARSER_STATE::REQ_HEADER_RCV)
+		break;
+	case HTTP_PARSER_STATE::REQ_HEADER_RCV:
 		ret = zproxy_http_request_head_rcv(ctx);
-	else if (ctx->parser->state == HTTP_PARSER_STATE::WAIT_100_CONT)
+		break;
+	case HTTP_PARSER_STATE::WAIT_100_CONT:
 		ret = zproxy_http_request_100_cont(ctx);
-	else if (ctx->parser->state == HTTP_PARSER_STATE::REQ_BODY_RCV)
+		break;
+	case HTTP_PARSER_STATE::REQ_BODY_RCV:
 		ret = zproxy_http_request_body_rcv(ctx);
-	else
+		break;
+	default:
 		//~ TODO: streamLogMessage(ctx->stream, "Request status not expected %s", ctx->stream->getState());
 		return -1;
+	}
 
 	//~ TODO: if (ctx->buf) {
 		//~ streamLogDebug(ctx->stream, ">>>> {bytes:%lu/%lu} %.*s",
 			       //~ ctx->buf_len, ctx->req_len, ctx->buf_len, ctx->buf);
 	//~ }
 
-	if (ret < 0)
-		zproxy_http_parser_reset(ctx->parser);
+	//~ if (ret < 0)
+		//~ zproxy_http_parser_reset(ctx->parser);
 
 	return ret;
 }
@@ -572,24 +616,24 @@ static enum RETURN_HTTP zproxy_http_response_head_rcv_parse(struct zproxy_http_c
 		if (!parser->res.buf_cpy)
 			return PROXY_RESPONSE;
 	}
-
-	parser->res.buf_cpy_len = sprintf((char *)parser->res.buf_cpy + parser->res.buf_cpy_len, "%s", ctx->buf);
+	memcpy((void*)(parser->res.buf_cpy + parser->res.buf_cpy_len), ctx->buf,
+	       ctx->buf_len);
+	parser->res.buf_cpy_len = ctx->buf_len;
 	free((char *)ctx->buf);
 	ctx->buf_len = 0;
 
 	ret = phr_parse_response(parser->res.buf_cpy, parser->res.buf_cpy_len,
-								 &parser->res.minor_version,
-								 &parser->res.status_code,
-								 (const char **)&parser->res.message,
-								 &parser->res.message_len,
-								 parser->res.headers,
-								 &parser->res.num_headers,
-								 parser->res.last_length);
+				 &parser->res.minor_version,
+				 &parser->res.status_code,
+				 (const char**)&parser->res.message,
+				 &parser->res.message_len, parser->res.headers,
+				 &parser->res.num_headers,
+				 parser->res.last_length);
 
 	parser->res.last_length = parser->res.buf_cpy_len;
 	if (ret > 0) {
-		parser->req.body = parser->req.buf_cpy + ret;
-		parser->req.body_len = parser->req.buf_cpy_len - ret;
+		parser->res.body = parser->res.buf_cpy + ret;
+		parser->res.body_len = parser->res.buf_cpy_len - ret;
 		return RETURN_HTTP::SUCCESS;
 	}
 
@@ -603,21 +647,22 @@ int zproxy_http_response_parser(struct zproxy_http_ctx *ctx)
 {
 	struct zproxy_http_parser *parser = ctx->parser;
 	enum RETURN_HTTP state;
+	size_t len;
 
 	//~ TODO: streamLogDebug(ctx->stream, "<-<- {bytes:%lu} %.*s", ctx->buf_len, ctx->buf_len, ctx->buf);
 
-	//~ TODO: if (parser->state == HTTP_STATE::TUNNEL) {
+	switch (parser->state) {
+	case HTTP_PARSER_STATE::TUNNEL: {
 		//~ streamLogDebug(ctx->stream, "tunnel: forwarding response");
-		//~ return 1;
-	//~ }
-
-	//~ TODO: if (state == HTTP_STATE::REQ_BODY_RCV) {
+		return 1;
+		break;
+	}
+	case HTTP_PARSER_STATE::REQ_BODY_RCV: {
 		//~ ctx->stream->setState(HTTP_STATE::RESP_HEADER_RCV);
 		//~ state = ctx->stream->getState();
-	//~ }
-
-	if (parser->state == HTTP_PARSER_STATE::RESP_HEADER_RCV) {
-		//TODO: Improve parser, now it restarts the parsing if it is not completed
+		break;
+	}
+	case HTTP_PARSER_STATE::RESP_HEADER_RCV: {
 		state = zproxy_http_response_head_rcv_parse(ctx);
 
 		/* Return 0 if you want core to keep reading data from client. */
@@ -636,48 +681,100 @@ int zproxy_http_response_parser(struct zproxy_http_ctx *ctx)
 			return -1;
 		}
 
-		ctx->buf_tail_len = zproxy_http_response_send_to_client(ctx);
+		if ((len = zproxy_http_response_send_to_client(ctx)) == 0) {
+			zproxy_http_event_reply_error(ctx, WS_HTTP_500);
+			return -1;
+		}
 
-		//~ TODO: stream->logSuccess();
+		ctx->buf_tail_len = ctx->buf_len;
 
-	} else if (parser->state == HTTP_PARSER_STATE::RESP_BODY_RCV) {
-		// TODO: add to body
-		//~ ctx->stream->response.message = const_cast<char *>(&ctx->buf[ctx->buf_len - ctx->buf_tail_len]);
-		//~ ctx->stream->response.message_length = ctx->buf_tail_len;
-	} else {
-		// TODO: ctx->stream->getStateTracer();
-		//~ streamLogMessage(ctx->stream, "no valid state %s", stream->getStateString(state));
-		return -1;
-	}
+		// TODO: manage body
+		// TODO: check WAF body
 
-	// TODO: manage body chunk
-	// TODO: check WAF body
+		// TODO: update ctx->req_len, ctx->buf, ctx->buf_len
+		// TODO: set new state
 
-	// TODO: manage parser states
-	//~ ctx->resp_len = ctx->res.buf_cpy_len;
-	//ctx->resp_len = ctx->stream->response.getBufferRewritedLength();
+		//~ len = parser->res.len - len;
+		parser->res.len -= len;
+		if (parser->res.len < 0) {
+			zproxy_http_event_reply_error(ctx, WS_HTTP_500);
+			return -1;
+		}
 
-	/*if (stream->response.expectBody())
-		parser->state = RESP_BODY_RCV;
-	else*/ if (parser->expect_100_cont_hdr && parser->res.status_code == 100) {
-		parser->state = REQ_BODY_RCV;
-	} else {
 		zproxy_stats_backend_inc_code(parser->http_state,
 					      ctx->backend->cfg,
 					      parser->res.status_code);
 
-		if (parser->websocket) {
-			parser->state = TUNNEL;
-		} else if (zproxy_http_expect_new_req(parser)) {
-			zcu_log_print_th(LOG_DEBUG, "New request is expected");
-			parser->state = REQ_HEADER_RCV;
+		if (parser->chunk_state == CHUNKED_ENABLED) {
+			ssize_t res;
+			char *buf_cpy;
+			size_t buf_cpy_len;
+
+			parser->chunked_decoder = { 0 };
+
+			buf_cpy = strndup(parser->res.body,
+					  parser->res.body_len);
+			buf_cpy_len = parser->res.body_len;
+			res = phr_decode_chunked(&parser->chunked_decoder,
+						 buf_cpy, &buf_cpy_len);
+			free(buf_cpy);
+
+			if (res == -2) {
+				zcu_log_print_th(LOG_DEBUG, "Continue chunked");
+				parser->state = HTTP_PARSER_STATE::RESP_BODY_RCV;
+			} else if (res == -1) {
+				zproxy_http_event_reply_error(ctx, WS_HTTP_500);
+				zcu_log_print_th(LOG_WARNING,
+						 "Error parsing chunked data.");
+				return -1;
+			} else {
+				zcu_log_print_th(LOG_DEBUG, "Last chunk found");
+				parser->chunk_state = CHUNKED_LAST_CHUNK;
+				parser->state = HTTP_PARSER_STATE::CLOSE;
+				ctx->http_close = true;
+			}
+			//~ ctx->resp_len = ;
+		} else if (parser->expect_100_cont_hdr &&
+			   parser->res.status_code == 100) {
+			parser->state = REQ_BODY_RCV;
 		} else {
-			zcu_log_print_th(LOG_DEBUG, "New request is NOT expected");
-			parser->state = CLOSE;
-			ctx->http_close = true;
-			return 1;
+			if (parser->websocket) {
+				parser->state = TUNNEL;
+			} else if (zproxy_http_expect_new_req(parser)) {
+				zcu_log_print_th(LOG_DEBUG, "New request is expected");
+				parser->state = REQ_HEADER_RCV;
+			} else {
+				zcu_log_print_th(LOG_DEBUG, "New request is NOT expected");
+				parser->state = CLOSE;
+				ctx->http_close = true;
+				return 1;
+			}
 		}
+		//~ TODO: stream->logSuccess();
+		break;
 	}
+	case HTTP_PARSER_STATE::RESP_BODY_RCV: {
+		// TODO: add to body
+		//~ ctx->stream->response.message = const_cast<char *>(&ctx->buf[ctx->buf_len - ctx->buf_tail_len]);
+		//~ ctx->stream->response.message_length = ctx->buf_tail_len;
+
+		//~ ctx->buf_len = parser->res.buf_cpy_len;
+		ctx->resp_len = parser->res.buf_cpy_len;
+		parser->res.len -= parser->res.buf_cpy_len;
+		ctx->buf_tail_len = 0;
+
+		// TODO WAF (CAREFUL WITH PARTIAL MATCHES)
+		break;
+	}
+	default: {
+		// TODO: ctx->stream->getStateTracer();
+		//~ streamLogMessage(ctx->stream, "no valid state %s", stream->getStateString(state));
+		return -1;
+	}
+	}
+
+	//~ ctx->resp_len = ctx->res.buf_cpy_len;
+	//ctx->resp_len = ctx->stream->response.getBufferRewritedLength();
 
 	zcu_log_print_th(LOG_DEBUG, "<<<< {bytes:%lu/%lu} %.*s", ctx->buf_len,
 			 ctx->resp_len, ctx->buf_len, ctx->buf);

@@ -242,6 +242,8 @@ struct zproxy_http_parser {
 	bool expect_100_cont_hdr;
 	bool accept_encoding_header;
 
+	struct phr_chunked_decoder      chunked_decoder;
+
 	struct {
 		char *method;
 		size_t method_len;
@@ -260,6 +262,7 @@ struct zproxy_http_parser {
 		const char *body;
 		size_t body_len;
 		size_t content_len;
+		size_t len;
 
 		bool upgrade_header;
 		bool conn_upgr_hdr;
@@ -281,6 +284,7 @@ struct zproxy_http_parser {
 		const char *body;
 		size_t body_len;
 		size_t content_len;
+		size_t len;
 
 		bool upgrade_header;
 		bool conn_upgr_hdr;
