@@ -227,7 +227,7 @@ static size_t zproxy_http_request_send_to_backend(struct zproxy_http_ctx *ctx)
 				"%.*s", (int)parser->virtual_host_hdr.line_size,
 				parser->virtual_host_hdr.name);
 
-	for (i = 0; i != parser->req.num_headers; i++) {
+	for (i = 0; i < parser->req.num_headers; i++) {
 		if (parser->req.headers[i].header_off)
 			continue;
 
@@ -242,6 +242,9 @@ static size_t zproxy_http_request_send_to_backend(struct zproxy_http_ctx *ctx)
 		len += sprintf((char*)ctx->buf + len, "%.*s", (int)parser->req.body_len, parser->req.body);
 
 	ctx->buf_len = len;
+
+	zcu_log_print_th(LOG_DEBUG, "%.*s", ctx->buf_len, ctx->buf);
+
 	return len;
 }
 

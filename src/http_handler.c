@@ -17,7 +17,6 @@
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
-#include "zcu_http.h"
 #endif
 
 #include <netdb.h>
@@ -32,6 +31,7 @@
 #include "pico_http_parser.h"
 #include "state.h"
 #include "zcu_common.h"
+#include "zcu_http.h"
 #include "zcu_log.h"
 #include "zcu_network.h"
 
@@ -288,8 +288,7 @@ static int zproxy_http_add_header_line(struct phr_header *headers,
 	if (!buf)
 		return -1;
 
-	(*num_headers)++;
-	header = &headers[*num_headers];
+	header = &headers[(*num_headers)++];
 	header->line_size = len;
 	snprintf(buf, len + 1, "%s" HTTP_LINE_END, header_line);
 
@@ -638,13 +637,10 @@ int zproxy_http_handle_request_headers(struct zproxy_http_ctx *ctx)
 		!list_empty(&service->runtime.replace_header_req)) ?
 		&service->runtime.replace_header_req :
 		&proxy->runtime.replace_header_req;
-	const char *add_headers = (!service->header.add_header_req[0]) ?
-		service->header.add_header_req :
-		proxy->header.add_header_req;
 	size_t i;
 
 	// copy value of num_headers since headers may be added
-	size_t num_headers = parser->req.num_headers;
+	const size_t num_headers = parser->req.num_headers;
 	for (i = 0; i != num_headers; i++) {
 		regmatch_t eol{ 0, static_cast<regoff_t>(parser->req.headers[i].line_size) };
 		eol.rm_so = 0;
@@ -655,8 +651,14 @@ int zproxy_http_handle_request_headers(struct zproxy_http_ctx *ctx)
 		zproxy_http_manage_headers(ctx, &parser->req.headers[i]);
 	}
 
-	if(add_headers[0])
-		zproxy_http_add_header_line(parser->req.headers, &parser->req.num_headers, add_headers);
+	if (proxy && proxy->header.add_header_req[0])
+		zproxy_http_add_header_line(parser->req.headers,
+					    &parser->req.num_headers,
+					    proxy->header.add_header_req);
+	if (service && service->header.add_header_req[0])
+		zproxy_http_add_header_line(parser->req.headers,
+					    &parser->req.num_headers,
+					    service->header.add_header_req);
 
 	zproxy_http_set_x_forwarded_for_header(parser, inet_ntoa(ctx->addr->sin_addr), INET_STR_SIZE);
 
