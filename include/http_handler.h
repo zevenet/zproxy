@@ -274,7 +274,6 @@ int zproxy_http_parser_free(struct zproxy_http_parser *parser);
 int zproxy_http_parser_reset(struct zproxy_http_parser *parser);
 int zproxy_http_handle_request_headers(struct zproxy_http_ctx *ctx);
 int zproxy_http_handle_response_headers(struct zproxy_http_ctx *ctx);
-int zproxy_http_set_redirect_response(struct zproxy_http_ctx *ctx);
 void zproxy_http_set_virtual_host_header(struct zproxy_http_parser *parser,
 					 const char *str, size_t str_len);
 void zproxy_http_set_destination_header(void);

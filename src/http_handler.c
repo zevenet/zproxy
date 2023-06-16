@@ -715,44 +715,6 @@ int zproxy_http_handle_response_headers(struct zproxy_http_ctx *ctx)
 	return 0;
 }
 
-int zproxy_http_set_redirect_response(struct zproxy_http_ctx *ctx)
-{
-	struct zproxy_http_parser *parser = ctx->parser;
-	struct zproxy_backend_redirect *redirect = &parser->service_cfg->redirect;
-	char buf[MAX_HEADER_LEN] = {0};
-	char new_url[MAX_HEADER_LEN] = {0};
-	struct matcher *current, *next;
-
-	snprintf(new_url, MAX_HEADER_LEN, "%s", redirect->url);
-	if (redirect->redir_macro) {
-		str_replace_str(
-			buf, redirect->url, strlen(redirect->url),
-			MACRO_VHOST, MACRO_VHOST_LEN,
-			(char *) parser->virtual_host_hdr.value,
-			parser->virtual_host_hdr.value_len);
-		strncpy(new_url, buf, MAX_HEADER_LEN);
-	}
-
-	switch (redirect->redir_type) {
-	case 1: // dynamic
-		list_for_each_entry_safe(current, next, &parser->service_cfg->runtime.req_url, list) {
-			if (str_replace_regexp(buf, parser->req.path,
-						   parser->req.path_len,
-					       &current->pat, new_url) != -1) {
-				strncpy(new_url, buf, MAX_HEADER_LEN);
-			}
-		}
-		break;
-	case 2: // append
-		strncat(new_url, parser->req.path, parser->req.path_len);
-		break;
-	default:
-		break;
-	}
-
-	return 0;
-}
-
 static int naive_search(const char *stack, int stack_size,
                         const char *needle, int needle_len, int *partial)
 {
