@@ -184,6 +184,7 @@ int zproxy_http_parser_reset(struct zproxy_http_parser *parser)
 	parser->req.last_length = 0;
 	parser->state = REQ_HEADER_RCV;
 	parser->chunk_state = CHUNKED_DISABLED;
+	parser->accept_encoding_header = false;
 
 	return 0;
 }
@@ -580,7 +581,7 @@ static void zproxy_http_manage_headers(struct zproxy_http_ctx *ctx,
 	} else if (!strncmp(header->name, http_headers_str[CONNECTION], header->name_len)) {
 		//TODO: setHeaderConnection(header_value);
 	} else if (!strncmp(header->name, http_headers_str[ACCEPT_ENCODING], header->name_len)) {
-		//TODO: accept_encoding_header = true;
+		parser->accept_encoding_header = true;
 	} else if (!strncmp(header->name, http_headers_str[TRANSFER_ENCODING],
 			    header->name_len)) {
 		int start, end;

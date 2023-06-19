@@ -234,6 +234,7 @@ struct zproxy_http_parser {
 	phr_header *destination_hdr;
 	phr_header *x_forwarded_for_hdr;
 	bool expect_100_cont_hdr;
+	bool accept_encoding_header;
 
 	struct {
 		char *method;
