@@ -277,7 +277,7 @@ int zproxy_http_handle_request_headers(struct zproxy_http_ctx *ctx);
 int zproxy_http_handle_response_headers(struct zproxy_http_ctx *ctx);
 void zproxy_http_set_virtual_host_header(struct zproxy_http_parser *parser,
 					 const char *str, size_t str_len);
-void zproxy_http_set_destination_header(void);
+void zproxy_http_set_destination_header(struct zproxy_http_ctx *ctx);
 struct phr_header * zproxy_http_add_header(struct phr_header *headers,
 					   size_t *num_headers, const char *name,
 					   size_t name_len, const char *value,

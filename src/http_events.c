@@ -91,7 +91,7 @@ void zproxy_http_set_header_rewrite_backend(struct zproxy_http_ctx *ctx)
 		zproxy_http_set_virtual_host_header(parser, inet_ntoa(ctx->backend->addr.sin_addr), INET_STR_SIZE);
 
 	if (proxy->header.rw_destination)
-		zproxy_http_set_destination_header(); // TODO
+		zproxy_http_set_destination_header(ctx);
 }
 
 static void zproxy_set_backend(struct zproxy_backend_cfg *backend, struct zproxy_http_ctx *ctx)

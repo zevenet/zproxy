@@ -272,21 +272,21 @@ static void zproxy_http_replace_header(struct zproxy_http_parser *parser,
 	}
 }
 
-static int zproxy_http_add_header_line(struct phr_header *headers,
-					size_t *num_headers,
-					const char *header_line)
+static struct phr_header *
+zproxy_http_add_header_line(struct phr_header *headers, size_t *num_headers,
+			    const char *header_line)
 {
 	struct phr_header *header;
 	size_t len;
 	char *buf;
 
 	if (*num_headers >= MAX_HEADERS)
-		return -1;
+		return NULL;
 
 	len = strlen(header_line) + strlen(HTTP_LINE_END);
 	buf = (char *) calloc(len + 1, sizeof(char));
 	if (!buf)
-		return -1;
+		return NULL;
 
 	header = &headers[(*num_headers)++];
 	header->line_size = len;
@@ -306,7 +306,7 @@ static int zproxy_http_add_header_line(struct phr_header *headers,
 	zcu_log_print_th(LOG_DEBUG, "Add header line: %.*s", header->line_size,
 			 header->name);
 
-	return 0;
+	return header;
 }
 
 static void zproxy_http_set_x_forwarded_for_header(
@@ -350,31 +350,119 @@ void zproxy_http_set_virtual_host_header(
 	}
 }
 
-void zproxy_http_set_destination_header()
+static bool is_host(const char *vaddr, int vport, const char *addr, int port)
 {
-/*	TODO
- 	regmatch_t matches[4];
-	std::string proto;
-	std::string host;
-	std::string path;
-	std::string host_addr;
-	int port;
-	std::string newh = http::http_info::headers_names_strings.at(http::HTTP_HEADER_NAME::DESTINATION) + ": ";
+	bool ret = false;
 
-	parseUrl(request.destination_header, matches, proto, host, path, host_addr, port);
+	struct addrinfo *in_addr = zcu_net_get_address(vaddr, vport);
 
-	if (host.empty() || !isHost(host_addr, port, listener->address, listener->port)) {
-		newh += request.destination_header;
-	} else {
-		if (backend->runtime.ssl_enabled)
-			newh += "https://";
-		else
-			newh += "http://";
-		newh += std::string(backend->address) + ":" + std::to_string(backend->port) + path;
+	if (in_addr) {
+		struct addrinfo *in_addr_2 = zcu_net_get_address(addr, port);
+
+		if (zcu_soc_equal_sockaddr(in_addr->ai_addr, in_addr_2->ai_addr, 1))
+			ret = true;
+
+		freeaddrinfo(in_addr_2);
+		freeaddrinfo(in_addr);
 	}
 
-	newh += http::CRLF;
-	request.volatile_headers.push_back(std::move(newh));*/
+	return ret;
+
+}
+
+static void parse_url(const char *header_value, size_t header_value_len,
+		      regmatch_t *matches, const char **proto,
+		      size_t *proto_len, const char **host, size_t *host_len,
+		      const char **path, size_t *path_len,
+		      const char **host_addr, size_t *host_addr_len,
+		      int *port, size_t *port_len)
+{
+	regex_t reg;
+
+	regcomp(&reg, "^(http|https)://([^/]+)(.*)", REG_EXTENDED);
+	if (!regexec(&reg, header_value, 4, matches, 0)) {
+		*proto = header_value + matches[1].rm_so;
+		*proto_len = matches[1].rm_eo - matches[1].rm_so;
+
+		*host = *host_addr = header_value + matches[2].rm_so;
+		*host_len = *host_addr_len = matches[2].rm_eo - matches[2].rm_so;
+
+		*path = header_value + matches[3].rm_so;
+		*path_len = matches[3].rm_eo - matches[3].rm_so;
+
+		size_t i;
+		for (i = 0; i < *host_addr_len && (*host_addr)[i] != ':'; ++i);
+		if (i != *host_addr_len) {
+			*port = atoi(*host + i + 1);
+			*port_len = *host_len - (i + 1);
+			*host_len = i;
+		} else if (!strncmp(*proto, "https", *proto_len)) {
+			*port = 443;
+			*port_len = 3;
+		} else {
+			*port = 80;
+			*port_len = 2;
+		}
+	} else {
+		*path = header_value;
+		*path_len = header_value_len;
+	}
+	regfree(&reg);
+}
+
+void zproxy_http_set_destination_header(struct zproxy_http_ctx *ctx)
+{
+	struct zproxy_http_parser *parser = ctx->parser;
+
+	if (!parser->destination_hdr)
+		return;
+
+	struct phr_header *header = parser->destination_hdr;
+	const struct zproxy_backend_cfg *backend = ctx->backend->cfg;
+
+	const char *loc;
+	size_t loc_len;
+	regmatch_t matches[4];
+	const char *proto = NULL, *host = NULL, *path = NULL, *host_addr = NULL;
+	size_t proto_len = 0, host_len = 0, path_len = 0, host_addr_len = 0;
+	int port = -1;
+	size_t port_len = 0;
+	char *new_header_value = NULL;
+	size_t nhv_len = 0;
+
+	loc = strndup(header->value, header->value_len);
+	loc_len = header->value_len;
+	new_header_value = (char*)calloc(MAX_HEADER_LEN, sizeof(char));
+	nhv_len = snprintf(new_header_value, MAX_HEADER_LEN, "%s: ",
+			   http_headers_str[DESTINATION]);
+
+	parse_url(loc, loc_len, matches, &proto, &proto_len, &host, &host_len,
+		  &path, &path_len, &host_addr, &host_addr_len, &port,
+		  &port_len);
+
+	if (!host_len && !is_host(host_addr, port, ctx->cfg->address,
+				 ctx->cfg->port)) {
+		nhv_len += sprintf(new_header_value + nhv_len, "%.*s",
+				   (int)header->value_len, header->value);
+	} else {
+		if (backend->runtime.ssl_enabled)
+			nhv_len += sprintf(new_header_value + nhv_len, "https://");
+		else
+			nhv_len += sprintf(new_header_value + nhv_len, "http://");
+
+		nhv_len += sprintf(new_header_value + nhv_len, "%s:%d%.*s",
+				   backend->address, backend->port,
+				   (int)path_len, path);
+	}
+
+	parser->destination_hdr =
+		zproxy_http_add_header_line(parser->req.headers,
+					    &parser->req.num_headers,
+					    new_header_value);
+	header->header_off = true;
+
+	free((void*)loc);
+	free((void*)new_header_value);
 }
 
 static int rewrite_location(struct zproxy_http_ctx *ctx, phr_header *header)
@@ -395,7 +483,6 @@ static int rewrite_location(struct zproxy_http_ctx *ctx, phr_header *header)
 	loc = strndup(header->value, header->value_len);
 	loc_len = header->value_len;
 
-	regex_t reg;
 	regmatch_t matches[4];
 	const char *proto = NULL, *host = NULL, *path = NULL, *host_addr = NULL;
 	size_t proto_len = 0, host_len = 0, path_len = 0, host_addr_len = 0;
@@ -404,35 +491,9 @@ static int rewrite_location(struct zproxy_http_ctx *ctx, phr_header *header)
 	char *new_header_value = NULL;
 	size_t nhv_len = 0;
 
-	regcomp(&reg, "^(http|https)://([^/]+)(.*)", REG_EXTENDED);
-	if (!regexec(&reg, loc, 4, matches, 0)) {
-		proto = loc + matches[1].rm_so;
-		proto_len = matches[1].rm_eo - matches[1].rm_so;
-
-		host = host_addr = loc + matches[2].rm_so;
-		host_len = host_addr_len = matches[2].rm_eo - matches[2].rm_so;
-
-		path = loc + matches[3].rm_so;
-		path_len = matches[3].rm_eo - matches[3].rm_so;
-
-		size_t i;
-		for (i = 0; i < host_addr_len && host_addr[i] != ':'; ++i);
-		if (i != host_addr_len) {
-			port = atoi(host + i + 1);
-			port_len = host_len - (i + 1);
-			host_len = i;
-		} else if (!strncmp(proto, "https", proto_len)) {
-			port = 443;
-			port_len = 3;
-		} else {
-			port = 80;
-			port_len = 2;
-		}
-	} else {
-		path = loc;
-		path_len = loc_len;
-	}
-	regfree(&reg);
+	parse_url(loc, loc_len, matches, &proto, &proto_len, &host, &host_len,
+		  &path, &path_len, &host_addr, &host_addr_len, &port,
+		  &port_len);
 
 	if (ctx->backend && rw_location) {
 		struct addrinfo *in_addr;
@@ -574,7 +635,6 @@ static void zproxy_http_manage_headers(struct zproxy_http_ctx *ctx,
 	struct zproxy_http_parser *parser = ctx->parser;
 
 	if (!strncmp(header->name, http_headers_str[DESTINATION], header->name_len)) {
-		// TODO: manage destination header
 		parser->destination_hdr = header;
 	} else if (!strncmp(header->name, http_headers_str[UPGRADE], header->name_len)) {
 		// TODO: setHeaderUpgrade(header_value);
