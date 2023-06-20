@@ -466,6 +466,46 @@ void zproxy_http_set_destination_header(struct zproxy_http_ctx *ctx)
 	free((void*)new_header_value);
 }
 
+void zproxy_http_rewrite_url(struct zproxy_http_parser *parser)
+{
+	const struct zproxy_service_cfg *service_cfg = parser->service_cfg;
+	char path_orig[ZCU_DEF_BUFFER_SIZE],
+		buf[ZCU_DEF_BUFFER_SIZE],
+		aux_buf[ZCU_DEF_BUFFER_SIZE];
+	int offset = 0;
+	size_t ori_size = ZCU_DEF_BUFFER_SIZE;
+	bool modified = false;
+	struct replace_header *current, *next;
+
+	snprintf(path_orig, ZCU_DEF_BUFFER_SIZE, "%.*s",
+		 (int)parser->req.path_len,parser->req.path);
+	snprintf(aux_buf, ZCU_DEF_BUFFER_SIZE, "%.*s",
+		 (int)parser->req.path_len,parser->req.path);
+
+	list_for_each_entry_safe(current, next, &service_cfg->runtime.req_rw_url, list) {
+		offset = str_replace_regexp(buf, aux_buf, strlen(aux_buf),
+					    &current->match, current->replace);
+		if (offset != -1) {
+			modified = true;
+			snprintf(aux_buf, ZCU_DEF_BUFFER_SIZE, "%s", buf);
+			zcu_log_print_th(LOG_DEBUG,
+					 "URL rewritten \"%s\" -> \"%s\"",
+					 path_orig, buf);
+
+			if (ori_size > parser->req.path_len - offset)
+				ori_size = parser->req.path_len - offset;
+		}
+	}
+
+	if (modified) {
+		parser->req.path_mod = true;
+		parser->req.path_repl = strdup(aux_buf);
+		parser->req.path_repl_len = strlen(aux_buf);
+		zcu_log_print_th(LOG_DEBUG, "URL for reverse Location \"%.*s\"",
+				 parser->req.path_len, parser->req.path);
+	}
+}
+
 static int rewrite_location(struct zproxy_http_ctx *ctx, phr_header *header)
 {
 	struct zproxy_http_parser *parser = ctx->parser;
@@ -475,8 +515,8 @@ static int rewrite_location(struct zproxy_http_ctx *ctx, phr_header *header)
 	int rw_location = parser->service_cfg->header.rw_location;
 	int rw_url_rev = parser->service_cfg->header.rw_url_rev;
 
-	/*if (!stream->request.path_mod)
-		rw_url_rev = 0;*/
+	if (!parser->req.path_mod)
+		rw_url_rev = 0;
 
 	if (!rw_location && !rw_url_rev)
 		return 1;
@@ -495,6 +535,11 @@ static int rewrite_location(struct zproxy_http_ctx *ctx, phr_header *header)
 	parse_url(loc, loc_len, matches, &proto, &proto_len, &host, &host_len,
 		  &path, &path_len, &host_addr, &host_addr_len, &port,
 		  &port_len);
+
+	if (parser->req.path_mod && rw_url_rev) {
+		path = parser->req.path_repl;
+		path_len = parser->req.path_repl_len;
+	}
 
 	if (ctx->backend && rw_location) {
 		struct addrinfo *in_addr;
@@ -586,17 +631,6 @@ static int rewrite_location(struct zproxy_http_ctx *ctx, phr_header *header)
 				 (int)path_len, path);
 		}
 	}
-
-	/*
-	if (stream->request.path_mod && rw_url_rev) {
-		// the string to remove must be at the begining
-		if (path.find(stream->request.path_repl.data()) == 0) {
-			path.replace(0, stream->request.path_repl.length(),
-					 stream->request.path_ori);
-			zcu_log_print(LOG_DEBUG,"location-rewritten: %s", path.data());
-		}
-	}
-	*/
 
 	if (!new_header_value && proto_len && host_len) {
 		// "://:" contains the extra characters used in host string

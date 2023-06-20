@@ -188,16 +188,23 @@ static size_t zproxy_http_request_send_to_backend(struct zproxy_http_ctx *ctx)
 	struct zproxy_http_parser *parser = ctx->parser;
 	size_t i;
 	size_t len = 0;
+	char *path = parser->req.path_mod ? parser->req.path_repl :
+		parser->req.path;
+	size_t path_len = parser->req.path_mod ? parser->req.path_repl_len :
+		parser->req.path_len;
 
 	ctx->buf = (char *) malloc(SRV_MAX_HEADER + CONFIG_MAXBUF);
 	if (!ctx->buf)
 		return -1;
 
-	len = sprintf((char *)ctx->buf,
-			"%.*s %.*s HTTP/1.%d%s",
-			(int)parser->req.method_len, parser->req.method,
-			(int)parser->req.path_len, parser->req.path, parser->req.minor_version,
-			HTTP_LINE_END);
+	len = sprintf((char *)ctx->buf, "%.*s %.*s HTTP/1.%d%s",
+		      (int)parser->req.method_len, parser->req.method,
+		      (int)path_len, path, parser->req.minor_version,
+		      HTTP_LINE_END);
+
+	// free memory allocated for replacement path once used
+	if (parser->req.path_mod)
+		free(parser->req.path_repl);
 
 	if (parser->virtual_host_hdr.value_len)
 		len += sprintf((char *)ctx->buf + len,
@@ -416,7 +423,8 @@ static int zproxy_http_request_head_rcv(struct zproxy_http_ctx *ctx)
 		return -1;
 	}
 
-	// TODO: Rewrite URL
+	if (!list_empty(&parser->service_cfg->runtime.req_rw_url))
+		zproxy_http_rewrite_url(parser);
 
 	if (!zproxy_http_validate_max_request(ctx)) {
 		zproxy_http_event_reply_error(ctx, WS_HTTP_400);

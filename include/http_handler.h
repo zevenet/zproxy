@@ -247,6 +247,9 @@ struct zproxy_http_parser {
 		size_t method_len;
 		char *path;
 		size_t path_len;
+		bool path_mod;
+		char *path_repl;
+		size_t path_repl_len;
 		int minor_version;
 		phr_header headers[MAX_HEADERS];
 		size_t num_headers;
@@ -284,6 +287,7 @@ int zproxy_http_handle_response_headers(struct zproxy_http_ctx *ctx);
 void zproxy_http_set_virtual_host_header(struct zproxy_http_parser *parser,
 					 const char *str, size_t str_len);
 void zproxy_http_set_destination_header(struct zproxy_http_ctx *ctx);
+void zproxy_http_rewrite_url(struct zproxy_http_parser *parser);
 struct phr_header * zproxy_http_add_header(struct phr_header *headers,
 					   size_t *num_headers, const char *name,
 					   size_t name_len, const char *value,
