@@ -100,6 +100,16 @@ struct zproxy_http_state *zproxy_state_lookup(uint32_t proxy_id)
 	return state;
 }
 
+struct zproxy_http_state *
+zproxy_state_getref(struct zproxy_http_state *http_state)
+{
+	pthread_mutex_lock(&list_mutex);
+	http_state->refcnt++;
+	pthread_mutex_unlock(&list_mutex);
+
+	return http_state;
+}
+
 void zproxy_states_lock(void)
 {
 	pthread_mutex_lock(&list_mutex);

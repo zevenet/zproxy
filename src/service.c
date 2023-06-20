@@ -492,8 +492,6 @@ int zproxy_service_select(struct zproxy_http_ctx *ctx)
 	list_for_each_entry(service, &ctx->cfg->service_list, list) {
 		if (_zproxy_service_select(ctx, service)) {
 			ctx->parser->service_cfg = service;
-			ctx->parser->http_state =
-				zproxy_state_lookup(service->proxy->id);
 			return 0;
 		}
 	}

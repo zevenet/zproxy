@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "config.h"
 #include "http.h"
 #include "http_handler.h"
 #include "http_tools.h"
@@ -855,50 +856,73 @@ static bool http_last_chunk(const char *data, size_t data_size, int *partial)
 	return 1;
 }*/
 
-/* TODO:
-static void zproxy_http_clear_stats(struct zproxy_http_parser *parser)
+int zproxy_http_update_stats(struct zproxy_http_parser *parser,
+			     const struct zproxy_backend_cfg *backend_cfg,
+			     const enum CONN_STATE new_state)
 {
-	switch(parser->stats_state)
-	{
+	struct zproxy_http_state *http_state = parser->http_state;
+	int ret = 1;
+
+	zcu_log_print_th(LOG_DEBUG, "Changing stats: %d -> %d",
+			 parser->conn_state, new_state);
+
+	if (new_state == parser->conn_state)
+		return ret;
+
+	switch (parser->conn_state) {
 		case NEW_CONN:
 			zproxy_stats_listener_dec_conn_established(http_state);
 			zproxy_stats_listener_dec_conn_pending(http_state);
 			break;
 		case BCK_CONN:
 			zproxy_stats_listener_dec_conn_established(http_state);
-			zproxy_stats_backend_dec_conn_pending(http_state, backend_config);
+			zproxy_stats_backend_dec_conn_pending(http_state, backend_cfg);
 			break;
 		case ESTABLISHED:
 			zproxy_stats_listener_dec_conn_established(http_state);
-			zproxy_stats_backend_dec_conn_established(http_state, backend_config);
+			zproxy_stats_backend_dec_conn_established(http_state, backend_cfg);
 			break;
 		case UNDEF:
-			streamLogDebug(this, "The stream stats are not defined");
 			break;
 		default:
-			streamLogMessage(this, "The stream stats are not defined: %d", stats_state);
+			ret = -1;
+			break;
 	}
-	stats_state = UNDEF;
-}
 
-
-int zproxy_http_update_stats(struct zproxy_http_parser *parser, const STREAM_STATE new_state)
-{
-	int ret = 1;
-	//~ streamLogDebug(this, "Changing stats: %d -> %d", stats_state, new_state);
-
-	if (new_state == parser->stats_state)
+	if (ret < 0) {
+		zcu_log_print_th(LOG_ERR,
+				 "The stream stats are not defined: %d",
+				 parser->conn_state);
 		return ret;
+	}
 
-	zproxy_http_clear_stats(parser);
+	parser->conn_state = new_state;
 
-	ret = setStats(new_state);
-	if(ret < 0)
-	{
-		streamLogMessage(this, "Error setting stats for state: %d -> %d",
-				stats_state, new_state);
+	switch (parser->conn_state) {
+		case NEW_CONN:
+			zproxy_stats_listener_inc_conn_established(http_state);
+			zproxy_stats_listener_inc_conn_pending(http_state);
+			break;
+		case BCK_CONN:
+			zproxy_stats_listener_inc_conn_established(http_state);
+			zproxy_stats_backend_inc_conn_pending(http_state, backend_cfg);
+			break;
+		case ESTABLISHED:
+			zproxy_stats_listener_inc_conn_established(http_state);
+			zproxy_stats_backend_inc_conn_established(http_state, backend_cfg);
+			break;
+		case UNDEF:
+			break;
+		default:
+			ret = -1;
+			break;
+	}
+
+	if (ret < 0) {
+		zcu_log_print_th(LOG_ERR,
+				 "Error setting stats for state: %d -> %d",
+				 parser->conn_state, new_state);
 	}
 
 	return ret;
 }
-*/

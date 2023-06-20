@@ -18,6 +18,7 @@
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
+
 #include <stdlib.h>
 #include <stdint.h>
 #include <unistd.h>
@@ -31,11 +32,13 @@
 #include <assert.h>
 #include <fcntl.h>
 
+#include "http_handler.h"
 #include "proxy.h"
 #include "socket.h"
 #include "worker.h"
 #include "ssl.h"
 #include "list.h"
+#include "zcu_log.h"
 
 static int zproxy_conn_raw_client_send(struct ev_loop *loop,
 				       const char *buf, uint32_t buflen,
@@ -370,7 +373,7 @@ static int zproxy_backend_reconnect(struct ev_loop *loop, struct zproxy_conn *co
 	close(conn->backend.io.fd);
 	zproxy_conn_splice_release(conn);
 	conn->backend.setup = false;
-	//~ TODO: conn->stream->updateStats(NEW_CONN);
+	zproxy_http_update_stats(conn->parser, conn->backend.cfg, NEW_CONN);
 	if (__zproxy_backend_reconnect(loop, conn) < 0) {
 		if (!conn->client.resp_buf)
 			return -1;
@@ -430,7 +433,7 @@ static void zproxy_backend_connect_cb(struct ev_loop *loop, struct ev_io *io, in
 				 EV_WRITE);
 	}
 
-	//~ TODO: conn->stream->updateStats(ESTABLISHED);
+	zproxy_http_update_stats(conn->parser, conn->backend.cfg, ESTABLISHED);
 
 	return;
 
@@ -479,7 +482,7 @@ int zproxy_conn_backend_connect(struct ev_loop *loop, struct zproxy_conn *conn,
 		return __zproxy_backend_reconnect(loop, conn);
 	}
 
-	//~ TODO: conn->stream->updateStats(BCK_CONN);
+	zproxy_http_update_stats(conn->parser, conn->backend.cfg, BCK_CONN);
 
 	conn->backend.setup = true;
 	conn->backend.ssl_enabled = backend->ssl_enabled;

@@ -196,6 +196,8 @@ struct zproxy_http_state *
 zproxy_state_init(const struct zproxy_proxy_cfg *proxy);
 void zproxy_state_purge(uint32_t proxy_id);
 struct zproxy_http_state *zproxy_state_lookup(uint32_t proxy_id);
+struct zproxy_http_state *
+zproxy_state_getref(struct zproxy_http_state *http_state);
 void zproxy_state_free(struct zproxy_http_state **http_state);
 void zproxy_states_lock(void);
 void zproxy_states_unlock(void);

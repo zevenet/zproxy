@@ -19,8 +19,6 @@
 #define _ZPROXY_HTTP_HANDLER_H_
 
 #include "pico_http_parser.h"
-#include "session.h"
-#include "state.h"
 
 #define MAX_HEADERS				128
 #define MAX_EXTRA_HEADERS		24
@@ -52,6 +50,13 @@ enum REQUEST_RESULT {
 	BACKEND_NOT_FOUND,
 	BACKEND_TIMEOUT,
 	GATEWAY_TIMEOUT,
+};
+
+enum CONN_STATE {
+	UNDEF = 0,
+	NEW_CONN,
+	BCK_CONN,
+	ESTABLISHED,
 };
 
 enum HTTP_PARSER_STATE {
@@ -229,6 +234,7 @@ struct zproxy_http_parser {
 	enum HTTP_CHUNKED_STATUS	chunk_state;
 	bool				websocket;
 	struct zproxy_http_state	*http_state;
+	enum CONN_STATE                 conn_state;
 
 	phr_header virtual_host_hdr;
 	phr_header *destination_hdr;
@@ -282,5 +288,8 @@ struct phr_header * zproxy_http_add_header(struct phr_header *headers,
 					   size_t *num_headers, const char *name,
 					   size_t name_len, const char *value,
 					   size_t value_len);
+int zproxy_http_update_stats(struct zproxy_http_parser *parser,
+			     const struct zproxy_backend_cfg *backend_cfg,
+			     const enum CONN_STATE new_state);
 
 #endif

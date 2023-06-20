@@ -493,13 +493,16 @@ int zproxy_http_request_parser(struct zproxy_http_ctx *ctx)
 			zcu_log_print(LOG_ERR, "unable to create http parser");
 			return -1;
 		}
+		ctx->parser->http_state =
+			zproxy_state_getref((struct zproxy_http_state*)ctx->state);
 	}
+
 
 	if (!ctx->parser)
 		return -1;
 
 	//~ TODO: streamLogDebug(ctx->stream, "->-> {bytes:%lu} %.*s", ctx->buf_len, ctx->buf_len, ctx->buf);
-	//~ TODO: ctx->stream->updateStats(NEW_CONN);
+	zproxy_http_update_stats(ctx->parser, ctx->backend->cfg, NEW_CONN);
 
 	if (ctx->parser->state == HTTP_PARSER_STATE::CLOSE)
 		return -1;
