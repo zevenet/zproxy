@@ -19,6 +19,7 @@
 #include "http_handler.h"
 #include "http_tools.h"
 #include "service.h"
+#include "state.h"
 #include "zcu_common.h"
 #include "zcu_http.h"
 #include "zcu_log.h"
@@ -328,6 +329,9 @@ static int zproxy_http_event_reply_redirect_response(struct zproxy_http_ctx *ctx
 	parser->res.message = (char *)ws_str_responses[code] + 4;
 	parser->res.message_len = strlen(parser->res.message);
 
+	zproxy_stats_listener_inc_code((struct zproxy_http_state*)ctx->state,
+				       ws_to_http(code));
+
 	zproxy_http_add_header(parser->res.headers,
 			       &parser->res.num_headers,
 			       http_headers_str[CONTENT_TYPE],
@@ -629,10 +633,10 @@ int zproxy_http_response_parser(struct zproxy_http_ctx *ctx)
 			&& stream->response.http_status_code == 100) {
 		ctx->stream->setState(HTTP_STATE::REQ_BODY_RCV);
 	} else {
+		zproxy_stats_backend_inc_code(parser->http_state,
+					      ctx->backend->cfg,
+					      parser->res.status_code);
 
-		zproxy_stats_backend_inc_code(stream->http_state,
-				stream->backend_config,
-				stream->response.http_status_code);
 		if (stream->isTunnel()) {
 			ctx->stream->setState(HTTP_STATE::TUNNEL);
 		} else if (stream->expectNewRequest()) {
@@ -714,6 +718,9 @@ int zproxy_http_event_reply_error(struct zproxy_http_ctx *ctx, enum ws_responses
 	parser->res.status_code = ws_to_http(code);
 	parser->res.message = (char *)ws_str_responses[code] + 4;
 	parser->res.message_len = strlen(parser->res.message);
+
+	zproxy_stats_listener_inc_code((struct zproxy_http_state*)ctx->state,
+				       ws_to_http(code));
 
 	custom_msg = zproxy_cfg_get_errmsg(&proxy->error.err_msgs,
 					   ws_to_http(code));
