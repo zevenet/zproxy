@@ -22,7 +22,6 @@
 #include <openssl/x509v3.h>
 #include <errno.h>
 #include <unistd.h>
-#include <mutex>
 #include <memory>
 #include "proxy.h"
 #include "config.h"

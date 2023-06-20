@@ -22,7 +22,6 @@
 #include "http.h"
 #include "state.h"
 #include <sys/socket.h>
-#include <string>
 
 struct zproxy_cfg;
 

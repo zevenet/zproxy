@@ -18,7 +18,6 @@
 #include "waf.h"
 #include "state.h"
 #include "zcu_log.h"
-#include <string>
 #include <unistd.h>
 
 static void zproxy_waf_logmodsec(void *data, const void *message)

@@ -22,7 +22,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <pcreposix.h>
-#include <string>
 #include <pthread.h>
 #include <fcntl.h>
 #include <sys/socket.h>
