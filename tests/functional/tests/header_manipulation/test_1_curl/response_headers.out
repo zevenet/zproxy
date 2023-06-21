@@ -1,8 +1,8 @@
-HTTP/1.0 503 no backend
+HTTP/1.1 503 Service Unavailable
 Content-Type: text/html
 Content-Length: #######
 Expires: now
 Pragma: no-cache
-Cache-control: no-cache,no-store
+Cache-Control: no-cache,no-store
 X-Test: test
 

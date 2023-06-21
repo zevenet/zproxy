@@ -1,8 +1,8 @@
-HTTP/1.0 400 Bad Request
+HTTP/1.1 414 URI Too Long
 Content-Type: text/html
 Content-Length: #######
 Expires: now
 Pragma: no-cache
 Server: zproxy
-Cache-control: no-cache,no-store
+Cache-Control: no-cache,no-store
 
