@@ -179,7 +179,11 @@ void zproxy_conn_release(struct ev_loop *loop, struct zproxy_conn *conn, int err
 	free(conn->backend.buf);
 	zproxy_conn_backend_close(loop, conn);
 
-	zproxy_http_parser_free(conn->parser);
+	if (conn->parser) {
+		zproxy_http_update_stats(conn->parser, conn->backend.cfg,
+					 UNDEF);
+		zproxy_http_parser_free(conn->parser);
+	}
 
 	if (err < 0)
 		level = LOG_ERR;
