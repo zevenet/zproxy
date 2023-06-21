@@ -509,11 +509,18 @@ void zproxy_http_rewrite_url(struct zproxy_http_parser *parser)
 static int rewrite_location(struct zproxy_http_ctx *ctx, phr_header *header)
 {
 	struct zproxy_http_parser *parser = ctx->parser;
+	const struct zproxy_proxy_cfg *proxy = ctx->cfg;
 	const char *loc;
 	size_t loc_len;
+	bool rw_location, rw_url_rev;
 
-	int rw_location = parser->service_cfg->header.rw_location;
-	int rw_url_rev = parser->service_cfg->header.rw_url_rev;
+	rw_location = proxy->header.rw_location;
+	rw_url_rev = proxy->header.rw_url_rev;
+
+	if (parser->service_cfg) {
+		rw_location |= parser->service_cfg->header.rw_location;
+		rw_url_rev |= parser->service_cfg->header.rw_url_rev;
+	}
 
 	if (!parser->req.path_mod)
 		rw_url_rev = 0;
@@ -560,8 +567,8 @@ static int rewrite_location(struct zproxy_http_ctx *ctx, phr_header *header)
 				zcu_net_get_address(ctx->backend->cfg->address,
 						    ctx->backend->cfg->port);
 			struct addrinfo *listener_addr =
-				zcu_net_get_address(parser->service_cfg->proxy->address,
-						    parser->service_cfg->proxy->port);
+				zcu_net_get_address(proxy->address,
+						    proxy->port);
 
 			// rewrite location if it points to the backend
 			if (zcu_soc_equal_sockaddr(in_addr->ai_addr,
@@ -570,8 +577,8 @@ static int rewrite_location(struct zproxy_http_ctx *ctx, phr_header *header)
 				new_proto_len = proto_len;
 			// or the listener address with different port
 			} else if (rw_location &&
-				   (parser->service_cfg->proxy->port != port ||
-				    strncmp(proto, (!parser->service_cfg->proxy->runtime.ssl_enabled) ? "http" : "https", proto_len)) &&
+				   (proxy->port != port ||
+				    strncmp(proto, (!proxy->runtime.ssl_enabled) ? "http" : "https", proto_len)) &&
 				   (zcu_soc_equal_sockaddr(in_addr->ai_addr, listener_addr->ai_addr, 0) ||
 				    !strncmp(host, parser->virtual_host_hdr.value, MIN(host_len, parser->virtual_host_hdr.value_len)))) {
 				new_proto = !strncmp(proto, "https", proto_len) ? "http" : "https";
@@ -582,12 +589,12 @@ static int rewrite_location(struct zproxy_http_ctx *ctx, phr_header *header)
 				new_vhost = parser->virtual_host_hdr.value;
 				new_vhost_len = parser->virtual_host_hdr.value_len;
 
-				if ((!parser->service_cfg->proxy->runtime.ssl_enabled && parser->service_cfg->proxy->port != 443) ||
-				    (parser->service_cfg->proxy->port != 80)) {
+				if ((!proxy->runtime.ssl_enabled && proxy->port != 443) ||
+				    (proxy->port != 80)) {
 					size_t i;
 					for (i = 0; i < header->value_len && header->value[i] != ':'; ++i);
 					if (i == header->value_len) {
-						new_port = parser->service_cfg->proxy->port;
+						new_port = proxy->port;
 						for (i = new_port; i > 0; i /= 10)
 							new_port_len++;
 					}

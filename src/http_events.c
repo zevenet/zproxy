@@ -284,9 +284,68 @@ static size_t zproxy_http_response_send_to_client(struct zproxy_http_ctx *ctx)
 	return len;
 }
 
-static int zproxy_http_event_reply_redirect_response(struct zproxy_http_ctx *ctx)
+static int zproxy_http_event_reply_redirect(struct zproxy_http_ctx *ctx,
+					    enum ws_responses code,
+					    const char *url)
 {
 	const struct zproxy_proxy_cfg *proxy = ctx->cfg;
+	struct zproxy_http_parser *parser;
+	const char *custom_msg;
+	char custom_msg_len[MAX_HEADER_VALUE];
+
+	if (!proxy)
+		return -1;
+
+	parser = ctx->parser;
+
+	parser->res.num_headers = 0;
+	parser->res.minor_version = parser->req.minor_version;
+	parser->res.status_code = ws_to_http(code);
+	parser->res.message = (char *)ws_str_responses[code] + 4;
+	parser->res.message_len = strlen(parser->res.message);
+
+	zproxy_stats_listener_inc_code((struct zproxy_http_state*)ctx->state,
+				       ws_to_http(code));
+
+	zproxy_http_add_header(parser->res.headers,
+			       &parser->res.num_headers,
+			       http_headers_str[CONTENT_TYPE],
+			       CONTENTTYPE_HEADER_SIZE, "text/html", 9);
+
+	custom_msg = zproxy_cfg_get_errmsg(&proxy->error.err_msgs,
+					   ws_to_http(code));
+	if (!custom_msg || !custom_msg[0]) {
+		char *tmp_buf = (char*)calloc(ZCU_DEF_BUFFER_SIZE, sizeof(char));
+		snprintf(tmp_buf, ZCU_DEF_BUFFER_SIZE,
+			"<html><head><title>Redirect</title></"
+			"head><body><h1>Redirect</h1><p>You "
+			"should go to <a href=%s>%s</a></p></body></html>",
+			url, url);
+		custom_msg = tmp_buf;
+	}
+	sprintf(custom_msg_len, "%d", (int)strlen(custom_msg));
+	zproxy_http_add_header(parser->res.headers, &parser->res.num_headers,
+			       http_headers_str[CONTENT_LENGTH],
+			       CONTENTLEN_HEADER_SIZE, custom_msg_len,
+			       strlen(custom_msg_len));
+	parser->res.body = custom_msg;
+
+	zproxy_http_add_header(parser->res.headers, &parser->res.num_headers,
+			       http_headers_str[LOCATION], LOCATION_HEADER_SIZE,
+			       url, strlen(url));
+
+	// Process the headers as a response
+	parser->state = RESP_HEADER_RCV;
+	zproxy_http_handle_response_headers(ctx);
+	// Then set to close the connection after redirect
+	parser->state = HTTP_PARSER_STATE::CLOSE;
+	zproxy_http_response_send_to_client(ctx);
+
+	return 1;
+}
+
+static int zproxy_http_event_reply_redirect_response(struct zproxy_http_ctx *ctx)
+{
 	struct zproxy_http_parser *parser = ctx->parser;
 	struct zproxy_backend_redirect *redirect =
 		&parser->service_cfg->redirect;
@@ -294,8 +353,6 @@ static int zproxy_http_event_reply_redirect_response(struct zproxy_http_ctx *ctx
 	char buf[MAX_HEADER_LEN] = { 0 };
 	char new_url[MAX_HEADER_LEN] = { 0 };
 	struct matcher *current, *next;
-	const char *custom_msg;
-	char custom_msg_len[MAX_HEADER_VALUE];
 
 	snprintf(new_url, MAX_HEADER_LEN, "%s", redirect->url);
 	if (redirect->redir_macro) {
@@ -327,53 +384,7 @@ static int zproxy_http_event_reply_redirect_response(struct zproxy_http_ctx *ctx
 		break;
 	}
 
-	if (!proxy)
-		return -1;
-
-	parser->res.num_headers = 0;
-	parser->res.minor_version = parser->req.minor_version;
-	parser->res.status_code = ws_to_http(code);
-	parser->res.message = (char *)ws_str_responses[code] + 4;
-	parser->res.message_len = strlen(parser->res.message);
-
-	zproxy_stats_listener_inc_code((struct zproxy_http_state*)ctx->state,
-				       ws_to_http(code));
-
-	zproxy_http_add_header(parser->res.headers,
-			       &parser->res.num_headers,
-			       http_headers_str[CONTENT_TYPE],
-			       CONTENTTYPE_HEADER_SIZE, "text/html", 9);
-
-	custom_msg = zproxy_cfg_get_errmsg(&proxy->error.err_msgs,
-					   ws_to_http(code));
-	if (!custom_msg || !custom_msg[0]) {
-		char *tmp_buf = (char*)calloc(ZCU_DEF_BUFFER_SIZE, sizeof(char));
-		snprintf(tmp_buf, ZCU_DEF_BUFFER_SIZE,
-			"<html><head><title>Redirect</title></"
-			"head><body><h1>Redirect</h1><p>You "
-			"should go to <a href=%s>%s</a></p></body></html>",
-			new_url, new_url);
-		custom_msg = tmp_buf;
-	}
-	sprintf(custom_msg_len, "%d", (int)strlen(custom_msg));
-	zproxy_http_add_header(parser->res.headers, &parser->res.num_headers,
-			       http_headers_str[CONTENT_LENGTH],
-			       CONTENTLEN_HEADER_SIZE, custom_msg_len,
-			       strlen(custom_msg_len));
-	parser->res.body = custom_msg;
-
-	zproxy_http_add_header(parser->res.headers, &parser->res.num_headers,
-			       http_headers_str[LOCATION], LOCATION_HEADER_SIZE,
-			       new_url, strlen(new_url));
-
-	// Process the headers as a response
-	parser->state = RESP_HEADER_RCV;
-	zproxy_http_handle_response_headers(ctx);
-	// Then set to close the connection after redirect
-	parser->state = HTTP_PARSER_STATE::CLOSE;
-	zproxy_http_response_send_to_client(ctx);
-
-	return 0;
+	return zproxy_http_event_reply_redirect(ctx, code, new_url);
 }
 
 static int zproxy_http_request_100_cont(struct zproxy_http_ctx *ctx)
@@ -678,42 +689,6 @@ int zproxy_http_event_timeout(struct zproxy_http_ctx *ctx)
 	return 0;
 }
 
-int zproxy_http_event_nossl(struct zproxy_http_ctx *ctx)
-{
-	const struct zproxy_proxy_cfg *proxy = ctx->cfg;
-	if (!proxy)
-		return -1;
-
-	// TODO: rewrite like zproxy_http_event_reply_error()
-
-	ctx->resp_buf = (char*)calloc(SRV_MAX_HEADER + CONFIG_MAXBUF, sizeof(char));
-	if (!ctx->resp_buf)
-		return -1;
-
-	if (proxy->error.nosslredirect_url[0]) {
-		snprintf((char*)ctx->resp_buf, SRV_MAX_HEADER + CONFIG_MAXBUF,
-			 "%s%s%s%s%s%s%s", HTTP_PROTO,
-			 ws_str_responses[proxy->error.nosslredirect_code], HTTP_LINE_END,
-			 HTTP_HEADER_EXPIRES HTTP_HEADER_PRAGMA_NO_CACHE
-			 HTTP_HEADER_LOCATION, proxy->error.nosslredirect_url, HTTP_LINE_END,
-			 HTTP_HEADER_SERVER HTTP_HEADER_CACHE_CONTROL);
-	} else {
-		snprintf((char*)ctx->resp_buf, SRV_MAX_HEADER + CONFIG_MAXBUF,
-			 "%s%s%s%s%zu%s%s%s", HTTP_PROTO,
-			 ws_str_responses[proxy->error.errnossl_code], HTTP_LINE_END,
-			 HTTP_HEADER_CONTENT_HTML
-			 HTTP_HEADER_CONTENTLEN, strlen(ctx->cfg->runtime.errnossl_msg), HTTP_LINE_END,
-			 HTTP_HEADER_EXPIRES
-			 HTTP_HEADER_PRAGMA_NO_CACHE
-			 HTTP_HEADER_SERVER
-			 HTTP_HEADER_CACHE_CONTROL
-			 HTTP_LINE_END,
-			 ctx->cfg->runtime.errnossl_msg);
-	}
-
-	return 1;
-}
-
 int zproxy_http_event_reply_error(struct zproxy_http_ctx *ctx, enum ws_responses code)
 {
 	const struct zproxy_proxy_cfg *proxy = ctx->cfg;
@@ -769,4 +744,28 @@ int zproxy_http_event_reply_error(struct zproxy_http_ctx *ctx, enum ws_responses
 	zproxy_http_response_send_to_client(ctx);
 
 	return 0;
+}
+
+int zproxy_http_event_nossl(struct zproxy_http_ctx *ctx)
+{
+	const struct zproxy_proxy_cfg *proxy = ctx->cfg;
+	enum ws_responses code;
+	const char *url;
+	int ret;
+
+	if (!(ctx->parser = zproxy_http_parser_alloc())) {
+		zcu_log_print_th(LOG_ERR, "OOM when allocating parser.");
+		return -1;
+	}
+
+	if (proxy->error.nosslredirect_url[0]) {
+		code = proxy->error.nosslredirect_code;
+		url = proxy->error.nosslredirect_url;
+		ret = zproxy_http_event_reply_redirect(ctx, code, url);
+	} else {
+		code = proxy->error.errnossl_code;
+		ret = zproxy_http_event_reply_error(ctx, code);
+	}
+
+	return ret;
 }
