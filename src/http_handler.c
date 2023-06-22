@@ -533,7 +533,7 @@ static int rewrite_location(struct zproxy_http_ctx *ctx, phr_header *header)
 {
 	struct zproxy_http_parser *parser = ctx->parser;
 	const struct zproxy_proxy_cfg *proxy = ctx->cfg;
-	const char *loc;
+	char loc[MAX_HEADER_VALUE] = { 0 };
 	size_t loc_len;
 	bool rw_location, rw_url_rev;
 
@@ -551,7 +551,8 @@ static int rewrite_location(struct zproxy_http_ctx *ctx, phr_header *header)
 	if (!rw_location && !rw_url_rev)
 		return 1;
 
-	loc = strndup(header->value, header->value_len);
+	snprintf(loc, MAX_HEADER_VALUE, "%.*s", (int)header->value_len,
+		 header->value);
 	loc_len = header->value_len;
 
 	regmatch_t matches[4];
@@ -559,8 +560,7 @@ static int rewrite_location(struct zproxy_http_ctx *ctx, phr_header *header)
 	size_t proto_len = 0, host_len = 0, path_len = 0, host_addr_len = 0;
 	int port = -1;
 	size_t port_len = 0;
-	char *new_header_value = NULL;
-	size_t nhv_len = 0;
+	char new_header_value[MAX_HEADER_VALUE] = { 0 };
 
 	parse_url(loc, loc_len, matches, &proto, &proto_len, &host, &host_len,
 		  &path, &path_len, &host_addr, &host_addr_len, &port,
@@ -625,22 +625,17 @@ static int rewrite_location(struct zproxy_http_ctx *ctx, phr_header *header)
 			}
 
 			if (new_proto && new_vhost) {
-				// "://:" contains the extra characters used in host string
-				nhv_len = new_proto_len + strlen("://:") +
-					new_vhost_len + new_port_len +
-					path_len + 1;
-				new_header_value =
-					(char*)calloc(nhv_len, sizeof(char));
-
 				if (new_port_len) {
-					snprintf(new_header_value, nhv_len,
+					snprintf(new_header_value,
+						 MAX_HEADER_VALUE,
 						 "%.*s://%.*s:%d%.*s",
 						 (int)new_proto_len, new_proto,
 						 (int)new_vhost_len, new_vhost,
 						 new_port, (int)path_len,
 						 path);
 				} else {
-					snprintf(new_header_value, nhv_len,
+					snprintf(new_header_value,
+						 MAX_HEADER_VALUE,
 						 "%.*s://%.*s%.*s",
 						 (int)new_proto_len, new_proto,
 						 (int)new_vhost_len, new_vhost,
@@ -653,43 +648,33 @@ static int rewrite_location(struct zproxy_http_ctx *ctx, phr_header *header)
 			freeaddrinfo(in_addr);
 		}
 
-		if (!new_header_value && proto && host) {
-			nhv_len = proto_len + strlen("://") + host_len + path_len + 1;
-			new_header_value = (char*)calloc(nhv_len, sizeof(char));
-			snprintf(new_header_value, nhv_len, "%.*s://%.*s%.*s",
-				 (int)proto_len, proto, (int)host_len, host,
-				 (int)path_len, path);
+		if (!new_header_value[0] && proto && host) {
+			snprintf(new_header_value, MAX_HEADER_VALUE,
+				 "%.*s://%.*s%.*s", (int)proto_len, proto,
+				 (int)host_len, host, (int)path_len, path);
 		}
 	}
 
-	if (!new_header_value && proto_len && host_len) {
-		// "://:" contains the extra characters used in host string
-		nhv_len = proto_len + strlen("://:") + host_len + port_len +
-			path_len + 1;
-		new_header_value = (char*)calloc(nhv_len, sizeof(char));
+	if (!new_header_value[0] && proto_len && host_len) {
 		if (!port_len) {
-			snprintf(new_header_value, nhv_len, "%.*s://%.*s%.*s",
-				 (int)proto_len, proto, (int)host_len, host,
-				 (int)path_len, path);
+			snprintf(new_header_value, MAX_HEADER_VALUE,
+				 "%.*s://%.*s%.*s", (int)proto_len, proto,
+				 (int)host_len, host, (int)path_len, path);
 		} else {
-			snprintf(new_header_value, nhv_len, "%.*s://%.*s:%d%.*s",
-				 (int)proto_len, proto, (int)host_len, host,
-				 port, (int)path_len, path);
+			snprintf(new_header_value, MAX_HEADER_VALUE,
+				 "%.*s://%.*s:%d%.*s", (int)proto_len, proto,
+				 (int)host_len, host, port, (int)path_len,
+				 path);
 		}
 	}
 
-	size_t new_header_len = header->name_len + strlen(": ") + nhv_len + 1;
-	char new_header[new_header_len];
-	snprintf(new_header, new_header_len, "%.*s: %.*s",
-		 (int)header->name_len, header->name,
-		 (int)nhv_len, new_header_value);
+	char new_header[MAX_HEADER_LEN];
+	snprintf(new_header, MAX_HEADER_LEN, "%.*s: %s", (int)header->name_len,
+		 header->name, new_header_value);
 	zproxy_http_add_header_line(parser->res.headers,
 				    &parser->res.num_headers,
 				    new_header);
 	header->header_off = 1;
-
-	free((void*)new_header_value);
-	free((void*)loc);
 
 	return 1;
 }
