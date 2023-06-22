@@ -39,4 +39,3 @@ tests/waf_redirect
 tests/waf_reload
 tests/waf_xss_and_100continue_http
 tests/waf_xss_and_100continue_https
-tests/websocket

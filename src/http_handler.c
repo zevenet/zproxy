@@ -19,6 +19,7 @@
 #define _GNU_SOURCE
 #endif
 
+#include <ctype.h>
 #include <netdb.h>
 #include <pcreposix.h>
 #include <stdio.h>
@@ -35,6 +36,20 @@
 #include "zcu_http.h"
 #include "zcu_log.h"
 #include "zcu_network.h"
+
+#define PARSER_STATE_SET(parser, var, value)                                   \
+	switch (parser->state) {                                               \
+	case REQ_HEADER_RCV:                                                   \
+		parser->req.var = value;                                       \
+		break;                                                         \
+	case RESP_HEADER_RCV:                                                  \
+		parser->res.var = value;                                       \
+		break;                                                         \
+	default:                                                               \
+		zcu_log_print_th(LOG_ERR, "Invalid parser state %d",           \
+				 parser->state);                               \
+		break;                                                         \
+	}
 
 const char *http_headers_str[_MAX_HTTP_HEADER_NAME] = {
 	"",
@@ -186,6 +201,14 @@ int zproxy_http_parser_reset(struct zproxy_http_parser *parser)
 	parser->state = REQ_HEADER_RCV;
 	parser->chunk_state = CHUNKED_DISABLED;
 	parser->accept_encoding_header = false;
+	parser->req.upgrade_header = false;
+	parser->req.conn_upgr_hdr = false;
+	parser->req.conn_close_pending = false;
+	parser->req.conn_keep_alive = false;
+	parser->res.upgrade_header = false;
+	parser->res.conn_upgr_hdr = false;
+	parser->res.conn_close_pending = false;
+	parser->res.conn_keep_alive = false;
 
 	return 0;
 }
@@ -679,9 +702,33 @@ static void zproxy_http_manage_headers(struct zproxy_http_ctx *ctx,
 	if (!strncmp(header->name, http_headers_str[DESTINATION], header->name_len)) {
 		parser->destination_hdr = header;
 	} else if (!strncmp(header->name, http_headers_str[UPGRADE], header->name_len)) {
-		// TODO: setHeaderUpgrade(header_value);
+		char upgr_hdr[MAX_HEADER_VALUE] = { 0 };
+		for (size_t i = 0; i < header->value_len; ++i)
+			upgr_hdr[i] = tolower(header->value[i]);
+
+		if (strstr(upgr_hdr, "websocket")) {
+			PARSER_STATE_SET(parser, upgrade_header, true);
+		} else {
+			zcu_log_print_th(LOG_WARNING,
+					 "Invalid upgrade value: %.*s",
+					 header->value_len, header->value);
+		}
 	} else if (!strncmp(header->name, http_headers_str[CONNECTION], header->name_len)) {
-		//TODO: setHeaderConnection(header_value);
+		char conn_hdr[MAX_HEADER_VALUE] = { 0 };
+		for (size_t i = 0; i < header->value_len; ++i)
+			conn_hdr[i] = tolower(header->value[i]);
+
+		if (strstr(conn_hdr, "upgrade")) {
+			PARSER_STATE_SET(parser, conn_upgr_hdr, true);
+		} else if (strstr(conn_hdr, "close")) {
+			PARSER_STATE_SET(parser, conn_close_pending, true);
+		} else if (strstr(conn_hdr, "keep-alive")) {
+			PARSER_STATE_SET(parser, conn_keep_alive, true);
+		} else {
+			zcu_log_print_th(LOG_WARNING,
+					 "Invalid upgrade value: %.*s",
+					 header->value_len, header->value);
+		}
 	} else if (!strncmp(header->name, http_headers_str[ACCEPT_ENCODING], header->name_len)) {
 		parser->accept_encoding_header = true;
 	} else if (!strncmp(header->name, http_headers_str[TRANSFER_ENCODING],
@@ -696,19 +743,7 @@ static void zproxy_http_manage_headers(struct zproxy_http_ctx *ctx,
 		const size_t content_len =
 			strtoul(header->value, NULL, 10);
 
-		switch (ctx->parser->state) {
-		case REQ_HEADER_RCV:
-			ctx->parser->req.content_len = content_len;
-			break;
-		case RESP_HEADER_RCV:
-			ctx->parser->res.content_len = content_len;
-			break;
-		default:
-			zcu_log_print_th(LOG_ERR,
-					 "Invalid stream state to parse headers: %d",
-					 ctx->parser->state);
-			break;
-		}
+		PARSER_STATE_SET(parser, content_len, content_len);
 	} else if (!strncmp(header->name, http_headers_str[HOST], header->name_len)) {
 		header->header_off = true;
 		zproxy_http_set_virtual_host_header(parser, header->value, header->value_len);
@@ -812,6 +847,12 @@ int zproxy_http_handle_response_headers(struct zproxy_http_ctx *ctx)
 		zproxy_http_add_header_line(parser->res.headers,
 					    &parser->res.num_headers,
 					    service->header.add_header_res);
+
+	if (parser->req.upgrade_header && parser->req.conn_upgr_hdr &&
+	    parser->res.upgrade_header && parser->res.conn_upgr_hdr) {
+		parser->websocket = true;
+		zcu_log_print_th(LOG_DEBUG, "Websocket enabled");
+	}
 
 	// TODO: add other standard headers, cookies, etc
 

@@ -647,33 +647,32 @@ int zproxy_http_response_parser(struct zproxy_http_ctx *ctx)
 
 	// TODO: manage parser states
 	//~ ctx->resp_len = ctx->res.buf_cpy_len;
-/*	ctx->resp_len = ctx->stream->response.getBufferRewritedLength();
+	//ctx->resp_len = ctx->stream->response.getBufferRewritedLength();
 
-	if (stream->response.expectBody())
-		ctx->stream->setState(HTTP_STATE::RESP_BODY_RCV);
-	else if (stream->request.expect_100_cont_header
-			&& stream->response.http_status_code == 100) {
-		ctx->stream->setState(HTTP_STATE::REQ_BODY_RCV);
+	/*if (stream->response.expectBody())
+		parser->state = RESP_BODY_RCV;
+	else if (parser->expect_100_cont_hdr && parser->res.status_code == 100) {
+		parser->state = REQ_BODY_RCV;
 	} else {
 		zproxy_stats_backend_inc_code(parser->http_state,
 					      ctx->backend->cfg,
 					      parser->res.status_code);
 
-		if (stream->isTunnel()) {
-			ctx->stream->setState(HTTP_STATE::TUNNEL);
-		} else if (stream->expectNewRequest()) {
-			streamLogDebug(ctx->stream, "New request is expected");
-			ctx->stream->setState(HTTP_STATE::REQ_HEADER_RCV);
+		if (parser->websocket) {
+			parser->state = TUNNEL;
+		} else if (zproxy_http_expect_new_req(parser)) {
+			zcu_log_print_th(LOG_DEBUG, "New request is expected");
+			parser->state = REQ_HEADER_RCV;
 		} else {
-			stream->setState(HTTP_STATE::CLOSE);
-			streamLogDebug(ctx->stream, "New request is NOT expected");
-			ctx->http_close = 1;
+			zcu_log_print_th(LOG_DEBUG, "New request is NOT expected");
+			parser->state = CLOSE;
+			ctx->http_close = true;
 			return 1;
 		}
 	}
 
-	streamLogDebug(ctx->stream, "<<<< {bytes:%lu/%lu} %.*s", ctx->buf_len, ctx->resp_len, ctx->buf_len, ctx->buf);
-*/
+	zcu_log_print_th(LOG_DEBUG, "<<<< {bytes:%lu/%lu} %.*s", ctx->buf_len,
+			 ctx->resp_len, ctx->buf_len, ctx->buf);*/
 	return 1;
 }
 
