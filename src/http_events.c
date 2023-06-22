@@ -651,7 +651,7 @@ int zproxy_http_response_parser(struct zproxy_http_ctx *ctx)
 
 	/*if (stream->response.expectBody())
 		parser->state = RESP_BODY_RCV;
-	else if (parser->expect_100_cont_hdr && parser->res.status_code == 100) {
+	else*/ if (parser->expect_100_cont_hdr && parser->res.status_code == 100) {
 		parser->state = REQ_BODY_RCV;
 	} else {
 		zproxy_stats_backend_inc_code(parser->http_state,
@@ -672,7 +672,7 @@ int zproxy_http_response_parser(struct zproxy_http_ctx *ctx)
 	}
 
 	zcu_log_print_th(LOG_DEBUG, "<<<< {bytes:%lu/%lu} %.*s", ctx->buf_len,
-			 ctx->resp_len, ctx->buf_len, ctx->buf);*/
+			 ctx->resp_len, ctx->buf_len, ctx->buf);
 	return 1;
 }
 
