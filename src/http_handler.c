@@ -535,7 +535,15 @@ static int rewrite_location(struct zproxy_http_ctx *ctx, phr_header *header)
 	const struct zproxy_proxy_cfg *proxy = ctx->cfg;
 	char loc[MAX_HEADER_VALUE] = { 0 };
 	size_t loc_len;
+	char new_header_value[MAX_HEADER_VALUE] = { 0 };
+	size_t nhv_len = 0;
+	char new_header[MAX_HEADER_LEN];
 	bool rw_location, rw_url_rev;
+	regmatch_t matches[4];
+	const char *proto = NULL, *host = NULL, *path = NULL, *host_addr = NULL;
+	size_t proto_len = 0, host_len = 0, path_len = 0, host_addr_len = 0;
+	int port = -1;
+	size_t port_len = 0;
 
 	rw_location = proxy->header.rw_location;
 	rw_url_rev = proxy->header.rw_url_rev;
@@ -546,44 +554,23 @@ static int rewrite_location(struct zproxy_http_ctx *ctx, phr_header *header)
 	}
 
 	if (!parser->req.path_mod)
-		rw_url_rev = 0;
+		rw_url_rev = false;
 
 	if (!rw_location && !rw_url_rev)
 		return 1;
 
-	snprintf(loc, MAX_HEADER_VALUE, "%.*s", (int)header->value_len,
-		 header->value);
-	loc_len = header->value_len;
-
-	regmatch_t matches[4];
-	const char *proto = NULL, *host = NULL, *path = NULL, *host_addr = NULL;
-	size_t proto_len = 0, host_len = 0, path_len = 0, host_addr_len = 0;
-	int port = -1;
-	size_t port_len = 0;
-	char new_header_value[MAX_HEADER_VALUE] = { 0 };
+	loc_len = snprintf(loc, MAX_HEADER_VALUE, "%.*s",
+			   (int)header->value_len, header->value);
 
 	parse_url(loc, loc_len, matches, &proto, &proto_len, &host, &host_len,
 		  &path, &path_len, &host_addr, &host_addr_len, &port,
 		  &port_len);
 
-	if (parser->req.path_mod && rw_url_rev) {
-		path = parser->req.path_repl;
-		path_len = parser->req.path_repl_len;
-	}
-
 	if (ctx->backend && rw_location) {
 		struct addrinfo *in_addr;
-		{
-			char aux_host[host_len];
-			sprintf(aux_host, "%.*s", (int)host_len, host);
-			in_addr = zcu_net_get_address(aux_host, port);
-		}
-		const char *new_proto = NULL;
-		size_t new_proto_len = 0;
-		const char *new_vhost = NULL;
-		size_t new_vhost_len = 0;
-		int new_port = -1;
-		size_t new_port_len = 0;
+		char aux_host[host_len];
+		sprintf(aux_host, "%.*s", (int)host_len, host);
+		in_addr = zcu_net_get_address(aux_host, port);
 
 		if (in_addr) {
 			struct addrinfo *backend_addr =
@@ -596,50 +583,35 @@ static int rewrite_location(struct zproxy_http_ctx *ctx, phr_header *header)
 			// rewrite location if it points to the backend
 			if (zcu_soc_equal_sockaddr(in_addr->ai_addr,
 						   backend_addr->ai_addr, 1)) {
-				new_proto = proto;
-				new_proto_len = proto_len;
+				nhv_len = sprintf(new_header_value + nhv_len,
+						  "%.*s", (int)proto_len,
+						  proto);
 			// or the listener address with different port
 			} else if (rw_location &&
 				   (proxy->port != port ||
 				    strncmp(proto, (!proxy->runtime.ssl_enabled) ? "http" : "https", proto_len)) &&
 				   (zcu_soc_equal_sockaddr(in_addr->ai_addr, listener_addr->ai_addr, 0) ||
 				    !strncmp(host, parser->virtual_host_hdr.value, MIN(host_len, parser->virtual_host_hdr.value_len)))) {
-				new_proto = !strncmp(proto, "https", proto_len) ? "http" : "https";
-				new_proto_len = strlen(new_proto);
+				const char *new_proto =
+					!strncmp(proto, "https", proto_len) ? "http" : "https";
+				nhv_len = sprintf(new_header_value, "%s",
+						  new_proto);
 			}
 
-			if (new_proto) {
-				new_vhost = parser->virtual_host_hdr.value;
-				new_vhost_len = parser->virtual_host_hdr.value_len;
+			if (new_header_value[0]) {
+				nhv_len += sprintf(new_header_value + nhv_len,
+						   "://%.*s",
+						   (int)parser->virtual_host_hdr.value_len,
+						   parser->virtual_host_hdr.value);
 
 				if ((!proxy->runtime.ssl_enabled && proxy->port != 443) ||
 				    (proxy->port != 80)) {
 					size_t i;
 					for (i = 0; i < header->value_len && header->value[i] != ':'; ++i);
 					if (i == header->value_len) {
-						new_port = proxy->port;
-						for (i = new_port; i > 0; i /= 10)
-							new_port_len++;
+						nhv_len += sprintf(new_header_value + nhv_len,
+								   ":%d", proxy->port);
 					}
-				}
-			}
-
-			if (new_proto && new_vhost) {
-				if (new_port_len) {
-					snprintf(new_header_value,
-						 MAX_HEADER_VALUE,
-						 "%.*s://%.*s:%d%.*s",
-						 (int)new_proto_len, new_proto,
-						 (int)new_vhost_len, new_vhost,
-						 new_port, (int)path_len,
-						 path);
-				} else {
-					snprintf(new_header_value,
-						 MAX_HEADER_VALUE,
-						 "%.*s://%.*s%.*s",
-						 (int)new_proto_len, new_proto,
-						 (int)new_vhost_len, new_vhost,
-						 (int)path_len, path);
 				}
 			}
 
@@ -647,28 +619,24 @@ static int rewrite_location(struct zproxy_http_ctx *ctx, phr_header *header)
 			freeaddrinfo(listener_addr);
 			freeaddrinfo(in_addr);
 		}
-
-		if (!new_header_value[0] && proto && host) {
-			snprintf(new_header_value, MAX_HEADER_VALUE,
-				 "%.*s://%.*s%.*s", (int)proto_len, proto,
-				 (int)host_len, host, (int)path_len, path);
-		}
 	}
 
-	if (!new_header_value[0] && proto_len && host_len) {
-		if (!port_len) {
-			snprintf(new_header_value, MAX_HEADER_VALUE,
-				 "%.*s://%.*s%.*s", (int)proto_len, proto,
-				 (int)host_len, host, (int)path_len, path);
-		} else {
-			snprintf(new_header_value, MAX_HEADER_VALUE,
-				 "%.*s://%.*s:%d%.*s", (int)proto_len, proto,
-				 (int)host_len, host, port, (int)path_len,
-				 path);
-		}
+	if (!new_header_value[0] && proto && host) {
+		nhv_len = sprintf(new_header_value, "%.*s://%.*s",
+				  (int)proto_len, proto, (int)host_len, host);
 	}
 
-	char new_header[MAX_HEADER_LEN];
+	if (parser->req.path_mod && rw_url_rev) {
+		path = parser->req.path_repl;
+		path_len = parser->req.path_repl_len;
+		zcu_log_print(LOG_DEBUG,"location-rewritten: %.*s",
+			      (int)path_len, path);
+
+	}
+
+	nhv_len += sprintf(new_header_value + nhv_len, "%.*s", (int)path_len,
+			   path);
+
 	snprintf(new_header, MAX_HEADER_LEN, "%.*s: %s", (int)header->name_len,
 		 header->name, new_header_value);
 	zproxy_http_add_header_line(parser->res.headers,
