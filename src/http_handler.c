@@ -442,47 +442,47 @@ void zproxy_http_set_destination_header(struct zproxy_http_ctx *ctx)
 	struct phr_header *header = parser->destination_hdr;
 	const struct zproxy_backend_cfg *backend = ctx->backend->cfg;
 
-	const char *loc;
+	char loc[MAX_HEADER_VALUE] = { 0 };
 	size_t loc_len;
 	regmatch_t matches[4];
 	const char *proto = NULL, *host = NULL, *path = NULL, *host_addr = NULL;
 	size_t proto_len = 0, host_len = 0, path_len = 0, host_addr_len = 0;
 	int port = -1;
-	char *new_header_value = NULL;
-	size_t nhv_len = 0;
+	char new_header[MAX_HEADER_LEN] = { 0 };
+	size_t new_header_len = 0;
 
-	loc = strndup(header->value, header->value_len);
-	loc_len = header->value_len;
-	new_header_value = (char*)calloc(MAX_HEADER_LEN, sizeof(char));
-	nhv_len = snprintf(new_header_value, MAX_HEADER_LEN, "%s: ",
-			   http_headers_str[DESTINATION]);
+	loc_len = snprintf(loc, MAX_HEADER_VALUE, "%.*s",
+			   (int)header->value_len, header->value);
+	new_header_len = snprintf(new_header, MAX_HEADER_LEN, "%s: ",
+				  http_headers_str[DESTINATION]);
 
 	parse_url(loc, loc_len, matches, &proto, &proto_len, &host, &host_len,
 		  &path, &path_len, &host_addr, &host_addr_len, &port);
 
 	if (!host_len && !is_host(host_addr, port, ctx->cfg->address,
-				 ctx->cfg->port)) {
-		nhv_len += sprintf(new_header_value + nhv_len, "%.*s",
-				   (int)header->value_len, header->value);
+				  ctx->cfg->port)) {
+		new_header_len += sprintf(new_header + new_header_len, "%.*s",
+					  (int)header->value_len,
+					  header->value);
 	} else {
-		if (backend->runtime.ssl_enabled)
-			nhv_len += sprintf(new_header_value + nhv_len, "https://");
-		else
-			nhv_len += sprintf(new_header_value + nhv_len, "http://");
+		if (backend->runtime.ssl_enabled) {
+			new_header_len += sprintf(new_header + new_header_len,
+						  "https://");
+		} else {
+			new_header_len += sprintf(new_header + new_header_len,
+						  "http://");
+		}
 
-		nhv_len += sprintf(new_header_value + nhv_len, "%s:%d%.*s",
-				   backend->address, backend->port,
-				   (int)path_len, path);
+		new_header_len += sprintf(new_header + new_header_len,
+					  "%s:%d%.*s", backend->address,
+					  backend->port, (int)path_len, path);
 	}
 
 	parser->destination_hdr =
 		zproxy_http_add_header_line(parser->req.headers,
 					    &parser->req.num_headers,
-					    new_header_value);
+					    new_header);
 	header->header_off = true;
-
-	free((void*)loc);
-	free((void*)new_header_value);
 }
 
 void zproxy_http_rewrite_url(struct zproxy_http_parser *parser)
