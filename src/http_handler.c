@@ -399,7 +399,7 @@ static void parse_url(const char *header_value, size_t header_value_len,
 		      size_t *proto_len, const char **host, size_t *host_len,
 		      const char **path, size_t *path_len,
 		      const char **host_addr, size_t *host_addr_len,
-		      int *port, size_t *port_len)
+		      int *port)
 {
 	regex_t reg;
 
@@ -418,14 +418,12 @@ static void parse_url(const char *header_value, size_t header_value_len,
 		for (i = 0; i < *host_addr_len && (*host_addr)[i] != ':'; ++i);
 		if (i != *host_addr_len) {
 			*port = atoi(*host + i + 1);
-			*port_len = *host_len - (i + 1);
 			*host_len = i;
-		} else if (!strncmp(*proto, "https", *proto_len)) {
+		} else if (*proto_len == strlen("https") &&
+			   !strncmp(*proto, "https", *proto_len)) {
 			*port = 443;
-			*port_len = 3;
 		} else {
 			*port = 80;
-			*port_len = 2;
 		}
 	} else {
 		*path = header_value;
@@ -450,7 +448,6 @@ void zproxy_http_set_destination_header(struct zproxy_http_ctx *ctx)
 	const char *proto = NULL, *host = NULL, *path = NULL, *host_addr = NULL;
 	size_t proto_len = 0, host_len = 0, path_len = 0, host_addr_len = 0;
 	int port = -1;
-	size_t port_len = 0;
 	char *new_header_value = NULL;
 	size_t nhv_len = 0;
 
@@ -461,8 +458,7 @@ void zproxy_http_set_destination_header(struct zproxy_http_ctx *ctx)
 			   http_headers_str[DESTINATION]);
 
 	parse_url(loc, loc_len, matches, &proto, &proto_len, &host, &host_len,
-		  &path, &path_len, &host_addr, &host_addr_len, &port,
-		  &port_len);
+		  &path, &path_len, &host_addr, &host_addr_len, &port);
 
 	if (!host_len && !is_host(host_addr, port, ctx->cfg->address,
 				 ctx->cfg->port)) {
@@ -543,7 +539,6 @@ static int rewrite_location(struct zproxy_http_ctx *ctx, phr_header *header)
 	const char *proto = NULL, *host = NULL, *path = NULL, *host_addr = NULL;
 	size_t proto_len = 0, host_len = 0, path_len = 0, host_addr_len = 0;
 	int port = -1;
-	size_t port_len = 0;
 
 	rw_location = proxy->header.rw_location;
 	rw_url_rev = proxy->header.rw_url_rev;
@@ -563,8 +558,7 @@ static int rewrite_location(struct zproxy_http_ctx *ctx, phr_header *header)
 			   (int)header->value_len, header->value);
 
 	parse_url(loc, loc_len, matches, &proto, &proto_len, &host, &host_len,
-		  &path, &path_len, &host_addr, &host_addr_len, &port,
-		  &port_len);
+		  &path, &path_len, &host_addr, &host_addr_len, &port);
 
 	if (ctx->backend && rw_location) {
 		struct addrinfo *in_addr;
