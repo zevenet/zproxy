@@ -19,6 +19,7 @@
 #include "http_handler.h"
 #include "http_tools.h"
 #include "service.h"
+#include "session.h"
 #include "state.h"
 #include "zcu_common.h"
 #include "zcu_http.h"
@@ -119,14 +120,21 @@ static int zproxy_http_validate_max_request(struct zproxy_http_ctx *ctx)
 
 int zproxy_http_request_reconnect(struct zproxy_http_ctx *ctx)
 {
+	struct zproxy_http_parser *parser = ctx->parser;
 	zproxy_backend_cfg *backend;
 	char  *buf = nullptr;
 
 	// TODO: set down
 
 	// clear sessions if they exist
-	// PARSERTODO: Connect with the sessions table
-	//~ zproxy_session_delete_backend(stream->session, &stream->backend_config->runtime.addr);
+	{
+		const struct zproxy_http_state *state =
+			(struct zproxy_http_state*)ctx->state;
+		struct zproxy_sessions *sessions =
+			zproxy_state_get_service_sessions(parser->service_cfg->name,
+							  &state->services);
+		zproxy_session_delete_backend(sessions, &ctx->backend->addr);
+	}
 
 	// getting a new backend
 	backend = zproxy_service_select_backend(ctx);
@@ -753,6 +761,8 @@ int zproxy_http_event_nossl(struct zproxy_http_ctx *ctx)
 	int ret;
 
 	if (!(ctx->parser = zproxy_http_parser_alloc())) {
+		ctx->parser->http_state =
+			zproxy_state_getref((struct zproxy_http_state*)ctx->state);
 		zcu_log_print_th(LOG_ERR, "OOM when allocating parser.");
 		return -1;
 	}
