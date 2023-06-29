@@ -360,20 +360,12 @@ static void zproxy_http_set_x_forwarded_for_header(
 	}
 }
 
-void zproxy_http_set_virtual_host_header(
-				struct zproxy_http_parser *parser,
-				const char *str, size_t str_len)
+void zproxy_http_set_virtual_host_header(struct zproxy_http_parser *parser,
+					 const char *str, size_t str_len)
 {
-	if (!parser->virtual_host_hdr.name_len) {
-		zproxy_http_set_header(&parser->virtual_host_hdr,
-				http_headers_str[HOST],
-				HOST_HEADER_SIZE,
-				str, str_len);
-	} else {
-		zproxy_http_set_header(&parser->virtual_host_hdr,
-			http_headers_str[HOST], HOST_HEADER_SIZE,
-			str, str_len);
-	}
+	zproxy_http_set_header(&parser->virtual_host_hdr,
+			       http_headers_str[HOST], HOST_HEADER_SIZE,
+			       str, str_len);
 }
 
 static bool is_host(const char *vaddr, int vport, const char *addr, int port)

@@ -26,6 +26,9 @@
 #include "zcu_http.h"
 #include "zcu_log.h"
 
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -90,8 +93,15 @@ void zproxy_http_set_header_rewrite_backend(struct zproxy_http_ctx *ctx)
 	struct zproxy_http_parser *parser = ctx->parser;
 	const struct zproxy_proxy_cfg *proxy = ctx->cfg;
 
-	if (proxy->header.rw_host)
-		zproxy_http_set_virtual_host_header(parser, inet_ntoa(ctx->backend->addr.sin_addr), INET_STR_SIZE);
+
+	if (proxy->header.rw_host) {
+		char bck_addr[CONFIG_MAX_FIN];
+		snprintf(bck_addr, CONFIG_MAX_FIN, "%s:%d",
+			 inet_ntoa(ctx->backend->addr.sin_addr),
+			 ntohs(ctx->backend->addr.sin_port));
+		zproxy_http_set_virtual_host_header(parser, bck_addr,
+						    INET_STR_SIZE);
+	}
 
 	if (proxy->header.rw_destination)
 		zproxy_http_set_destination_header(ctx);

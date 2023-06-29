@@ -1,9 +1,9 @@
 GET /headers HTTP/1.1
+Host: 10.2.1.1:80
 User-Agent: curl/VERSION
 Accept: */*
 Other-header: header-value
 X-Forwarded-For: 10.1.1.1
-Host: 10.2.1.1:80
 Destination: http://10.2.1.1:80/url
 
 

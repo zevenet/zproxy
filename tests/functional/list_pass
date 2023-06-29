@@ -20,6 +20,7 @@ tests/listener_removal
 tests/no_rewrite_destination_and_host
 tests/priority_disarranged_jump
 tests/response_body_binary
+tests/rewrite_destination_and_host
 tests/rewrite_location_0
 tests/rewrite_location_1
 tests/rewrite_location_2

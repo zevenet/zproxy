@@ -1,6 +1,5 @@
 tests/backend_https
 tests/least_conns_algo
-tests/rewrite_destination_and_host
 tests/sessions_backend_cookie
 tests/sessions_dynamic_cookie
 tests/sessions_dynamic_header
