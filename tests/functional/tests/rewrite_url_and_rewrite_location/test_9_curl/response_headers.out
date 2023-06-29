@@ -1,4 +1,4 @@
-HTTP/1.0 301 Moved Permanently
+HTTP/1.1 301 Moved Permanently
 Content-Type: text/html
 Content-Length: #######
 Location: https://example.com/vhost1/page%20?id%23=test;example

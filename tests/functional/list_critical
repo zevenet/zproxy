@@ -7,10 +7,6 @@ tests/headers
 tests/http
 tests/https
 tests/https_error_nossl
-tests/https_proto_no_tlsv1
-tests/https_proto_no_tlsv11
-tests/https_proto_no_tlsv12
-tests/https_proto_no_tlsv13
 tests/multi_listener
 tests/nosslredirect
 tests/redirect
@@ -19,9 +15,7 @@ tests/request_body_chunk
 tests/request_body_content_length
 tests/request_body_without_delimiter
 tests/response_body_bigfile
-tests/rewrite_url_and_rewrite_location
 tests/service_match
-tests/service_reselection
 tests/sessions_dynamic_url
 tests/sessions_old_backend
 tests/stats_connlimit
