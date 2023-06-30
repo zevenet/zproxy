@@ -2,6 +2,7 @@ tests/algorithm_weight
 tests/backend_collision
 tests/backend_collision_same_srv
 tests/backend_down
+tests/backend_https
 tests/backend_prio_increase
 tests/backend_prio_recheck
 tests/backend_unreachable

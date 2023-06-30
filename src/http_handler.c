@@ -360,6 +360,16 @@ static void zproxy_http_set_x_forwarded_for_header(
 	}
 }
 
+static void zproxy_http_set_sts(struct zproxy_http_parser *parser, int sts)
+{
+	char hdr[MAX_HEADER_LEN] = { 0 };
+	snprintf(hdr, MAX_HEADER_LEN, "%s: max-age=%d",
+		 http_headers_str[STRICT_TRANSPORT_SECURITY], sts);
+
+	zproxy_http_add_header_line(parser->res.headers,
+				    &parser->res.num_headers, hdr);
+}
+
 void zproxy_http_set_virtual_host_header(struct zproxy_http_parser *parser,
 					 const char *str, size_t str_len)
 {
@@ -680,6 +690,9 @@ static void zproxy_http_manage_headers(struct zproxy_http_ctx *ctx,
 			zcu_log_print_th(LOG_DEBUG, "Chunked enabled");
 			parser->chunk_state = CHUNKED_ENABLED;
 		}
+	} else if (!strncmp(header->name, http_headers_str[STRICT_TRANSPORT_SECURITY], header->name_len)) {
+		if (parser->service_cfg && parser->service_cfg->header.sts > 0)
+			header->header_off = true;
 	} else if (!strncmp(header->name, http_headers_str[CONTENT_LENGTH], header->name_len)) {
 		const size_t content_len =
 			strtoul(header->value, NULL, 10);
@@ -788,6 +801,8 @@ int zproxy_http_handle_response_headers(struct zproxy_http_ctx *ctx)
 		zproxy_http_add_header_line(parser->res.headers,
 					    &parser->res.num_headers,
 					    service->header.add_header_res);
+	if (service && service->header.sts > 0)
+		zproxy_http_set_sts(parser, service->header.sts);
 
 	if (parser->req.upgrade_header && parser->req.conn_upgr_hdr &&
 	    parser->res.upgrade_header && parser->res.conn_upgr_hdr) {

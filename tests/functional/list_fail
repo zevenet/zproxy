@@ -1,4 +1,3 @@
-tests/backend_https
 tests/least_conns_algo
 tests/sessions_backend_cookie
 tests/sessions_dynamic_cookie
